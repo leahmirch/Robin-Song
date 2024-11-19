@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true,
+    "jsx": "react",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "*"
+      ]
+    }
+  },
+  "include": [
+    "frontend/**/*",
+    "custom.d.ts"
+  ],
+  "extends": "expo/tsconfig.base"
+}
