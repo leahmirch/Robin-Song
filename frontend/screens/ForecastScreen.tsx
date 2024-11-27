@@ -5,7 +5,7 @@ import colors from '../assets/theme/colors';
 const ForecastScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.text}>Identify Screen</Text>
+      <Text style={styles.text}>Forecast Screen</Text>
     </SafeAreaView>
   );
 };
