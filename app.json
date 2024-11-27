@@ -6,6 +6,9 @@
       }
     },
     "owner": "koujo",
-    "slug": "robin"
+    "slug": "robin",
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
