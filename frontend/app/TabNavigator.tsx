@@ -1,16 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import IdentifyScreen from '../screens/IdentifyScreen';
 import ForecastScreen from '../screens/ForecastScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ChatButton from '../components/ChatButton';
+import ChatModal from '../components/ChatModal';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import colors from '../assets/theme/colors';
 
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
+  const [modalVisible, setModalVisible] = useState(false);
+
   return (
+    <View style={styles.container}>
     <Tab.Navigator
         screenOptions={{
             headerShown: false,
@@ -61,7 +67,21 @@ const TabNavigator = () => {
         }}
       />
     </Tab.Navigator>
+     
+    <ChatButton onPress={() => setModalVisible(true)} />
+
+    <ChatModal
+      visible={modalVisible}
+      onClose={() => setModalVisible(false)}
+    />
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
 
 export default TabNavigator;
