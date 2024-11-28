@@ -68,7 +68,10 @@ const TabNavigator = () => {
       />
     </Tab.Navigator>
      
-    <ChatButton onPress={() => setModalVisible(true)} />
+    <ChatButton 
+      onPress={() => setModalVisible(true)} 
+      hiddenScreens={['Profile']}
+    />
 
     <ChatModal
       visible={modalVisible}

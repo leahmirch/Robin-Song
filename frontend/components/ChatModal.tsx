@@ -41,6 +41,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E7C4B8',
   },
   text: {
+    fontFamily: 'Radio Canada',
     fontSize: 18,
     marginBottom: 20,
   },

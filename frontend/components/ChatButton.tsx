@@ -1,5 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigationState, useRoute } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import colors from '../assets/theme/colors';
 
@@ -10,9 +11,21 @@ interface ChatButtonProps {
     right?: number;
     left?: number;
   };
+  hiddenScreens?: string[];
 }
 
-const ChatButton: React.FC<ChatButtonProps> = ({ onPress, position }) => {
+const ChatButton: React.FC<ChatButtonProps> = ({ onPress, position, hiddenScreens = [] }) => {
+  const currentRouteName = useNavigationState((state: any) => {
+    if (state && Array.isArray(state.routes) && typeof state.index === 'number') {
+      return state.routes[state.index]?.name as string;
+    }
+    return '';
+  });
+
+  if (hiddenScreens.includes(currentRouteName)) {
+    return null;
+  }
+  
   return (
     <TouchableOpacity
       style={[styles.button, position && { ...position }]}
