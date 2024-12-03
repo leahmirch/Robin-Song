@@ -1,5 +1,7 @@
 import React from 'react';
-import {Modal, View, Text, StyleSheet, TouchableOpacity,} from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import colors from 'frontend/assets/theme/colors';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface ChatModalProps {
   visible: boolean;
@@ -23,9 +25,9 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose }) => {
 
           {/* Bottom Block */}
           <View style={styles.bottomBlock}>
-            {/* Owl Icon */}
+            {/* Bird Icon */}
             <View style={styles.emojiContainer}>
-              <Text style={styles.emojiText}>X</Text>
+              <MaterialCommunityIcons name="bird" size={30} color={colors.white} />
             </View>
 
             {/* Welcome Text */}
@@ -79,7 +81,7 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: '95%',
-    backgroundColor: '#E7C4B8',
+    backgroundColor: colors.chatGPTBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     position: 'relative',
@@ -88,7 +90,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: '#ECA08D',
+    backgroundColor: colors.accent,
     borderRadius: 15,
     width: 30,
     height: 30,
@@ -96,7 +98,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -110,45 +112,40 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#C0483A',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
   },
-  emojiText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
   heading: {
     fontFamily: 'Caprasimo',
     fontSize: 20,
-    color: '#8485Bf',
+    color: colors.chatGPTHeadingText,
     marginBottom: 5,
     textAlign: 'left',
   },
   subHeading: {
     fontFamily: 'Radio Canada',
     fontSize: 18,
-    color: '#222E50',
+    color: colors.text,
     marginBottom: 20,
     textAlign: 'left',
-    fontWeight: 'bold', 
+    fontWeight: 'bold',
   },
   suggestionsHeading: {
     fontFamily: 'Radio Canada',
     fontSize: 16,
-    color: '#8485Bf',
+    color: colors.chatGPTHeadingText,
     marginBottom: 10,
     textAlign: 'left',
-    fontWeight: 'bold',
+    fontWeight: 'bold', 
   },
   card: {
-    backgroundColor: '#ECD4C7',
+    backgroundColor: colors.card,
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
-    shadowColor: '#000000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -156,15 +153,15 @@ const styles = StyleSheet.create({
   cardText: {
     fontFamily: 'Radio Canada',
     fontSize: 14,
-    color: '#222E50',
+    color: colors.text,
   },
   inputContainer: {
     width: '100%',
     height: 50,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.chatGPTCardBackground,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: '#ECA08D',
+    borderColor: colors.accent,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
@@ -173,19 +170,19 @@ const styles = StyleSheet.create({
   inputPlaceholder: {
     fontFamily: 'Radio Canada',
     fontSize: 14,
-    color: '#ECA08D',
+    color: colors.chatGPTAccentText,
     flex: 1,
   },
   arrowButton: {
     width: 30,
     height: 30,
-    backgroundColor: '#ECA08D',
+    backgroundColor: colors.accent,
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
   },
   arrowButtonText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
