@@ -6,6 +6,7 @@ const colors = {
     secondary: '#8485Bf',
     bottomnav: '#FFF8F4',
     card: '#ECD4C7',
+    identifycard: '#EDCAB9',
     white: '#FFFFFF',
     black: '#000000',
   

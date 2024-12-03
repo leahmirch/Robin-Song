@@ -96,9 +96,9 @@ const styles = StyleSheet.create({
   },
   badge: {
     width: '35%',
-    backgroundColor: colors.card,
+    backgroundColor: colors.identifycard,
     borderRadius: 15,
-    paddingVertical: 15, 
+    paddingVertical: 15,
     alignItems: 'center',
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
@@ -107,13 +107,13 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontFamily: 'Caprasimo',
-    fontSize: 17, 
+    fontSize: 16,
     color: colors.primary,
     textAlign: 'center',
   },
   badgeDate: {
     fontFamily: 'Radio Canada',
-    fontSize: 13, 
+    fontSize: 12,
     color: colors.text,
     textAlign: 'center',
   },
@@ -157,16 +157,17 @@ const styles = StyleSheet.create({
   },
   sectionHeading: {
     fontFamily: 'Caprasimo',
-    fontSize: 28, 
+    fontSize: 28,
     color: colors.secondary,
     textAlign: 'center',
     marginBottom: 10,
   },
   sectionText: {
     fontFamily: 'Radio Canada',
-    fontSize: 16, 
+    fontSize: 16,
     color: colors.text,
     textAlign: 'left',
+    lineHeight: 24,
   },
   separator: {
     height: 2,

@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   addressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: colors.identifycard,
     borderRadius: 15,
     paddingVertical: 20,
     paddingHorizontal: 15,

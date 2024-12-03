@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {Modal, View, Text, StyleSheet, TouchableOpacity, TextInput,} from 'react-native';
 import colors from 'frontend/assets/theme/colors';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -18,6 +18,26 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose }) => {
     >
       <View style={styles.background}>
         <View style={styles.container}>
+          {/* New Chat with Dropdown */}
+          <View style={styles.topLeftContainer}>
+            <Text style={styles.newChatText}>New Chat</Text>
+            <MaterialCommunityIcons
+              name="chevron-down"
+              size={20}
+              color={colors.secondary}
+              style={styles.dropdownIcon}
+            />
+          </View>
+
+          {/* New Chat Button */}
+          <TouchableOpacity style={styles.newChatIcon}>
+            <MaterialCommunityIcons
+              name="note-edit-outline"
+              size={20}
+              color={colors.white}
+            />
+          </TouchableOpacity>
+
           {/* Close Button */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeText}>X</Text>
@@ -55,11 +75,13 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose }) => {
               </Text>
             </View>
 
-            {/* Bottom Input Placeholder */}
+            {/* Editable Input Section */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputPlaceholder}>
-                Ask me about birds or select a question...
-              </Text>
+              <TextInput
+                style={styles.inputField}
+                placeholder="Ask me about birds or select a question..."
+                placeholderTextColor={colors.chatGPTAccentText}
+              />
               <View style={styles.arrowButton}>
                 <Text style={styles.arrowButtonText}>↑</Text>
               </View>
@@ -86,6 +108,37 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     position: 'relative',
   },
+  topLeftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 10,
+    left: 15,
+  },
+  newChatText: {
+    fontFamily: 'Caprasimo',
+    fontSize: 18,
+    color: colors.black,
+    marginRight: 5,
+  },
+  dropdownIcon: {
+    marginTop: 2,
+  },
+  newChatIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 50,
+    backgroundColor: colors.accent,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
   closeButton: {
     position: 'absolute',
     top: 10,
@@ -96,6 +149,10 @@ const styles = StyleSheet.create({
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   closeText: {
     color: colors.white,
@@ -138,7 +195,7 @@ const styles = StyleSheet.create({
     color: colors.chatGPTHeadingText,
     marginBottom: 10,
     textAlign: 'left',
-    fontWeight: 'bold', 
+    fontWeight: 'bold',
   },
   card: {
     backgroundColor: colors.card,
@@ -167,10 +224,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginTop: 20,
   },
-  inputPlaceholder: {
+  inputField: {
     fontFamily: 'Radio Canada',
     fontSize: 14,
-    color: colors.chatGPTAccentText,
+    color: colors.text,
     flex: 1,
   },
   arrowButton: {
