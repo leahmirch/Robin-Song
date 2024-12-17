@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "expo": "^52.0.18",
+    "expo-env": "^1.1.1",
+    "firebase": "^11.1.0",
+    "react-native": "0.76.3"
+  }
+}

@@ -1,0 +1,12 @@
+# Python virtual environment
+birdnet-env/
+.env
+
+
+# editor history and system files
+.history/
+.DS_Store
+
+
+node_modules/
+
