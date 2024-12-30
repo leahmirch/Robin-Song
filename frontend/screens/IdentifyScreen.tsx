@@ -14,9 +14,16 @@ import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestor
 import { db } from "../../database/firebaseConfig";
 import axios from "axios";
 import colors from "frontend/assets/theme/colors";
+import Constants from 'expo-constants';
 
-// Unsplash API Key
-const UNSPLASH_ACCESS_KEY = "OW9_nKN_e_TWvCdmTMB7nuntkSeNR8sSnQzEucwxd-k";
+
+// Unsplash API Key; access key from environment variables
+const UNSPLASH_ACCESS_KEY =
+  process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY ||
+  Constants.expoConfig?.extra?.UNSPLASH_ACCESS_KEY;
+
+console.log('Unsplash API Key:', UNSPLASH_ACCESS_KEY);
+  
 
 interface BirdData {
   bird: string;
@@ -57,17 +64,22 @@ const IdentifyScreen: React.FC = () => {
   }, []);
 
   const fetchBirdImage = async (birdName: string) => {
-    setLoading(true);
-    try {
-      const response = await axios.get<{
-        results: { urls: { small: string } }[];
-      }>("https://api.unsplash.com/search/photos", {
-        params: {
-          query: birdName,
-          client_id: UNSPLASH_ACCESS_KEY,
-          per_page: 1,
-        },
-      });
+  setLoading(true);
+  try {
+    console.log('Fetching bird image with API Key:', UNSPLASH_ACCESS_KEY);
+
+  
+    const response = await axios.get<{
+      results: { urls: { small: string } }[];
+    }>("https://api.unsplash.com/search/photos", {
+      params: {
+        query: birdName,
+        per_page: 1,
+      },
+      headers: {
+        Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`,
+      },
+    });
       const images = response.data.results;
       setBirdImage(images.length > 0 ? images[0].urls.small : null);
     } catch (error) {

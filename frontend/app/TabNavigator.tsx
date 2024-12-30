@@ -7,6 +7,7 @@ import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ChatButton from '../components/ChatButton';
 import ChatModal from '../components/ChatModal';
+import AuthScreen from '../screens/AuthScreen';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import colors from '../assets/theme/colors';
 
@@ -66,6 +67,16 @@ const TabNavigator = () => {
             ),
         }}
       />
+        <Tab.Screen
+          name="Login"
+          component={AuthScreen}
+          options={{
+            tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+              <Ionicons name="log-in" size={size} color={color} />
+            ),
+            tabBarLabel: 'Login',
+          }}
+        />
     </Tab.Navigator>
      
     <ChatButton 

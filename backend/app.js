@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const birdsRoutes = require('./birds'); // Import the router from birds.js
+const birdsRoutes = require('./src/birds'); // Import the router from birds.js
 
 const app = express();
 const PORT = process.env.PORT || 3001;

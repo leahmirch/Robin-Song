@@ -1,12 +1,18 @@
 # Python virtual environment
 birdnet-env/
+backend/venv/
 .env
 
-
-# editor history and system files
+# Editor history and system files
 .history/
 .DS_Store
 
-
+# Node.js dependencies
 node_modules/
 
+# Exclude specific backend files
+backend/src/server.py
+
+# Large binary files
+*.pyd
+*.dll
