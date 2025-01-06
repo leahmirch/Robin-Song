@@ -3229,7 +3229,7 @@ execa@^5.1.1:
 
 expo-application@~6.0.0:
   version "6.0.1"
-  resolved "https://registry.yarnpkg.com/expo-application/-/expo-application-6.0.1.tgz#bb5e1f15636c51c571a0062e8f9d4e504da967e4"
+  resolved "https://registry.npmjs.org/expo-application/-/expo-application-6.0.1.tgz"
   integrity sha512-w+1quSmKp8SYKT+GAFHSN5c6u+PqoVRIfpsLyRQrQdOnBA9dA8Hw6JT9sHNFmA30A2v1b/sdYZE3qKuRJFNSWQ==
 
 expo-asset@~11.0.1:
@@ -3244,7 +3244,7 @@ expo-asset@~11.0.1:
 
 expo-auth-session@~6.0.1:
   version "6.0.1"
-  resolved "https://registry.yarnpkg.com/expo-auth-session/-/expo-auth-session-6.0.1.tgz#5360e0698053feb258db98b68f2fa0323589b581"
+  resolved "https://registry.npmjs.org/expo-auth-session/-/expo-auth-session-6.0.1.tgz"
   integrity sha512-ip47J74BQBp4gWK5FgqEt7T108twmpSPIfHPhtIH0PvY5GLDKuN1OiL6QIQUgs3xC6n1M0bja6kXakbnNcVSLA==
   dependencies:
     expo-application "~6.0.0"
@@ -3264,7 +3264,7 @@ expo-constants@~17.0.0, expo-constants@~17.0.3:
 
 expo-crypto@~14.0.0:
   version "14.0.1"
-  resolved "https://registry.yarnpkg.com/expo-crypto/-/expo-crypto-14.0.1.tgz#2aabfebf202f8390db9060c033a18ad8eabe8cd9"
+  resolved "https://registry.npmjs.org/expo-crypto/-/expo-crypto-14.0.1.tgz"
   integrity sha512-/gGpD9UAz8fgZtU08cwwqeQElkFmMy2Hc8lLa9laSjD3YN0XM07zDJyJ+CC1VhQ63G8WpUnq1IHSmaPbbLp+oQ==
   dependencies:
     base64-js "^1.3.0"
@@ -3326,7 +3326,7 @@ expo-splash-screen@~0.29.18:
 
 expo-web-browser@~14.0.0:
   version "14.0.1"
-  resolved "https://registry.yarnpkg.com/expo-web-browser/-/expo-web-browser-14.0.1.tgz#97f3f141b0897364bc8364d90d6e29df0beec8aa"
+  resolved "https://registry.npmjs.org/expo-web-browser/-/expo-web-browser-14.0.1.tgz"
   integrity sha512-QM9F3ie+UyIOoBvqFmT6CZojb1vMc2H+7ZlMT5dEu1PL2jtYyOeK2hLfbt/EMt7CBm/w+P29H9W9Y9gdebOkuQ==
 
 expo@~52.0.20:

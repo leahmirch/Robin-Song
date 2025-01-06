@@ -1,11 +1,11 @@
 // Import the functions you need from the SDKs you need
 import Constants from "expo-constants";
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import { getAnalytics, isSupported as analyticsIsSupported } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, initializeAuth, browserSessionPersistence, browserLocalPersistence, getReactNativePersistence } from "firebase/auth";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { Platform } from 'react-native';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -23,16 +23,35 @@ const firebaseConfig = {
 };
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app); // For tracking user behavior
 
 const db = getFirestore(app); // For storing/retrieving bird detection data
-// Enable Firebase Authentication
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
-const googleProvider = new GoogleAuthProvider(); // Enable Google Authentication
 
-// Log the Firebase configuration for debugging
-console.log("Final Firebase Config:", firebaseConfig);
+
+// Analytics (Optional, only for supported environments)
+let analytics;
+analyticsIsSupported().then((supported) => {
+  if (supported) {
+    analytics = getAnalytics(app);
+    console.log(' Analytics initialized');
+  } else {
+    console.warn('Analytics not supported in this environment');
+  }
+});
+
+// Initialize Firebase Auth with platform-specific persistence
+let auth;
+
+if (Platform.OS === 'web') {
+  // Web-specific persistence
+  auth = getAuth(app);
+  auth.setPersistence(browserLocalPersistence); // Use localStorage for persistence
+  console.log('Auth initialized with browserLocalPersistence');
+} else {
+  // Mobile-specific persistence
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+  console.log('Auth initialized with AsyncStorage persistence');
+}
 
 export { db, auth, googleProvider, app };

@@ -1,7 +1,10 @@
+
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import colors from '../assets/theme/colors';
+import * as AuthSession from 'expo-auth-session';
+
 
 export default function AuthScreen() {
   const handleGoogleSignIn = async () => {
