@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { StyleSheet, Text, SafeAreaView, ActivityIndicator } from 'react-native';
@@ -11,6 +12,13 @@ import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 
 //Firebase Auth Instance
 const auth = getAuth(app);
+import React from 'react';
+import { useFonts } from 'expo-font';
+import { StyleSheet, Text, SafeAreaView } from 'react-native';
+import colors from './frontend/assets/theme/colors';
+import { NavigationContainer } from '@react-navigation/native';
+import TabNavigator from './frontend/app/TabNavigator';
+
 
 export default function App() {
     const [loaded, error] = useFonts({

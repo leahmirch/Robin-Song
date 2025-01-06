@@ -67,6 +67,7 @@ const TabNavigator = () => {
             ),
         }}
       />
+
         <Tab.Screen
           name="Login"
           component={AuthScreen}
@@ -77,6 +78,7 @@ const TabNavigator = () => {
             tabBarLabel: 'Login',
           }}
         />
+
     </Tab.Navigator>
      
     <ChatButton 

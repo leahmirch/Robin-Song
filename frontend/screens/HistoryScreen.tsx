@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  SafeAreaView,
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { SafeAreaView, ScrollView, View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ActivityIndicator} from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../database/firebaseConfig";
@@ -72,6 +62,12 @@ const HistoryScreen: React.FC = () => {
   );
   const groupedBirds = groupByMonth(filteredBirds);
 
+
+import React from 'react';
+import {SafeAreaView, ScrollView, View, Text, StyleSheet, TextInput, Image, TouchableOpacity,} from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import colors from '../assets/theme/colors';
+const HistoryScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -91,6 +87,7 @@ const HistoryScreen: React.FC = () => {
             style={styles.searchInput}
             placeholder="Search..."
             placeholderTextColor={colors.accent}
+
             value={search}
             onChangeText={setSearch}
           />
@@ -142,6 +139,57 @@ const HistoryScreen: React.FC = () => {
 
         {/* End of History */}
         <Text style={styles.endOfHistory}>End of History.</Text>
+
+        {/* November Header */}
+        <Text style={styles.monthHeader}>November 2024</Text>
+
+        {/* History Entries */}
+        {Array(3)
+          .fill(null)
+          .map((_, index) => (
+            <View style={styles.historyCard} key={`november-robin-${index}`}>
+              <Image
+                source={require('../assets/img/robin.png')}
+                style={styles.birdImage}
+              />
+              <View style={styles.entryDetails}>
+                <Text style={styles.birdName}>American Robin</Text>
+                <Text style={styles.birdLocation}>Hines Park</Text>
+              </View>
+              <View style={styles.entryTime}>
+                <Text style={styles.entryDate}>November 19, 2024</Text>
+                <Text style={styles.entryHour}>2:22:22 PM</Text>
+              </View>
+            </View>
+          ))}
+
+        {/* October Header */}
+        <Text style={styles.entryTime}></Text>
+        <Text style={styles.monthHeader}>October 2024</Text>
+
+        {/* October Entries */}
+        {Array(2)
+          .fill(null)
+          .map((_, index) => (
+            <View style={styles.historyCard} key={`october-wren-${index}`}>
+              <Image
+                source={require('../assets/img/carolina.png')}
+                style={styles.birdImage}
+              />
+              <View style={styles.entryDetails}>
+                <Text style={styles.birdName}>Carolina Wren</Text>
+                <Text style={styles.birdLocation}>Wayne County</Text>
+              </View>
+              <View style={styles.entryTime}>
+                <Text style={styles.entryDate}>October 19, 2024</Text>
+                <Text style={styles.entryHour}>1:23:45 PM</Text>
+              </View>
+            </View>
+          ))}
+
+        {/* End of History */}
+        <Text style={styles.endOfHistory}>End of History.</Text>
+        <Text style={styles.endOfHistory}></Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -156,6 +204,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
+
     fontFamily: "Caprasimo",
     fontSize: 48,
     color: colors.secondary,
@@ -165,6 +214,17 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
+
+    fontFamily: 'Caprasimo',
+    fontSize: 48,
+    color: colors.secondary,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+
     backgroundColor: colors.chatGPTCardBackground,
     borderRadius: 20,
     borderWidth: 2,
@@ -184,6 +244,13 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     fontFamily: "Radio Canada",
+
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  searchInput: {
+    fontFamily: 'Radio Canada',
     fontSize: 16,
     color: colors.accent,
     flex: 1,
@@ -197,6 +264,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-end",
     flexDirection: "row",
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    flexDirection: 'row',
     marginBottom: 20,
   },
   filterIcon: {
@@ -213,6 +284,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: colors.secondary,
     fontWeight: "bold",
+    fontFamily: 'Radio Canada',
+    fontSize: 16,
+    color: colors.white,
+    fontWeight: 'bold',
+  },
+  monthHeader: {
+    fontFamily: 'Radio Canada',
+    fontSize: 24,
+    color: colors.secondary,
+    fontWeight: 'bold',
     marginBottom: 10,
   },
   historyCard: {
@@ -238,16 +319,19 @@ const styles = StyleSheet.create({
   },
   birdName: {
     fontFamily: "Caprasimo",
+    fontFamily: 'Caprasimo',
     fontSize: 18,
     color: colors.primary,
     marginBottom: 2,
   },
   birdLocation: {
     fontFamily: "Radio Canada",
+    fontFamily: 'Radio Canada',
     fontSize: 16,
     color: colors.text,
   },
   entryTime: {
+
     alignItems: "flex-end",
   },
   entryDate: {
@@ -258,6 +342,17 @@ const styles = StyleSheet.create({
   },
   entryHour: {
     fontFamily: "Radio Canada",
+    alignItems: 'flex-end',
+  },
+  entryDate: {
+    fontFamily: 'Radio Canada',
+    fontSize: 14,
+    color: colors.secondary,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  entryHour: {
+    fontFamily: 'Radio Canada',
     fontSize: 14,
     color: colors.text,
   },
@@ -266,8 +361,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.accent,
     textAlign: "center",
+    fontFamily: 'Radio Canada',
+    fontSize: 16,
+    color: colors.accent,
+    textAlign: 'center',
     marginTop: 20,
   },
 });
+
+export default HistoryScreen;
 
 export default HistoryScreen;
