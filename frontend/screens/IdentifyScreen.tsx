@@ -99,13 +99,6 @@ const IdentifyScreen: React.FC = () => {
       }
     };
 
-import React from 'react';
-import {SafeAreaView, View, Text, StyleSheet, Image, ScrollView,} from 'react-native';
-import colors from 'frontend/assets/theme/colors';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-  
-const IdentifyScreen: React.FC = () => {
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -136,23 +129,6 @@ const IdentifyScreen: React.FC = () => {
               {latestBird
                 ? latestBird.timestamp.toLocaleString()
                 : "No bird detected yet"}
-
-          <Text style={styles.badgeDate}> </Text>
-            <Text style={styles.badgeText}>Identification Stopped</Text>
-            <Text style={styles.badgeDate}> </Text>
-          </View>
-          <View style={styles.listeningButton}>
-            <MaterialCommunityIcons
-              name="microphone-off"
-              size={36}
-              color={colors.card} 
-            />
-          </View>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Bird Last Identified On</Text>
-            <Text style={styles.badgeDate}>
-              Tuesday, November 5 2024 at 1:15 P.M.
-
             </Text>
           </View>
         </View>
@@ -174,9 +150,8 @@ const IdentifyScreen: React.FC = () => {
             <Image source={{ uri: birdImage }} style={styles.robinImage} />
           ) : (
             <Text style={styles.sectionText}>No image available.</Text>
-
-        <Text style={styles.speciesName}>American Robin</Text>
-        <Text style={styles.speciesLatin}>Turdus Migratorius</Text>
+          )}
+        </View>
 
         {/* Robin Image */}
         <View style={styles.robinContainer}>
@@ -274,6 +249,10 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     paddingVertical: 15,
     alignItems: "center",
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   badgeText: {
     fontFamily: "Caprasimo",
@@ -286,42 +265,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text,
     textAlign: "center",
-
-    fontFamily: 'Caprasimo',
-    fontSize: 48,
-    color: colors.secondary,
-    textAlign: 'center',
     marginBottom: 20,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  badge: {
-    width: '35%',
-    backgroundColor: colors.identifycard,
-    borderRadius: 15,
-    paddingVertical: 15,
-    alignItems: 'center',
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  badgeText: {
-    fontFamily: 'Caprasimo',
-    fontSize: 16,
-    color: colors.primary,
-    textAlign: 'center',
-  },
-  badgeDate: {
-    fontFamily: 'Radio Canada',
-    fontSize: 12,
-    color: colors.text,
-    textAlign: 'center',
-
   },
   listeningButton: {
     width: 80,
@@ -349,29 +293,6 @@ const styles = StyleSheet.create({
   robinContainer: {
     alignItems: "center",
     justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  speciesName: {
-    fontFamily: 'Caprasimo',
-    fontSize: 36,
-    color: colors.secondary,
-    textAlign: 'center',
-    marginBottom: 5,
-  },
-  speciesLatin: {
-    fontFamily: 'Radio Canada Italic',
-    fontSize: 20,
-    color: colors.text,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  robinContainer: {
-    alignItems: 'center',
     marginBottom: 20,
   },
   robinImage: {
@@ -380,6 +301,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 5,
     borderColor: colors.primary,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   sectionText: {
     fontFamily: "Radio Canada",
@@ -395,22 +320,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 10,
   },
-
-  sectionHeading: {
-    fontFamily: 'Caprasimo',
-    fontSize: 28,
-    color: colors.secondary,
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  sectionText: {
-    fontFamily: 'Radio Canada',
-    fontSize: 16,
-    color: colors.text,
-    textAlign: 'left',
-    lineHeight: 24,
-  },
-
   separator: {
     height: 2,
     backgroundColor: colors.accent,

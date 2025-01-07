@@ -1,6 +1,6 @@
 # Python virtual environment
 birdnet-env/
-backend/venv/
+venv/
 .env
 
 # Editor history and system files

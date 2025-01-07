@@ -54,4 +54,6 @@ if (Platform.OS === 'web') {
   console.log('Auth initialized with AsyncStorage persistence');
 }
 
-export { db, auth, googleProvider, app };
+//TODO: uncomment googleProvider. can't get it to run currently while its there
+//export { db, auth, googleProvider, app };
+export { db, auth, app };
