@@ -62,12 +62,6 @@ const HistoryScreen: React.FC = () => {
   );
   const groupedBirds = groupByMonth(filteredBirds);
 
-
-import React from 'react';
-import {SafeAreaView, ScrollView, View, Text, StyleSheet, TextInput, Image, TouchableOpacity,} from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import colors from '../assets/theme/colors';
-const HistoryScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -214,23 +208,16 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-
     fontFamily: 'Caprasimo',
     fontSize: 48,
     color: colors.secondary,
     textAlign: 'center',
     marginBottom: 20,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-
     backgroundColor: colors.chatGPTCardBackground,
     borderRadius: 20,
     borderWidth: 2,
     borderColor: colors.accent,
     height: 40,
-    marginBottom: 15,
     paddingHorizontal: 15,
   },
   searchIconContainer: {
@@ -244,13 +231,9 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     fontFamily: "Radio Canada",
-
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
-  },
-  searchInput: {
-    fontFamily: 'Radio Canada',
     fontSize: 16,
     color: colors.accent,
     flex: 1,
@@ -264,10 +247,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-end",
     flexDirection: "row",
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-    flexDirection: 'row',
     marginBottom: 20,
   },
   filterIcon: {
@@ -284,16 +263,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: colors.secondary,
     fontWeight: "bold",
-    fontFamily: 'Radio Canada',
-    fontSize: 16,
-    color: colors.white,
-    fontWeight: 'bold',
-  },
-  monthHeader: {
-    fontFamily: 'Radio Canada',
-    fontSize: 24,
-    color: colors.secondary,
-    fontWeight: 'bold',
     marginBottom: 10,
   },
   historyCard: {
@@ -319,19 +288,16 @@ const styles = StyleSheet.create({
   },
   birdName: {
     fontFamily: "Caprasimo",
-    fontFamily: 'Caprasimo',
     fontSize: 18,
     color: colors.primary,
     marginBottom: 2,
   },
   birdLocation: {
     fontFamily: "Radio Canada",
-    fontFamily: 'Radio Canada',
     fontSize: 16,
     color: colors.text,
   },
   entryTime: {
-
     alignItems: "flex-end",
   },
   entryDate: {
@@ -339,20 +305,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.secondary,
     fontWeight: "bold",
+    marginBottom: 2,
   },
   entryHour: {
     fontFamily: "Radio Canada",
     alignItems: 'flex-end',
-  },
-  entryDate: {
-    fontFamily: 'Radio Canada',
-    fontSize: 14,
-    color: colors.secondary,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  entryHour: {
-    fontFamily: 'Radio Canada',
     fontSize: 14,
     color: colors.text,
   },
@@ -361,14 +318,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.accent,
     textAlign: "center",
-    fontFamily: 'Radio Canada',
-    fontSize: 16,
-    color: colors.accent,
-    textAlign: 'center',
     marginTop: 20,
   },
 });
-
-export default HistoryScreen;
 
 export default HistoryScreen;

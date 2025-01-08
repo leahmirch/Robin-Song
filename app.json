@@ -13,13 +13,11 @@
       "FIREBASE_APP_ID": "${FIREBASE_APP_ID}",
       "FIREBASE_MEASUREMENT_ID": "${FIREBASE_MEASUREMENT_ID}",
       "UNSPLASH_ACCESS_KEY": "${EXPO_PUBLIC_UNSPLASH_ACCESS_KEY}"
-      }
-
+    }
     },
     "owner": "koujo",
     "slug": "robin",
     "plugins": [
       "expo-font"
-    ]
-  }
+  ]
 }
