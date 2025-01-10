@@ -153,15 +153,6 @@ const IdentifyScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Robin Image */}
-        <View style={styles.robinContainer}>
-          <Image
-            source={require('frontend/assets/img/robin.png')}
-            style={styles.robinImage}
-          />
-
-        </View>
-
         {/* Sections with Lines */}
         <View>
           <Text style={styles.sectionHeading}>Physical Description</Text>
