@@ -34,87 +34,94 @@ The Bird Sound Identifier application is a cutting-edge tool designed to enhance
 Follow these steps to clone, set up, and run the app in it's current development mode.
 
 
-### **1. Clone or Fork the Repository**
-Download the project files using the following command:
 
+### 1. **Clone the Repository**
 ```bash
 git clone https://github.com/leahmirch/Robin-Song.git
-```
-
-Or fork and clone the repository to your local machine.
-
-
-### **2. Navigate to the Project Directory**
-Change into the root directory of the project:
-
-```bash
 cd Robin-Song
 ```
 
+---
 
-### **3. Install Dependencies**
-Install the required project dependencies:
+### 2. **Backend Setup**
+#### **Virtual Environment**
+1. Navigate to the backend folder:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a virtual environment:
+     ```bash
+     python -m venv venv
+     venv/Scripts/activate
+     ```
 
-```bash
-yarn install
-```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
+#### **Firebase Admin Key**
+1. Obtain the `firebase-admin-key.json` file:
+   - Reach out to another team member or refer to the **Discord backend chat** to access this file.
+2. Place the file in the following location:
+   ```
+   backend/secrets/firebase-admin-key.json
+   ```
 
-### **4. Install Latest Versions of Expo and React Native**
-Ensure you have the latest versions of `react-native` and `expo` installed:
-
-```bash
-yarn add react-native@0.76.3
-yarn add expo@latest
-```
-
-
-### **5. Log in to Expo**
-Create an Expo Go account on your mobile phone if you don't already have one. Log in on your PC via terminal using the following command:
-
-```bash
-npx expo login -u your_email@umich.edu
-```
-
-Enter your password when prompted.
-
-
-### **6. Start the App**
-To start the app, run:
-
-```bash
-yarn start
-```
-
-
-### **7. Access the App**
-After starting the app:
-
-- **Mobile App**:  
-  Scan the displayed QR code using your phone's camera or the Expo Go app.
-
-- **Web App**:  
-  Press `w` in the terminal to open the app in your web browser.
+#### **Run the Detection Script**
+1. Start the backend by running:
+   ```bash
+   python src/detect_birds.py
+   ```
+2. Confirm bird detection:
+   - Birds heard will be identified.
+   - Data will be uploaded to Firestore under the "birds" collection.
 
 ---
 
-## **Technical Overview**
+### 3. **Frontend Setup**
+#### **Dependencies**
+1. Open a new terminal (preferably cmd for Windows).
 
-### **Frontend**
-- Built with React Native using Expo for rapid development.
-- Organized code structure with dedicated folders for screens, components, hooks, and helpers.
-- Cross-platform compatibility with support for Android, iOS, and web.
+2. Navigate to the frontend folder:
+   ```bash
+   cd frontend
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-### **Backend**
-- Node.js backend using Express.
-- API endpoints for retrieving bird data, saving sightings, and fetching the latest updates.
-- Modular structure for scalability and maintainability.
+#### **Expo**
+1. Ensure you have Expo CLI installed:
+   ```bash
+   npm install -g expo-cli
+   ```
+2. Log in to Expo:
+   ```bash
+   npx expo login -u <your-email>
+   ```
+
+#### **Run the Frontend**
+1. Start the Expo development server:
+   ```bash
+   npm start
+   ```
+2. Access the app:
+   - **Mobile**: Scan the QR code displayed in the terminal with the Expo Go app.
+   - **Web**: Press `w` in the terminal to open the app in your browser.
 
 ---
 
-## **Contributing**
+### 4. **Environment Variables**
 
-We welcome contributions from the community! If you'd like to contribute to Robin-Song, feel free to submit a pull request or open an issue for any bugs or feature requests.
+Set up the `.env` file in the root directory with the following:
+```
+EXPO_PUBLIC_UNSPLASH_ACCESS_KEY=your_unsplash_api_key
+```
 
+Replace `your_unsplash_api_key` with your actual Unsplash API key from your Unsplash account.
+
+---
 
 Enjoy exploring the wonders of the avian world with **Robin**! 🌟
