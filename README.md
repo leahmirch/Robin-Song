@@ -52,7 +52,7 @@ cd Robin-Song
 2. Create and activate a virtual environment:
      ```bash
      python -m venv venv
-     venv/Scripts/activate
+     venv\Scripts\activate
      ```
 
 3. Install dependencies:
@@ -118,6 +118,7 @@ cd Robin-Song
 Set up the `.env` file in the root directory with the following:
 ```
 EXPO_PUBLIC_UNSPLASH_ACCESS_KEY=your_unsplash_api_key
+FIREBASE_ADMIN_CREDENTIALS=backend/secrets/firebase-admin-key.json
 ```
 
 Replace `your_unsplash_api_key` with your actual Unsplash API key from your Unsplash account.
