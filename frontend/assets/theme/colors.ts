@@ -7,6 +7,9 @@ const colors = {
     bottomnav: '#FFF8F4',
     card: '#ECD4C7',
     identifycard: '#EDCAB9',
+    form: '#FCEFE7',
+    placeholder: '#C6877F',
+    offwhite: '#FFF8F4',
     white: '#FFFFFF',
     black: '#000000',
   

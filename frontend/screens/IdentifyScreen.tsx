@@ -5,6 +5,7 @@ import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestor
 import { db } from "../../database/firebaseConfig";
 import axios from "axios";
 import colors from "frontend/assets/theme/colors";
+import Card from "../components/Card";
 import Constants from 'expo-constants';
 
 
@@ -28,7 +29,7 @@ const IdentifyScreen: React.FC = () => {
   const [birdImage, setBirdImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false); // State for detection status
-  const [detectionStatus, setDetectionStatus] = useState("Identification Stopped");
+  const [detectionStatus, setDetectionStatus] = useState("Not Identifying Birds");
 
   useEffect(() => {
     // Fetch the latest bird data
@@ -86,11 +87,11 @@ const IdentifyScreen: React.FC = () => {
       try {
         setIsDetecting((prev) => !prev);
         if (!isDetecting) {
-          setDetectionStatus("Identification Active");
+          setDetectionStatus("Identifying Birds");
           // Start detection
           await axios.post("http://127.0.0.1:5000/start-detection");
         } else {
-          setDetectionStatus("Identification Stopped");
+          setDetectionStatus("Not Identifying Birds");
           // Stop detection
           await axios.post("http://127.0.0.1:5000/stop-detection");
         }
@@ -107,12 +108,12 @@ const IdentifyScreen: React.FC = () => {
 
         {/* Status Badges with Central Button */}
         <View style={styles.statusContainer}>
-          <View style={styles.badge}>
-
+          <Card style={styles.badge}>
             <Text style={styles.badgeDate}></Text>
             <Text style={styles.badgeText}>{detectionStatus}</Text>
             <Text style={styles.badgeDate}></Text>
-          </View>
+          </Card>
+
           <TouchableOpacity
             style={styles.listeningButton}
             onPress={toggleDetection}
@@ -123,14 +124,15 @@ const IdentifyScreen: React.FC = () => {
               color={colors.card}
             />
           </TouchableOpacity>
-          <View style={styles.badge}>
+
+          <Card style={styles.badge}>
             <Text style={styles.badgeText}>Bird Last Identified On</Text>
             <Text style={styles.badgeDate}>
               {latestBird
                 ? latestBird.timestamp.toLocaleString()
                 : "No bird detected yet"}
             </Text>
-          </View>
+          </Card>
         </View>
 
         {/* Species Name */}
@@ -221,7 +223,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   title: {
-
     fontFamily: "Caprasimo",
     fontSize: 48,
     color: colors.secondary,
@@ -236,14 +237,11 @@ const styles = StyleSheet.create({
   },
   badge: {
     width: "35%",
-    backgroundColor: colors.identifycard,
-    borderRadius: 15,
-    paddingVertical: 15,
-    alignItems: "center",
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    height: 110,
+    justifyContent: "center",
+    shadowRadius: 0,
+    elevation: 0, 
+    padding: 0,
   },
   badgeText: {
     fontFamily: "Caprasimo",
@@ -256,7 +254,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text,
     textAlign: "center",
-    marginBottom: 20,
   },
   listeningButton: {
     width: 80,
@@ -265,6 +262,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   speciesName: {
     fontFamily: "Caprasimo",
