@@ -48,7 +48,7 @@ const ForecastScreen: React.FC = () => {
         {/* Address Box */}
         <Card style={styles.addressContainer}>
           <View style={styles.addressLine}>
-            <MaterialCommunityIcons name="map-marker" size={24} color={colors.primary} />
+            <MaterialCommunityIcons name="map-marker-radius-outline" size={24} color={colors.primary} />
             <Text style={styles.addressLabel}>Address</Text>
           </View>
           <Text style={styles.addressText}>
@@ -180,6 +180,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addressLabel: {
+    marginLeft: 4,
     fontFamily: 'Caprasimo',
     fontSize: 24,
     color: colors.primary,

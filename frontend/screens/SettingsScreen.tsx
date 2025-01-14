@@ -94,7 +94,7 @@ const SettingsScreen: React.FC = () => {
 
         <Toggle
           title="Enable Voice Commands"
-          startIcon="microphone-settings"
+          startIcon="microphone-outline"
           onToggle={(value) => console.log('Toggle is', value ? 'On' : 'Off')}
           description="Enabling voice commands allows you to navigate the app using verbal commands. Microphone access is required in order to enable voice commands."
         />
