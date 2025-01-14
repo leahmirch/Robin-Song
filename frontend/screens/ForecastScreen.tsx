@@ -3,6 +3,7 @@ import { SafeAreaView, ScrollView, View, Text, StyleSheet, Image } from 'react-n
 import colors from '../assets/theme/colors';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Card from '../components/Card';
 
 const ForecastScreen: React.FC = () => {
   return (
@@ -45,12 +46,16 @@ const ForecastScreen: React.FC = () => {
         </View>
 
         {/* Address Box */}
-        <View style={styles.addressContainer}>
-          <MaterialCommunityIcons name="map-marker" size={24} color={colors.primary} />
+        <Card style={styles.addressContainer}>
+          <View style={styles.addressLine}>
+            <MaterialCommunityIcons name="map-marker" size={24} color={colors.primary} />
+            <Text style={styles.addressLabel}>Address</Text>
+          </View>
           <Text style={styles.addressText}>
             7651 N Merriman Rd,{'\n'}Westland, MI 48185
           </Text>
-        </View>
+        </Card>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -155,6 +160,11 @@ const styles = StyleSheet.create({
     borderWidth: 5,
     borderColor: colors.primary,
   },
+  addressLine: {
+    flexDirection: 'row',
+    marginBottom: 10,
+    alignItems: 'center',
+  },
   addressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -168,6 +178,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     justifyContent: 'center',
+  },
+  addressLabel: {
+    fontFamily: 'Caprasimo',
+    fontSize: 24,
+    color: colors.primary,
   },
   addressText: {
     fontFamily: 'Radio Canada',
