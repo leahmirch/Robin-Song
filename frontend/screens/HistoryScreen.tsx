@@ -133,57 +133,6 @@ const HistoryScreen: React.FC = () => {
 
         {/* End of History */}
         <Text style={styles.endOfHistory}>End of History.</Text>
-
-        {/* November Header */}
-        <Text style={styles.monthHeader}>November 2024</Text>
-
-        {/* History Entries */}
-        {Array(3)
-          .fill(null)
-          .map((_, index) => (
-            <View style={styles.historyCard} key={`november-robin-${index}`}>
-              <Image
-                source={require('../assets/img/robin.png')}
-                style={styles.birdImage}
-              />
-              <View style={styles.entryDetails}>
-                <Text style={styles.birdName}>American Robin</Text>
-                <Text style={styles.birdLocation}>Hines Park</Text>
-              </View>
-              <View style={styles.entryTime}>
-                <Text style={styles.entryDate}>November 19, 2024</Text>
-                <Text style={styles.entryHour}>2:22:22 PM</Text>
-              </View>
-            </View>
-          ))}
-
-        {/* October Header */}
-        <Text style={styles.entryTime}></Text>
-        <Text style={styles.monthHeader}>October 2024</Text>
-
-        {/* October Entries */}
-        {Array(2)
-          .fill(null)
-          .map((_, index) => (
-            <View style={styles.historyCard} key={`october-wren-${index}`}>
-              <Image
-                source={require('../assets/img/carolina.png')}
-                style={styles.birdImage}
-              />
-              <View style={styles.entryDetails}>
-                <Text style={styles.birdName}>Carolina Wren</Text>
-                <Text style={styles.birdLocation}>Wayne County</Text>
-              </View>
-              <View style={styles.entryTime}>
-                <Text style={styles.entryDate}>October 19, 2024</Text>
-                <Text style={styles.entryHour}>1:23:45 PM</Text>
-              </View>
-            </View>
-          ))}
-
-        {/* End of History */}
-        <Text style={styles.endOfHistory}>End of History.</Text>
-        <Text style={styles.endOfHistory}></Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -198,7 +147,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-
     fontFamily: "Caprasimo",
     fontSize: 48,
     color: colors.secondary,
@@ -268,7 +216,7 @@ const styles = StyleSheet.create({
   historyCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.chatGPTCardBackground,
+    backgroundColor: colors.card,
     borderRadius: 15,
     padding: 10,
     marginBottom: 10,

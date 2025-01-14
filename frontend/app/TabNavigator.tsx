@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import IdentifyScreen from '../screens/IdentifyScreen';
 import ForecastScreen from '../screens/ForecastScreen';
 import HistoryScreen from '../screens/HistoryScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import ChatButton from '../components/ChatButton';
 import ChatModal from '../components/ChatModal';
 import AuthScreen from '../screens/AuthScreen';
@@ -59,8 +59,8 @@ const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
+        name="Settings"
+        component={SettingsScreen}
         options={{
             tabBarIcon: ({ color, size }: { color: string; size: number }) => (
                 <Ionicons name="person" size={size} color={color} />
@@ -83,7 +83,7 @@ const TabNavigator = () => {
      
     <ChatButton 
       onPress={() => setModalVisible(true)} 
-      hiddenScreens={['Profile']}
+      hiddenScreens={['Settings']}
     />
 
     <ChatModal
