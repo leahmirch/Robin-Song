@@ -5,37 +5,48 @@ import {
   StyleSheet, 
   GestureResponderEvent, 
   ViewStyle, 
-  TextStyle 
+  TextStyle,
+  View,
 } from 'react-native';
 import colors from '../assets/theme/colors';
 
 interface ButtonProps {
   title: string;
   onPress: (event: GestureResponderEvent) => void;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'card';
   style?: ViewStyle;
-  textStyle?: TextStyle
+  textStyle?: TextStyle;
+  icon?: React.ReactNode;
 }
 
-const Button: React.FC<ButtonProps> = ({ title, onPress, variant = 'primary', style, textStyle }) => {
+const Button: React.FC<ButtonProps> = ({ title, onPress, variant = 'primary', style, textStyle, icon }) => {
   return (
     <TouchableOpacity
       style={[
         styles.button,
         variant === 'primary' && styles.primary,
         variant === 'secondary' && styles.secondary,
+        variant === 'card' && styles.card,
         style,
       ]}
       onPress={onPress}
     >
+      {variant === 'card' && icon ? (
+        <View style={styles.cardContent}>
+          {icon}
+          <Text style={[styles.buttonText, styles.cardText, textStyle]}>{title}</Text>
+        </View>
+      ) : (
       <Text style={[
         styles.buttonText,
         variant === 'primary' && styles.primaryText,
         variant === 'secondary' && styles.secondaryText,
+        variant === 'card' && styles.cardText,
         textStyle,
       ]}>
         {title}
       </Text>
+    )}
     </TouchableOpacity>
   );
 };
@@ -44,10 +55,9 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 15,
     alignItems: 'center',
-    marginTop: 6,
-    marginBottom: 6,
+    marginVertical: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -60,6 +70,16 @@ const styles = StyleSheet.create({
   secondary: {
     backgroundColor: colors.accent,
   },
+  card: {
+    backgroundColor: colors.form,
+    borderWidth: 2,
+    borderColor: colors.accent,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
   buttonText: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -71,6 +91,12 @@ const styles = StyleSheet.create({
   secondaryText: {
     color: colors.offwhite,
   },
+  cardText: {
+    fontSize: 24,
+    fontWeight: 'regular',
+    color: colors.accent,
+    marginLeft: 12,
+  }
 });
 
 export default Button;

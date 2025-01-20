@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextInput, StyleSheet, View, Text, TextInputProps, TouchableOpacity } from 'react-native';
+import { TextInput, StyleSheet, View, Text, TextInputProps, TouchableOpacity, TextStyle } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import colors from '../assets/theme/colors';
 
@@ -7,6 +7,7 @@ interface TextFormFieldProps extends TextInputProps {
   label?: string;
   error?: string;
   isPassword?: boolean;
+  textStyle?: TextStyle;
 }
 
 const TextFormField: React.FC<TextFormFieldProps> = ({
@@ -14,6 +15,7 @@ const TextFormField: React.FC<TextFormFieldProps> = ({
   error,
   isPassword = false,
   style,
+  textStyle,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -27,15 +29,15 @@ const TextFormField: React.FC<TextFormFieldProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <View style={styles.inputContainer}>
         <TextInput
           style={[
             styles.input,
-            style,
             isFocused ? styles.focusedInput : null,
             error ? styles.errorBorder : null,
+            textStyle,
           ]}
           placeholderTextColor={colors.placeholder}
           selectionColor={colors.primary}
@@ -62,7 +64,7 @@ const TextFormField: React.FC<TextFormFieldProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 15,
+    marginBottom: 12,
   },
   label: {
     fontSize: 16,
@@ -75,14 +77,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: colors.primary,
-    borderRadius: 5,
+    borderRadius: 15,
     backgroundColor: colors.form,
   },
   input: {
     height: 40,
     flex: 1,
     paddingHorizontal: 10,
-    color: colors.text,
+    color: colors.primary,
     fontFamily: 'Radio Canada',
   },
   focusedInput: {

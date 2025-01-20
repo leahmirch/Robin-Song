@@ -1,8 +1,12 @@
 
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, SafeAreaView, Alert, ScrollView } from 'react-native';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import colors from '../assets/theme/colors';
+import TextFormField from '../components/TextForm';
+import Button from '../components/Button';
+import OrDivider from '../components/OrDivider';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as AuthSession from 'expo-auth-session';
 
 
@@ -19,91 +23,102 @@ export default function AuthScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Logo or App Branding */}
-      <Image
-        style={styles.logo}
-        resizeMode="contain"
-      />
-
-      {/* Welcome Text */}
-      <Text style={styles.title}>Welcome to Robin!</Text>
-      <Text style={styles.subtitle}>
-        Sign in to save your bird sightings and access your history anytime.
-      </Text>
-
-      {/* Google Sign-In Button */}
-      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.area}>
         <Image
-          style={styles.googleIcon}
+          source={require('../assets/img/logos/robinNoText72.png')}
+          style={styles.logo}
+          resizeMode="contain"
         />
-        <Text style={styles.googleButtonText}>Sign in with Google</Text>
-      </TouchableOpacity>
 
-      {/* Optional Footer */}
-      <Text style={styles.footerText}>Your adventure with birds starts here! 🐦</Text>
-    </View>
+        <Text style={styles.title}>Sign in to Robin!</Text>
+
+        <Text style={styles.subtitle}>Enter your account information to sign in.</Text>
+
+          <TextFormField
+            placeholder="Email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={{marginBottom: 24}}
+            textStyle={styles.form}
+          />
+
+          <TextFormField
+            placeholder="Password"
+            isPassword
+            style={{marginBottom: 16}}
+            textStyle={styles.form}
+          />
+
+        <Button
+          title="Sign In"
+          onPress={() => Alert.alert('Sign In Button Pressed')}
+          variant="primary"
+          style={styles.form}
+          textStyle={{fontSize: 24}}
+        />
+
+        <OrDivider />
+
+        <Button
+          title="Sign in with Google"
+          onPress={() => Alert.alert('Google Button Pressed')}
+          variant="card"
+          icon={<MaterialCommunityIcons name="google" size={35} color={colors.accent} />}
+        />
+
+        <Text style={styles.noAccount}>
+          Don't have an account? <strong>Sign up</strong>
+        </Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: colors.background,
-    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignContent: "center",
+  },
+  area: {
+    padding: 24,
   },
   logo: {
     width: 150,
     height: 150,
-    marginBottom: 20,
+    alignSelf: "center",
   },
   title: {
     fontFamily: 'Caprasimo',
-    fontSize: 28,
-    color: colors.primary,
+    fontSize: 32,
+    color: colors.secondary,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   subtitle: {
     fontFamily: 'Radio Canada',
     fontSize: 16,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
     lineHeight: 22,
   },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+  form: {
+    fontSize: 24,
+    height: 50,
   },
-  googleIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 10,
+  sizeContainer: {
+    marginBottom: 24,
   },
-  googleButtonText: {
+  noAccount: {
     fontFamily: 'Radio Canada',
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  footerText: {
-    fontFamily: 'Radio Canada Italic',
-    fontSize: 14,
+    fontSize: 20,
     color: colors.secondary,
-    textAlign: 'center',
-    marginTop: 40,
-  },
+    alignSelf: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 80,
+    marginBottom: 16,
+  }
 });

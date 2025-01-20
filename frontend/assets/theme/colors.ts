@@ -5,7 +5,7 @@ const colors = {
     primary: '#C0483A',
     secondary: '#8485Bf',
     bottomnav: '#FFF8F4',
-    card: '#ECD4C7',
+    card: '#EDD0C0',
     identifycard: '#EDCAB9',
     form: '#FCEFE7',
     placeholder: '#C6877F',
