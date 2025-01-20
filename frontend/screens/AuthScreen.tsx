@@ -62,7 +62,7 @@ export default function AuthScreen() {
 
         <Button
           title="Sign in with Google"
-          onPress={() => Alert.alert('Google Button Pressed')}
+          onPress={handleGoogleSignIn}
           variant="card"
           icon={<MaterialCommunityIcons name="google" size={35} color={colors.accent} />}
         />
