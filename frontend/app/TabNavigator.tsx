@@ -83,7 +83,7 @@ const TabNavigator = () => {
      
     <ChatButton 
       onPress={() => setModalVisible(true)} 
-      hiddenScreens={['Settings']}
+      hiddenScreens={['Settings', 'Login']}
     />
 
     <ChatModal

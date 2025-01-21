@@ -1,8 +1,13 @@
 
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, SafeAreaView, Alert, ScrollView } from 'react-native';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import colors from '../assets/theme/colors';
+import TextFormField from '../components/TextForm';
+import Button from '../components/Button';
+import OrDivider from '../components/OrDivider';
+import NavLink from '../components/NavLink';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as AuthSession from 'expo-auth-session';
 
 
@@ -19,91 +24,125 @@ export default function AuthScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Logo or App Branding */}
-      <Image
-        style={styles.logo}
-        resizeMode="contain"
-      />
-
-      {/* Welcome Text */}
-      <Text style={styles.title}>Welcome to Robin!</Text>
-      <Text style={styles.subtitle}>
-        Sign in to save your bird sightings and access your history anytime.
-      </Text>
-
-      {/* Google Sign-In Button */}
-      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+      
+      <View style={styles.area}>
         <Image
-          style={styles.googleIcon}
+          source={require('../assets/img/logos/robinNoText72.png')}
+          style={styles.logo}
+          resizeMode="contain"
         />
-        <Text style={styles.googleButtonText}>Sign in with Google</Text>
-      </TouchableOpacity>
 
-      {/* Optional Footer */}
-      <Text style={styles.footerText}>Your adventure with birds starts here! 🐦</Text>
-    </View>
+        <Text style={styles.title}>Sign in to Robin!</Text>
+
+        <Text style={styles.subtitle}>Enter your account information to sign in.</Text>
+
+        <TextFormField
+          placeholder="Email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          style={{marginBottom: 20}}
+          textStyle={styles.form}
+        />
+
+        <TextFormField
+          placeholder="Password"
+          isPassword
+          style={{marginBottom: 12}}
+          textStyle={styles.form}
+        />
+
+        <Button
+          title="Sign In"
+          onPress={() => Alert.alert('Sign In Button Pressed')}
+          variant="primary"
+          style={styles.form}
+          textStyle={{fontSize: 20}}
+        />
+
+        <OrDivider />
+
+        <Button
+          title="Sign in with Google"
+          onPress={handleGoogleSignIn}
+          variant="card"
+          icon={<MaterialCommunityIcons name="google" size={25} color={colors.accent} />}
+        />
+
+        <View style={styles.noAccountLayout}>
+          <Text style={styles.noAccountText}>
+            Don't have an account?
+          </Text>
+          <NavLink
+            text="Sign up"
+            targetTab="Identify" //TO DO: change this link to registration tab once it exists. 
+            textStyle={[styles.noAccountLink, styles.noAccountText]}
+          />
+        </View>
+        
+      </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+    justifyContent: "center",
+    alignContent: "center",
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: 20,
+    padding: 24,
+  },
+  area: {
+    width: '100%',
   },
   logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
+    width: 125,
+    height: 125,
+    alignSelf: "center",
   },
   title: {
     fontFamily: 'Caprasimo',
-    fontSize: 28,
-    color: colors.primary,
+    fontSize: 32,
+    color: colors.secondary,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   subtitle: {
     fontFamily: 'Radio Canada',
     fontSize: 16,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 24,
     lineHeight: 22,
   },
-  googleButton: {
+  form: {
+    fontSize: 20,
+    height: 50,
+  },
+  sizeContainer: {
+    marginBottom: 24,
+  },
+  noAccountLayout: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    marginTop: 24,
   },
-  googleIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 10,
-  },
-  googleButtonText: {
+  noAccountText: {
     fontFamily: 'Radio Canada',
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  footerText: {
-    fontFamily: 'Radio Canada Italic',
-    fontSize: 14,
+    fontSize: 18,
     color: colors.secondary,
-    textAlign: 'center',
-    marginTop: 40,
+    marginRight: 4,
+  },
+  noAccountLink: {
+    fontWeight: 'bold',
   },
 });
