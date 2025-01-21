@@ -57,6 +57,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 15,
     alignItems: 'center',
+    justifyContent: 'center',
     marginVertical: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
     color: colors.offwhite,
   },
   cardText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'regular',
     color: colors.accent,
     marginLeft: 12,

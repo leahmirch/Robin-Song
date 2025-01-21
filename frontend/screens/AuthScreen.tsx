@@ -6,6 +6,7 @@ import colors from '../assets/theme/colors';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
 import OrDivider from '../components/OrDivider';
+import NavLink from '../components/NavLink';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as AuthSession from 'expo-auth-session';
 
@@ -24,6 +25,8 @@ export default function AuthScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+      
       <View style={styles.area}>
         <Image
           source={require('../assets/img/logos/robinNoText72.png')}
@@ -35,27 +38,27 @@ export default function AuthScreen() {
 
         <Text style={styles.subtitle}>Enter your account information to sign in.</Text>
 
-          <TextFormField
-            placeholder="Email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={{marginBottom: 24}}
-            textStyle={styles.form}
-          />
+        <TextFormField
+          placeholder="Email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          style={{marginBottom: 20}}
+          textStyle={styles.form}
+        />
 
-          <TextFormField
-            placeholder="Password"
-            isPassword
-            style={{marginBottom: 16}}
-            textStyle={styles.form}
-          />
+        <TextFormField
+          placeholder="Password"
+          isPassword
+          style={{marginBottom: 12}}
+          textStyle={styles.form}
+        />
 
         <Button
           title="Sign In"
           onPress={() => Alert.alert('Sign In Button Pressed')}
           variant="primary"
           style={styles.form}
-          textStyle={{fontSize: 24}}
+          textStyle={{fontSize: 20}}
         />
 
         <OrDivider />
@@ -64,13 +67,22 @@ export default function AuthScreen() {
           title="Sign in with Google"
           onPress={handleGoogleSignIn}
           variant="card"
-          icon={<MaterialCommunityIcons name="google" size={35} color={colors.accent} />}
+          icon={<MaterialCommunityIcons name="google" size={25} color={colors.accent} />}
         />
 
-        <Text style={styles.noAccount}>
-          Don't have an account? <strong>Sign up</strong>
-        </Text>
+        <View style={styles.noAccountLayout}>
+          <Text style={styles.noAccountText}>
+            Don't have an account?
+          </Text>
+          <NavLink
+            text="Sign up"
+            targetTab="Identify" //TO DO: change this link to registration tab once it exists. 
+            textStyle={[styles.noAccountLink, styles.noAccountText]}
+          />
+        </View>
+        
       </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -82,12 +94,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignContent: "center",
   },
-  area: {
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 24,
   },
+  area: {
+    width: '100%',
+  },
   logo: {
-    width: 150,
-    height: 150,
+    width: 125,
+    height: 125,
     alignSelf: "center",
   },
   title: {
@@ -102,23 +120,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 24,
     lineHeight: 22,
   },
   form: {
-    fontSize: 24,
+    fontSize: 20,
     height: 50,
   },
   sizeContainer: {
     marginBottom: 24,
   },
-  noAccount: {
+  noAccountLayout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  noAccountText: {
     fontFamily: 'Radio Canada',
-    fontSize: 20,
+    fontSize: 18,
     color: colors.secondary,
-    alignSelf: 'center',
-    justifyContent: 'flex-end',
-    marginTop: 80,
-    marginBottom: 16,
-  }
+    marginRight: 4,
+  },
+  noAccountLink: {
+    fontWeight: 'bold',
+  },
 });

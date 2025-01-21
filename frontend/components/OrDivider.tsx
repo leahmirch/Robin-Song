@@ -17,18 +17,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 40,
+    marginVertical: 16,
   },
   line: {
     height: 2,
     backgroundColor: colors.accent,
-    width: '47%',
+    width: '45%',
   },
   text: {
     marginHorizontal: 7,
     color: colors.accent,
     fontFamily: 'Radio Canada',
-    fontSize: 20,
+    fontSize: 18,
   }
 });
 
