@@ -7,3 +7,4 @@ birdnet-env/
 *.pyd
 *.dll
 backend/secrets/
+.expo/devices.json

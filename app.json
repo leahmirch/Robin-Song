@@ -1,9 +1,10 @@
 {
   "expo": {
+    "name": "robin-song",
+    "slug": "robin-song",
     "extra": {
       "eas": {
-        "projectId": "5005edc4-9057-4fca-94f7-6f37a710a9b3"
-
+        "projectId": "39974b54-6afe-4a80-b7c5-e03bc091cfaa"
       },
       "FIREBASE_API_KEY": "${FIREBASE_API_KEY}",
       "FIREBASE_AUTH_DOMAIN": "${FIREBASE_AUTH_DOMAIN}",
@@ -13,11 +14,18 @@
       "FIREBASE_APP_ID": "${FIREBASE_APP_ID}",
       "FIREBASE_MEASUREMENT_ID": "${FIREBASE_MEASUREMENT_ID}",
       "UNSPLASH_ACCESS_KEY": "${EXPO_PUBLIC_UNSPLASH_ACCESS_KEY}"
-    }
     },
     "owner": "koujo",
-    "slug": "robin",
-    "plugins": [
-      "expo-font"
+    "android": {
+      "package": "com.koujo.robinsong",
+      "splash": {
+        "image": "./frontend/assets/img/logos/robin300.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#ECA08D"
+      }
+    }
+  },
+  "plugins": [
+    "expo-font"
   ]
 }
