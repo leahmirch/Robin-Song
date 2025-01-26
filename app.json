@@ -17,12 +17,12 @@
     },
     "owner": "robin-song",
     "android": {
-      "package": "com.koujo.robinsong",
       "splash": {
         "image": "./frontend/assets/img/logos/robin72.png",
         "resizeMode": "contain",
         "backgroundColor": "#ECA08D"
-      }
+      },
+      "package": "com.robinsong.robinsong"
     }
   },
   "plugins": [
