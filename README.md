@@ -125,4 +125,64 @@ Replace `your_unsplash_api_key` with your actual Unsplash API key from your Unsp
 
 ---
 
+### 5. **Development Builds**
+Currently, the process for creating a development build is established for Android emulators only. Methods for iOS devices, iOS simulators, and Android devices are in progress.
+
+1. Members of the Robin team must be added into the Expo "robin-song" organization. Please ask Jodi to be added into the org upon making an Expo account.
+
+2. Install an Android emulator with a device using the [Expo documentation](https://docs.expo.dev/get-started/set-up-your-environment/?mode=development-build&platform=android&device=simulated).
+
+3. Install the EAS CLI:
+```bash
+   npm install -g eas-cli
+```
+
+4. Ensure that Expo is installed:
+```bash
+   npm install expo
+```
+
+5. Install metro-config:
+```bash
+   npm install metro-config
+```
+
+6. Install dependencies:
+```bash
+   npm install
+```
+
+7. Login to your EAS account, if you aren't already logged in:
+```bash
+   eas login
+```
+
+8. Initialize the project with the Expo project ID:
+```bash
+   eas init --id 1a6b53c7-9874-4c72-93cf-b6b6799eef84
+```
+
+9. Configure the build: 
+```bash
+   eas build:configure
+```
+
+10. Create the development build:
+```bash
+   eas build --platform android --profile development
+```
+
+11. Start the development server:
+```bash
+   npx expo start
+```
+OR
+```bash
+   npm start
+```
+
+12. Select the option to run on Android by typing `a` into the terminal
+
+---
+
 Enjoy exploring the wonders of the avian world with **Robin**! 🌟
