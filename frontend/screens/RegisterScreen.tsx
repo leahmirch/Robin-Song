@@ -35,12 +35,22 @@ export default function RegisterScreen() {
 
         <Text style={styles.subtitle}>Enter your information to create an account.</Text>
 
-        <TextFormField
-          placeholder="Name"
-          autoCapitalize="none"
-          style={{marginBottom: 20}}
-          textStyle={styles.form}
-        />
+        <View style={styles.names}>
+          <TextFormField
+            placeholder="First Name"
+            autoCapitalize="none"
+            style={{marginBottom: 20, width: '49%'}}
+            textStyle={styles.form}
+          />
+
+          <TextFormField
+            placeholder="Last Name"
+            autoCapitalize="none"
+            style={{marginBottom: 20, width: '49%'}}
+            textStyle={styles.form}
+          />
+        </View>
+        
 
         <TextFormField
           placeholder="Email"
@@ -121,6 +131,10 @@ const styles = StyleSheet.create({
   form: {
     fontSize: 20,
     height: 50,
+  },
+  names: {
+    flexDirection: 'row',
+    gap: 6,
   },
   accountLayout: {
     flexDirection: 'row',
