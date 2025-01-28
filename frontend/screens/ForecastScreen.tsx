@@ -9,9 +9,6 @@ const ForecastScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Title */}
-        <Text style={styles.title}>Forecast</Text>
-
         {/* Bird Preference Button */}
         <View style={styles.preferenceContainer}>
           <View style={styles.preferenceButton}>
@@ -67,8 +64,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    padding: 20,
   },
   title: {
     fontFamily: 'Caprasimo',

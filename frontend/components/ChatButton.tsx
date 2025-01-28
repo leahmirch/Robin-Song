@@ -1,6 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigationState, useRoute } from '@react-navigation/native';
+import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { useNavigationState } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import colors from '../assets/theme/colors';
 
@@ -12,9 +12,10 @@ interface ChatButtonProps {
     left?: number;
   };
   hiddenScreens?: string[];
+  style?: ViewStyle;
 }
 
-const ChatButton: React.FC<ChatButtonProps> = ({ onPress, position, hiddenScreens = [] }) => {
+const ChatButton: React.FC<ChatButtonProps> = ({ onPress, position, hiddenScreens = [], style }) => {
   const currentRouteName = useNavigationState((state: any) => {
     if (state && Array.isArray(state.routes) && typeof state.index === 'number') {
       return state.routes[state.index]?.name as string;
@@ -28,7 +29,11 @@ const ChatButton: React.FC<ChatButtonProps> = ({ onPress, position, hiddenScreen
   
   return (
     <TouchableOpacity
-      style={[styles.button, position && { ...position }]}
+      style={[
+        styles.button, 
+        position && { ...position },
+        style,
+      ]}
       onPress={onPress}
     >
         <MaterialCommunityIcons name="bird" size={30} color={ colors.black } />
@@ -39,7 +44,6 @@ const ChatButton: React.FC<ChatButtonProps> = ({ onPress, position, hiddenScreen
 const styles = StyleSheet.create({
   button: {
     position: 'absolute',
-    bottom: 94,
     right: 15,
     backgroundColor: colors.accent,
     padding: 15,
