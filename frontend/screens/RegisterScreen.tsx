@@ -1,17 +1,17 @@
-
 import React from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, Alert, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView, Text, StyleSheet, Image, View } from 'react-native';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import colors from '../assets/theme/colors';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
 import OrDivider from '../components/OrDivider';
 import NavLink from '../components/NavLink';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as AuthSession from 'expo-auth-session';
+import colors from '../assets/theme/colors';
 
+export default function RegisterScreen() {
+  const navigation = useNavigation();
 
-export default function AuthScreen() {
   const handleGoogleSignIn = async () => {
     try {
       const auth = getAuth();
@@ -25,18 +25,32 @@ export default function AuthScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-      
-      <View style={styles.area}>
+      <View style={styles.spacing}>
         <Image
           source={require('../assets/img/logos/robinNoText72.png')}
           style={styles.logo}
           resizeMode="contain"
         />
+        <Text style={styles.title}>Welcome to Robin!</Text>
 
-        <Text style={styles.title}>Sign in to Robin!</Text>
+        <Text style={styles.subtitle}>Enter your information to create an account.</Text>
 
-        <Text style={styles.subtitle}>Enter your account information to sign in.</Text>
+        <View style={styles.names}>
+          <TextFormField
+            placeholder="First Name"
+            autoCapitalize="none"
+            style={{marginBottom: 20, width: '49%'}}
+            textStyle={styles.form}
+          />
+
+          <TextFormField
+            placeholder="Last Name"
+            autoCapitalize="none"
+            style={{marginBottom: 20, width: '49%'}}
+            textStyle={styles.form}
+          />
+        </View>
+        
 
         <TextFormField
           placeholder="Email"
@@ -54,8 +68,8 @@ export default function AuthScreen() {
         />
 
         <Button
-          title="Sign In"
-          onPress={() => Alert.alert('Sign In Button Pressed')}
+          title="Create Account"
+          onPress={() => navigation.navigate("Tabs")}
           variant="primary"
           style={styles.form}
           textStyle={{fontSize: 20}}
@@ -64,44 +78,36 @@ export default function AuthScreen() {
         <OrDivider />
 
         <Button
-          title="Sign in with Google"
+          title="Continue with Google"
           onPress={handleGoogleSignIn}
           variant="card"
           icon={<MaterialCommunityIcons name="google" size={25} color={colors.accent} />}
         />
 
-        <View style={styles.noAccountLayout}>
-          <Text style={styles.noAccountText}>
-            Don't have an account?
+        <View style={styles.accountLayout}>
+          <Text style={styles.accountText}>
+            Have an account?
           </Text>
           <NavLink
-            text="Sign up"
-            targetTab="Identify" //TO DO: change this link to registration tab once it exists. 
-            textStyle={[styles.noAccountLink, styles.noAccountText]}
+            text="Sign in"
+            targetTab="Login"
+            textStyle={[styles.accountLink, styles.accountText]}
           />
         </View>
-        
       </View>
-      </ScrollView>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: "center",
-    alignContent: "center",
-  },
-  scrollContent: {
-    flexGrow: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    alignContent: 'center',
+    backgroundColor: colors.background,
   },
-  area: {
-    width: '100%',
+  spacing: {
+    padding: 24,
   },
   logo: {
     width: 125,
@@ -119,30 +125,30 @@ const styles = StyleSheet.create({
     fontFamily: 'Radio Canada',
     fontSize: 16,
     color: colors.text,
-    textAlign: 'center',
+    alignSelf: 'center',
     marginBottom: 24,
-    lineHeight: 22,
   },
   form: {
     fontSize: 20,
     height: 50,
   },
-  sizeContainer: {
-    marginBottom: 24,
+  names: {
+    flexDirection: 'row',
+    gap: 6,
   },
-  noAccountLayout: {
+  accountLayout: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 24,
   },
-  noAccountText: {
+  accountText: {
     fontFamily: 'Radio Canada',
     fontSize: 18,
     color: colors.secondary,
     marginRight: 4,
   },
-  noAccountLink: {
+  accountLink: {
     fontWeight: 'bold',
   },
 });
