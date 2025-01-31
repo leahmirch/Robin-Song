@@ -8,7 +8,6 @@ import colors from "frontend/assets/theme/colors";
 import Card from "../components/Card";
 import Constants from 'expo-constants';
 
-
 // Unsplash API Key; access key from environment variables
 const UNSPLASH_ACCESS_KEY =
   process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY ||
@@ -16,7 +15,6 @@ const UNSPLASH_ACCESS_KEY =
 
 console.log('Unsplash API Key:', UNSPLASH_ACCESS_KEY);
   
-
 interface BirdData {
   bird: string;
   latitude: number;
@@ -28,7 +26,7 @@ const IdentifyScreen: React.FC = () => {
   const [latestBird, setLatestBird] = useState<BirdData | null>(null);
   const [birdImage, setBirdImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isDetecting, setIsDetecting] = useState(false); // State for detection status
+  const [isDetecting, setIsDetecting] = useState(false);
   const [detectionStatus, setDetectionStatus] = useState("Not Identifying Birds");
 
   useEffect(() => {
@@ -103,8 +101,7 @@ const IdentifyScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Title */}
-        <Text style={styles.title}>Identification</Text>
+        {/* <Text style={styles.title}>Identification</Text> */}
 
         {/* Status Badges with Central Button */}
         <View style={styles.statusContainer}>
@@ -219,8 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    padding: 20,
   },
   title: {
     fontFamily: "Caprasimo",
@@ -240,7 +236,7 @@ const styles = StyleSheet.create({
     height: 110,
     justifyContent: "center",
     shadowRadius: 0,
-    elevation: 0, 
+    elevation: 3, 
     padding: 0,
   },
   badgeText: {

@@ -65,8 +65,6 @@ const HistoryScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Title */}
-        <Text style={styles.title}>History</Text>
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>

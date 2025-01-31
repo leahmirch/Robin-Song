@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import colors from '../assets/theme/colors';
 import Card from '../components/Card';
 import Accordion from '../components/Accordion';
@@ -8,6 +9,8 @@ import Button from '../components/Button';
 import Toggle from '../components/Toggle';
 
 const SettingsScreen: React.FC = () => {
+  const navigation = useNavigation();
+
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -109,7 +112,7 @@ const SettingsScreen: React.FC = () => {
         <View style={styles.buttonContainer}>
           <Button
             title="Logout"
-            onPress={() => Alert.alert('Logout Pressed')}
+            onPress={() => navigation.navigate("Home")}
             variant="secondary"
           />
 
@@ -177,7 +180,7 @@ const styles = StyleSheet.create({
     width: 65,
     height: 65,
     marginBottom: 10,
-    borderRadius: '50%',
+    borderRadius: 50,
   },
   buttonContainer: {
     marginTop: 24,

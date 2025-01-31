@@ -1,14 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useFonts } from 'expo-font';
-import { StyleSheet, Text, SafeAreaView, ActivityIndicator } from 'react-native';
-import colors from './frontend/assets/theme/colors';
-import { NavigationContainer } from '@react-navigation/native';
-import TabNavigator from './frontend/app/TabNavigator';
-import LoginScreen from './frontend/screens/LoginScreen';
+import { StyleSheet, ActivityIndicator } from 'react-native';
 import { app } from './database/firebaseConfig';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-
+import RootLayout from './frontend/app/RootLayout';
 
 //Firebase Auth Instance
 const auth = getAuth(app);
@@ -26,7 +21,7 @@ export default function App() {
     useEffect(() => {
         const auth = getAuth(app);
         const unsubscribe = onAuthStateChanged(auth, (authUser) => {
-            setUser(authUser); // No more type error
+            setUser(authUser);
             setIsLoading(false);
         });
         return unsubscribe;
@@ -37,9 +32,7 @@ export default function App() {
     }
 
     return (
-        <NavigationContainer>
-            <TabNavigator />
-        </NavigationContainer>
+        <RootLayout />
     );
 }
 
