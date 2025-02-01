@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { View, Text, Image, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import colors from '../assets/theme/colors';
 import TextFormField from '../components/TextForm';
@@ -9,11 +9,57 @@ import OrDivider from '../components/OrDivider';
 import NavLink from '../components/NavLink';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as AuthSession from 'expo-auth-session';
-
+import { loginUser } from '../auth/authService';
+import ErrorMessage from "../components/ErrorMessage";
+import SuccessMessage from "../components/SuccessMessage";
 
 export default function LoginScreen() {
   const navigation = useNavigation();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const route = useRoute();
+  const [success, setSuccess] = useState<string | null>(
+    route.params?.successMessage || null
+  );
   
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  const handleLogin = async () => {
+    console.log("Attempting login...");
+  
+    if (!email || !password) {
+      setError("Email and password are required.");
+      console.log("Error Set:", error);
+      return;
+    }
+  
+    setLoading(true);
+  
+    try {
+      const result = await loginUser(email, password);
+      if (result) {
+        console.log("Login successful:", result);
+        navigation.navigate("Tabs");
+      } else {
+        setError("Invalid email or password.");
+        console.log("Error Set:", error);
+      }
+    } catch (error: any) {
+      console.log("Login failed:", error.message);
+      setError(error.message);
+      console.log("Error Set:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     try {
       const auth = getAuth();
@@ -40,8 +86,13 @@ export default function LoginScreen() {
 
         <Text style={styles.subtitle}>Enter your account information to sign in.</Text>
 
+        <SuccessMessage message={success} />
+        <ErrorMessage message={error} />
+
         <TextFormField
           placeholder="Email"
+          value={email} 
+          onChangeText={setEmail} 
           keyboardType="email-address"
           autoCapitalize="none"
           style={{marginBottom: 20}}
@@ -50,14 +101,16 @@ export default function LoginScreen() {
 
         <TextFormField
           placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
           isPassword
           style={{marginBottom: 12}}
           textStyle={styles.form}
         />
 
         <Button
-          title="Sign In"
-          onPress={() => navigation.navigate("Tabs")}
+          title={loading ? "Signing In..." : "Sign In"}
+          onPress={handleLogin} 
           variant="primary"
           style={styles.form}
           textStyle={{fontSize: 20}}
