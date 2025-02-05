@@ -140,6 +140,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     fontSize: 14,
+    fontFamily: 'Radio Canada',
     color: colors.text,
   },
 });
