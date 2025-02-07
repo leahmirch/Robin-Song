@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
-import {Modal, View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, FlatList, ScrollView} from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Modal, 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  TextInput, 
+  Alert, 
+  FlatList, 
+  ScrollView
+} from 'react-native';
 import colors from 'frontend/assets/theme/colors';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -45,54 +59,67 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose }) => {
       onRequestClose={onClose}
     >
       <View style={styles.background}>
-        <View style={styles.container}>
-          
-          {chatListVisible ? (
-            <ChatListScreen chats={chats} onSelectChat={selectChat} onClose={closeChatList} />
-          ) : (
-            <>
-              <TouchableOpacity style={styles.topLeftContainer} onPress={openChatList}>
-                <Text style={styles.newChatText}> {selectedChat ? selectedChat : 'New Chat'} </Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color={colors.secondary}/>
-              </TouchableOpacity>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={{ flex: 1 }}>
+              {chatListVisible ? (
+                <ChatListScreen chats={chats} onSelectChat={selectChat} onClose={closeChatList} />
+              ) : (
+                <>
+                  <View style={styles.topBarContainer}>
+                    <TouchableOpacity style={styles.newChatContainer} onPress={openChatList}>
+                      <Text style={styles.newChatText}> {selectedChat ? selectedChat : 'New Chat'} </Text>
+                      <MaterialCommunityIcons name="chevron-down" size={20} color={colors.secondary}/>
+                    </TouchableOpacity>
 
-              <TouchableOpacity style={styles.newChatIcon} onPress={() => Alert.alert('New Chat Button Pressed')}>
-                <MaterialCommunityIcons name="square-edit-outline" size={30} color={colors.primary}/>
-              </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', marginRight: 16 }}>
+                      <TouchableOpacity style={{ marginRight: 8 }} onPress={() => Alert.alert('New Chat Button Pressed')}>
+                        <MaterialCommunityIcons name="square-edit-outline" size={30} color={colors.primary}/>
+                      </TouchableOpacity>
 
-              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <Ionicons name="close" size={30} color={colors.primary} />
-              </TouchableOpacity>
+                      <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                        <Ionicons name="close" size={30} color={colors.primary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  
 
-              <View style={styles.bottomBlock}>
-                <View style={styles.iconContainer}>
-                  <MaterialCommunityIcons name="bird" size={30} color={colors.text}/>
-                </View>
+                  <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+                    <View style={styles.bottomBlock}>
+                      <View style={styles.iconContainer}>
+                        <MaterialCommunityIcons name="bird" size={30} color={colors.text}/>
+                      </View>
 
-                <Text style={styles.heading}>Hi Jodi, I’m Robin! Tweet Tweet!</Text>
-                <Text style={styles.subHeading}>How can I help you?</Text>
+                      <Text style={styles.heading}>Hi Jodi, I’m Robin! Tweet Tweet!</Text>
+                      <Text style={styles.subHeading}>How can I help you?</Text>
 
-                <Text style={styles.suggestionsHeading}>Suggestions</Text>
-                <ChatQuestion title="What does a Robin eat?" onPress={() => Alert.alert('Question Button Pressed')}/>
-                <ChatQuestion title="Tell me about a Robin's life cycle." onPress={() => Alert.alert('Question Button Pressed')}/>
-                <ChatQuestion title="What is the most common region to find a Robin?" onPress={() => Alert.alert('Question Button Pressed')}/>
-                <ChatQuestion title="What are some species similar to Robins?" onPress={() => Alert.alert('Question Button Pressed')}/>
+                      <Text style={styles.suggestionsHeading}>Suggestions</Text>
+                      <ChatQuestion title="What does a Robin eat?" onPress={() => Alert.alert('Question Button Pressed')}/>
+                      <ChatQuestion title="Tell me about a Robin's life cycle." onPress={() => Alert.alert('Question Button Pressed')}/>
+                      <ChatQuestion title="What is the most common region to find a Robin?" onPress={() => Alert.alert('Question Button Pressed')}/>
+                      <ChatQuestion title="What are some species similar to Robins?" onPress={() => Alert.alert('Question Button Pressed')}/>
 
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={styles.inputField}
-                    placeholder="Ask me about birds or select a question..."
-                    placeholderTextColor={colors.accent}
-                  />
-                  <TouchableOpacity style={styles.arrowButton} onPress={() => Alert.alert('Send Button Pressed')}>
-                    <Ionicons name="arrow-up" size={25} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-            </>
-          )}
-        </View>
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          style={styles.inputField}
+                          selectionColor={colors.primary}
+                          placeholder="Ask me about birds or select a question..."
+                          placeholderTextColor={colors.accent}
+                        />
+                        <TouchableOpacity style={styles.arrowButton} onPress={() => Alert.alert('Send Button Pressed')}>
+                          <Ionicons name="arrow-up" size={25} color={colors.primary} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </ScrollView>
+                </>
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -142,13 +169,13 @@ const ChatListScreen: React.FC<{ chats: { id: string; title: string; date: Date 
   const groupedChats = groupChatsByDate(filteredChats);
 
   return (
-    <View style={styles.chatListContainer}>
+    <View style={{ padding: 20 }}>
       <View style={styles.chatListTopBar}>
         <TouchableOpacity onPress={onClose}>
           <MaterialCommunityIcons name="chevron-left" size={30} color={colors.primary} />
         </TouchableOpacity>
 
-        <Text style={styles.chatListTitle}>All Chats</Text>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', fontFamily: 'Radio Canada' }}>All Chats</Text>
         
         <TouchableOpacity onPress={() => Alert.alert('New Chat Button Pressed')}>
           <MaterialCommunityIcons name="square-edit-outline" size={25} color={colors.primary}/>
@@ -207,12 +234,16 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     position: 'relative',
   },
-  topLeftContainer: {
+  topBarContainer: {
+    flexDirection: 'row',
+    marginTop: 16,
+    marginBottom: 10,
+    justifyContent: 'space-between',
+  },
+  newChatContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    position: 'absolute',
-    top: 10,
-    left: 15,
+    marginLeft: 16,
   },
   newChatText: {
     fontFamily: 'Radio Canada',
@@ -220,15 +251,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  newChatIcon: {
-    position: 'absolute',
-    top: 10,
-    right: 50,
-  },
   closeButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
     backgroundColor: colors.accent,
     borderRadius: 15,
     width: 30,
@@ -314,19 +337,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  chatListContainer: { 
-    padding: 20 
-  },
   chatListTopBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
-  },
-  chatListTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold',
-    fontFamily: 'Radio Canada',
   },
   chatSectionLabel: {
     marginTop: 24,
@@ -376,7 +391,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 500,
     color: colors.offwhite,
-  }
+  },
 });
 
 export default ChatModal;
