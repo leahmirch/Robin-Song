@@ -3,6 +3,7 @@ import { SafeAreaView, ScrollView, View, Text, StyleSheet, TextInput, Image, Tou
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../database/firebaseConfig";
+import SearchBar from "../components/SearchBar";
 import colors from "../assets/theme/colors";
 
 // Interface for Firestore data
@@ -18,6 +19,10 @@ const HistoryScreen: React.FC = () => {
   const [birds, setBirds] = useState<BirdHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+
+  const handleSearch = (query: string) => {
+    setSearch(query);
+  };
 
   useEffect(() => {
     const birdsCollection = collection(db, "birds");
@@ -66,24 +71,7 @@ const HistoryScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchIconContainer}>
-            <MaterialCommunityIcons
-              name="magnify"
-              size={16}
-              color={colors.primary}
-            />
-          </View>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search..."
-            placeholderTextColor={colors.accent}
-
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
+        <SearchBar label='Search...' search={search} setSearch={setSearch} onSearch={handleSearch} />
 
         {/* Filter Button */}
         <TouchableOpacity style={styles.filterButton}>
@@ -129,7 +117,6 @@ const HistoryScreen: React.FC = () => {
           ))
         )}
 
-        {/* End of History */}
         <Text style={styles.endOfHistory}>End of History.</Text>
       </ScrollView>
     </SafeAreaView>
@@ -151,39 +138,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    fontFamily: 'Caprasimo',
-    fontSize: 48,
-    color: colors.secondary,
-    textAlign: 'center',
-    marginBottom: 20,
-    backgroundColor: colors.chatGPTCardBackground,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: colors.accent,
-    height: 40,
-    paddingHorizontal: 15,
-  },
-  searchIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.accent,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  searchInput: {
-    fontFamily: "Radio Canada",
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    fontSize: 16,
-    color: colors.accent,
-    flex: 1,
-  },
   filterButton: {
     backgroundColor: colors.accent,
     borderRadius: 20,
@@ -193,7 +147,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-end",
     flexDirection: "row",
-    marginBottom: 20,
+    marginVertical: 20,
   },
   filterIcon: {
     marginRight: 5,

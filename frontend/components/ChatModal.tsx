@@ -4,6 +4,7 @@ import colors from 'frontend/assets/theme/colors';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ChatQuestion from './ChatQuestion';
+import SearchBar from './SearchBar';
 
 interface ChatModalProps {
   visible: boolean;
@@ -100,6 +101,10 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose }) => {
 const ChatListScreen: React.FC<{ chats: { id: string; title: string; date: Date }[]; onSelectChat: (title: string) => void; onClose: () => void }> = ({ chats, onSelectChat, onClose }) => {
   const [search, setSearch] = useState("");
 
+  const handleSearch = (query: string) => {
+    setSearch(query);
+  };
+
   const groupChatsByDate = (chats: { id: string; title: string; date: Date }[]) => {
     const today = new Date();
     const oneWeekAgo = new Date();
@@ -132,7 +137,9 @@ const ChatListScreen: React.FC<{ chats: { id: string; title: string; date: Date 
     return groupedChats;
   };
 
-  const groupedChats = groupChatsByDate(chats);
+  const filteredChats = chats.filter(chat => chat.title.toLowerCase().includes(search.toLowerCase()));
+
+  const groupedChats = groupChatsByDate(filteredChats);
 
   return (
     <View style={styles.chatListContainer}>
@@ -148,22 +155,7 @@ const ChatListScreen: React.FC<{ chats: { id: string; title: string; date: Date 
         </TouchableOpacity>
       </View>
 
-      <View style={styles.searchContainer}>
-          <View style={styles.searchIconContainer}>
-            <MaterialCommunityIcons
-              name="magnify"
-              size={16}
-              color={colors.primary}
-            />
-          </View>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search for a chat"
-            placeholderTextColor={colors.accent}
-            value={search}
-            onChangeText={setSearch}
-          />
-      </View>
+      <SearchBar label='Search for a chat' search={search} setSearch={setSearch} onSearch={handleSearch} />
       
       <ScrollView style={{height: '100%'}}>
         {Object.keys(groupedChats).map((section) =>
@@ -369,38 +361,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Radio Canada',
     color: colors.secondary,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    fontFamily: 'Caprasimo',
-    fontSize: 48,
-    color: colors.secondary,
-    textAlign: 'center',
-    backgroundColor: colors.chatGPTCardBackground,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: colors.accent,
-    height: 40,
-    paddingHorizontal: 15,
-  },
-  searchIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.accent,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  searchInput: {
-    fontFamily: "Radio Canada",
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    fontSize: 16,
-    color: colors.accent,
-    flex: 1,
   },
   newChatButton: {
     display: 'flex',
