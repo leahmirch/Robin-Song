@@ -35,6 +35,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ label, search, setSearch, onSearc
           </TouchableOpacity>
           <TextInput
             style={styles.searchInput}
+            selectionColor={colors.primary}
             placeholder={label}
             placeholderTextColor={colors.accent}
             value={search}
