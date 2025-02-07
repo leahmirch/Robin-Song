@@ -59,16 +59,44 @@ export default function RegisterScreen() {
     }
   };
 
-    const handleGoogleSignIn = async () => {
-      try {
-        const auth = getAuth();
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        console.log('User signed in with Google');
-      } catch (error) {
-        console.error('Error during sign-in:', error);
+  const handleGoogleSignIn = async () => {
+    try {
+      const auth = getAuth();
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+  
+      if (!user) {
+        console.error("Google sign-in failed: No user returned.");
+        return;
       }
-    };
+  
+      console.log("User signed in with Google:", user);
+  
+      const response = await fetch("http://localhost:5000/google-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          firstName: user.displayName?.split(" ")[0] || "Google",
+          lastName: user.displayName?.split(" ")[1] || "User",
+          uid: user.uid,
+        }),
+      });
+  
+      const data = await response.json();
+      if (!response.ok) {
+        console.error("Google user registration failed:", data.error);
+        return;
+      }
+  
+      console.log("Google user registered successfully:", data);
+  
+      navigation.navigate("Tabs");
+    } catch (error) {
+      console.error("Error during Google sign-in:", error);
+    }
+  };  
 
   return (
     <SafeAreaView style={styles.container}>

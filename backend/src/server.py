@@ -106,6 +106,43 @@ def register():
         return jsonify({"error": f"Error creating user: {str(e)}"}), 500
 
 
+@app.route('/google-register', methods=['POST'])
+def google_register():
+    """Register or update a user who signs in with Google."""
+    try:
+        data = request.json
+        email = data.get("email")
+        first_name = data.get("firstName", "Google")
+        last_name = data.get("lastName", "User")
+        uid = data.get("uid")
+
+        if not email or not uid:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        user_query = db.collection("users").where("email", "==", email).stream()
+        existing_user = next(user_query, None)
+
+        if existing_user:
+            return jsonify({"message": "User already exists in Firestore", "userId": existing_user.id}), 200
+
+        user_data = {
+            "firstName": first_name,
+            "lastName": last_name,
+            "email": email,
+            "uid": uid,
+            "password": "Google Account",
+            "voiceCommandsEnabled": False,
+            "locationPreferences": "Unknown City, State",
+            "createdAt": firestore.SERVER_TIMESTAMP
+        }
+        new_user_ref = db.collection("users").add(user_data)
+
+        return jsonify({"message": "Google user registered successfully", "userId": new_user_ref[1].id}), 201
+
+    except Exception as e:
+        return jsonify({"error": f"Error registering Google user: {str(e)}"}), 500
+
+
 @app.route('/login', methods=['POST'])
 def login():
     """Authenticate user login."""
