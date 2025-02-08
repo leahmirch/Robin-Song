@@ -11,6 +11,13 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
+const LOCAL_SERVER_IP = "192.168.0.3";  
+const API_BASE_URL = Platform.OS === "ios" 
+  ? "http://192.168.0.3:5000" 
+  : Platform.OS === "android" 
+    ? "http://10.0.2.2:5000" 
+    : "http://localhost:5000";
+
 const firebaseConfig = {
   apiKey: Constants.expoConfig?.extra?.EXPO_PUBLIC_FIREBASE_API_KEY || process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: Constants.expoConfig?.extra?.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -36,4 +43,4 @@ if (Platform.OS === "web") {
 
 const googleProvider = new GoogleAuthProvider();
 
-export { app, db, auth, googleProvider };
+export { app, db, auth, googleProvider, API_BASE_URL };

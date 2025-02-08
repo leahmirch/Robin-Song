@@ -1,4 +1,4 @@
-import { auth, googleProvider } from "database/firebaseConfig";
+import { auth, googleProvider, API_BASE_URL } from "database/firebaseConfig";
 import { signInWithPopup, signOut, User } from "firebase/auth";
 
 //Google Sign-In Function
@@ -33,7 +33,7 @@ export const registerUser = async (
   try {
     console.log("Sending registration request...");
 
-    const response = await fetch("http://localhost:5000/register", {  
+    const response = await fetch(`${API_BASE_URL}/register`, {  
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ firstName, lastName, email, password }),
@@ -62,7 +62,7 @@ export const loginUser = async (email: string, password: string): Promise<{ user
   }
 
   try {
-    const response = await fetch("http://localhost:5000/login", {
+    const response = await fetch(`${API_BASE_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'; 
 import { View, Text, Image, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, signInWithPopup} from 'firebase/auth';
 import colors from '../assets/theme/colors';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
@@ -12,6 +12,14 @@ import * as AuthSession from 'expo-auth-session';
 import { loginUser } from '../auth/authService';
 import ErrorMessage from "../components/ErrorMessage";
 import SuccessMessage from "../components/SuccessMessage";
+import * as WebBrowser from "expo-web-browser";
+import { ResponseType } from "expo-auth-session";
+import { useAuthRequest } from "expo-auth-session";
+import { makeRedirectUri } from "expo-auth-session";
+import { GoogleAuthProvider } from "firebase/auth";
+import { signInWithCredential } from "firebase/auth";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const navigation = useNavigation();
@@ -23,7 +31,19 @@ export default function LoginScreen() {
   const [success, setSuccess] = useState<string | null>(
     route.params?.successMessage || null
   );
+
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: "691628560884-hh9bsk5fm8i9bbpde1lltmvt36u4qs16.apps.googleusercontent.com",
+      scopes: ["profile", "email"],
+      responseType: ResponseType.IdToken,
+      redirectUri: makeRedirectUri({ scheme: "robinsong" }),
+      usePKCE: false, 
+    },
+    { authorizationEndpoint: "https://accounts.google.com/o/oauth2/auth" }
+  );
   
+
   useEffect(() => {
     if (success) {
       const timer = setTimeout(() => setSuccess(null), 5000);
@@ -62,10 +82,18 @@ export default function LoginScreen() {
 
   const handleGoogleSignIn = async () => {
     try {
+      const result = await promptAsync();
+      if (result.type !== "success") {
+        console.error("Google sign-in failed:", result);
+        return;
+      }
+  
+      const { id_token } = result.params;
+  
+      const credential = GoogleAuthProvider.credential(id_token);
       const auth = getAuth();
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
   
       if (!user) {
         console.error("Google sign-in failed: No user returned.");
@@ -74,6 +102,7 @@ export default function LoginScreen() {
   
       console.log("User signed in with Google:", user);
   
+      // Register Google user in Firestore
       const response = await fetch("http://localhost:5000/google-register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

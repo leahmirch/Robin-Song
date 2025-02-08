@@ -22,7 +22,7 @@ export default function ErrorMessage({ message }: Props) {
           Animated.timing(fadeAnim, {
             toValue: 0,
             duration: 2000,
-            useNativeDriver: true,
+            useNativeDriver: false,
           }),
           Animated.timing(heightAnim, {
             toValue: 0,

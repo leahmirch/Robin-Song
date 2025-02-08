@@ -16,7 +16,7 @@ firebase-admin==6.6.0
 flatbuffers==24.3.25
 Flask==3.0.0
 Flask-Bcrypt==1.0.1
-Flask-Cors==3.1.0
+Flask-Cors==5.0.0
 fonttools==4.55.2
 future==1.0.0
 gast==0.6.0
