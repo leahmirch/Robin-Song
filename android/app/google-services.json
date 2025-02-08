@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "691628560884",
+    "project_id": "robin-server-45ac7",
+    "storage_bucket": "robin-server-45ac7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:691628560884:android:a99c520708fe02a83429a1",
+        "android_client_info": {
+          "package_name": "com.robinsong.robinsong"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "691628560884-gh01nfj5ijkpm8ufh2lvbgkjtoqv5u86.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.robinsong.robinsong",
+            "certificate_hash": "75c254089b6c3bc2c4e66d2f9725c24947ce7404"
+          }
+        },
+        {
+          "client_id": "691628560884-hh9bsk5fm8i9bbpde1lltmvt36u4qs16.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvW_oXkUXRrf2K3by4z7GDkHBnZC7J7yY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "691628560884-hh9bsk5fm8i9bbpde1lltmvt36u4qs16.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

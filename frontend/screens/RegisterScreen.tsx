@@ -1,27 +1,127 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, Text, StyleSheet, Image, View } from 'react-native';
-import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
 import OrDivider from '../components/OrDivider';
 import NavLink from '../components/NavLink';
 import colors from '../assets/theme/colors';
+import { registerUser } from '../auth/authService';
+import { CommonActions } from '@react-navigation/native';
+import ErrorMessage from "../components/ErrorMessage";
+import Constants from "expo-constants";
+import { getAuth, signInWithCredential } from 'firebase/auth';
+import * as WebBrowser from "expo-web-browser";
+import { ResponseType } from "expo-auth-session";
+import { useAuthRequest } from "expo-auth-session";
+import { makeRedirectUri } from "expo-auth-session";
+import { GoogleAuthProvider } from "firebase/auth";
 
 export default function RegisterScreen() {
   const navigation = useNavigation();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: "691628560884-hh9bsk5fm8i9bbpde1lltmvt36u4qs16.apps.googleusercontent.com",
+      scopes: ["profile", "email"],
+      responseType: ResponseType.IdToken,
+      redirectUri: makeRedirectUri({ scheme: "robinsong" }),
+      usePKCE: false, 
+    },
+    { authorizationEndpoint: "https://accounts.google.com/o/oauth2/auth" }
+  );
+  
+  const handleRegister = async () => {
+    console.log("Attempting to register user...");
+  
+    if (!firstName || !lastName || !email || !password) {
+      setError("All fields are required to register.");
+      console.log("Error Set:", error);
+      return;
+    }
+  
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Invalid email format.");
+      console.log("Error Set:", error);
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const result = await registerUser(firstName, lastName, email, password);
+      if (result) {
+        console.log("User registered successfully:", result);
+
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [{ name: "Login", params: { successMessage: "Account created! Please log in below." } }],
+          })
+        );
+      }
+    } catch (error: any) {
+      console.log("Registration failed:", error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
+      const result = await promptAsync();
+      if (result.type !== "success") {
+        console.error("Google sign-in failed:", result);
+        return;
+      }
+  
+      const { id_token } = result.params;
+  
+      const credential = GoogleAuthProvider.credential(id_token);
       const auth = getAuth();
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      console.log('User signed in with Google');
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user; 
+  
+      if (!user) {
+        console.error("Google sign-in failed: No user returned.");
+        return;
+      }
+  
+      console.log("User signed in with Google:", user);
+  
+      const response = await fetch("http://localhost:5000/google-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          firstName: user.displayName?.split(" ")[0] || "Google",
+          lastName: user.displayName?.split(" ")[1] || "User",
+          uid: user.uid,
+        }),
+      });
+  
+      const data = await response.json();
+      if (!response.ok) {
+        console.error("Google user registration failed:", data.error);
+        return;
+      }
+  
+      console.log("Google user registered successfully:", data);
+  
+      navigation.navigate("Tabs");
     } catch (error) {
-      console.error('Error during sign-in:', error);
+      console.error("Error during Google sign-in:", error);
     }
-  };
+  };  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -35,16 +135,22 @@ export default function RegisterScreen() {
 
         <Text style={styles.subtitle}>Enter your information to create an account.</Text>
 
+        <ErrorMessage message={error} />
+
         <View style={styles.names}>
           <TextFormField
             placeholder="First Name"
+            value={firstName} 
+            onChangeText={setFirstName}
             autoCapitalize="none"
             style={{marginBottom: 20, width: '49%'}}
             textStyle={styles.form}
           />
 
           <TextFormField
-            placeholder="Last Name"
+            placeholder="Last Name" 
+            value={lastName} 
+            onChangeText={setLastName}
             autoCapitalize="none"
             style={{marginBottom: 20, width: '49%'}}
             textStyle={styles.form}
@@ -54,6 +160,8 @@ export default function RegisterScreen() {
 
         <TextFormField
           placeholder="Email"
+          value={email} 
+          onChangeText={setEmail} 
           keyboardType="email-address"
           autoCapitalize="none"
           style={{marginBottom: 20}}
@@ -62,14 +170,16 @@ export default function RegisterScreen() {
 
         <TextFormField
           placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
           isPassword
           style={{marginBottom: 12}}
           textStyle={styles.form}
         />
 
         <Button
-          title="Create Account"
-          onPress={() => navigation.navigate("Tabs")}
+          title={loading ? "Creating Account..." : "Create Account"}
+          onPress={handleRegister}
           variant="primary"
           style={styles.form}
           textStyle={{fontSize: 20}}

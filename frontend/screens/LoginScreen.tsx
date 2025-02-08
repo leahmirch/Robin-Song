@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { View, Text, Image, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { getAuth, signInWithPopup} from 'firebase/auth';
 import colors from '../assets/theme/colors';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
@@ -9,21 +9,124 @@ import OrDivider from '../components/OrDivider';
 import NavLink from '../components/NavLink';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as AuthSession from 'expo-auth-session';
+import { loginUser } from '../auth/authService';
+import ErrorMessage from "../components/ErrorMessage";
+import SuccessMessage from "../components/SuccessMessage";
+import * as WebBrowser from "expo-web-browser";
+import { ResponseType } from "expo-auth-session";
+import { useAuthRequest } from "expo-auth-session";
+import { makeRedirectUri } from "expo-auth-session";
+import { GoogleAuthProvider } from "firebase/auth";
+import { signInWithCredential } from "firebase/auth";
 
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const navigation = useNavigation();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const route = useRoute();
+  const [success, setSuccess] = useState<string | null>(
+    route.params?.successMessage || null
+  );
+
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: "691628560884-hh9bsk5fm8i9bbpde1lltmvt36u4qs16.apps.googleusercontent.com",
+      scopes: ["profile", "email"],
+      responseType: ResponseType.IdToken,
+      redirectUri: makeRedirectUri({ scheme: "robinsong" }),
+      usePKCE: false, 
+    },
+    { authorizationEndpoint: "https://accounts.google.com/o/oauth2/auth" }
+  );
   
-  const handleGoogleSignIn = async () => {
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  const handleLogin = async () => {
+    console.log("Attempting login...");
+  
+    if (!email || !password) {
+      setError("Email and password are required.");
+      console.log("Error Set:", error);
+      return;
+    }
+  
+    setLoading(true);
+  
     try {
-      const auth = getAuth();
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      console.log('User signed in with Google');
-    } catch (error) {
-      console.error('Error during sign-in:', error);
+      const result = await loginUser(email, password);
+      if (result) {
+        console.log("Login successful:", result);
+        navigation.navigate("Tabs");
+      } else {
+        setError("Invalid email or password.");
+        console.log("Error Set:", error);
+      }
+    } catch (error: any) {
+      console.log("Login failed:", error.message);
+      setError(error.message);
+      console.log("Error Set:", error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await promptAsync();
+      if (result.type !== "success") {
+        console.error("Google sign-in failed:", result);
+        return;
+      }
+  
+      const { id_token } = result.params;
+  
+      const credential = GoogleAuthProvider.credential(id_token);
+      const auth = getAuth();
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+  
+      if (!user) {
+        console.error("Google sign-in failed: No user returned.");
+        return;
+      }
+  
+      console.log("User signed in with Google:", user);
+  
+      // Register Google user in Firestore
+      const response = await fetch("http://localhost:5000/google-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          firstName: user.displayName?.split(" ")[0] || "Google",
+          lastName: user.displayName?.split(" ")[1] || "User",
+          uid: user.uid,
+        }),
+      });
+  
+      const data = await response.json();
+      if (!response.ok) {
+        console.error("Google user registration failed:", data.error);
+        return;
+      }
+  
+      console.log("Google user registered successfully:", data);
+  
+      navigation.navigate("Tabs");
+    } catch (error) {
+      console.error("Error during Google sign-in:", error);
+    }
+  };  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -40,8 +143,13 @@ export default function LoginScreen() {
 
         <Text style={styles.subtitle}>Enter your account information to sign in.</Text>
 
+        <SuccessMessage message={success} />
+        <ErrorMessage message={error} />
+
         <TextFormField
           placeholder="Email"
+          value={email} 
+          onChangeText={setEmail} 
           keyboardType="email-address"
           autoCapitalize="none"
           style={{marginBottom: 20}}
@@ -50,14 +158,16 @@ export default function LoginScreen() {
 
         <TextFormField
           placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
           isPassword
           style={{marginBottom: 12}}
           textStyle={styles.form}
         />
 
         <Button
-          title="Sign In"
-          onPress={() => navigation.navigate("Tabs")}
+          title={loading ? "Signing In..." : "Sign In"}
+          onPress={handleLogin} 
           variant="primary"
           style={styles.form}
           textStyle={{fontSize: 20}}

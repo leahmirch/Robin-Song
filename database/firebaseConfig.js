@@ -1,17 +1,23 @@
-// Import the functions you need from the SDKs you need
 import Constants from "expo-constants";
 import { initializeApp } from "firebase/app";
-import { getAnalytics, isSupported as analyticsIsSupported } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, initializeAuth, browserSessionPersistence, browserLocalPersistence, getReactNativePersistence } from "firebase/auth";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { 
+  getAuth, 
+  initializeAuth, 
+  browserLocalPersistence, 
+  getReactNativePersistence, 
+  GoogleAuthProvider 
+} from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+const LOCAL_SERVER_IP = "192.168.0.3";  
+const API_BASE_URL = Platform.OS === "ios" 
+  ? "http://192.168.0.3:5000" 
+  : Platform.OS === "android" 
+    ? "http://10.0.2.2:5000" 
+    : "http://localhost:5000";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: Constants.expoConfig?.extra?.EXPO_PUBLIC_FIREBASE_API_KEY || process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: Constants.expoConfig?.extra?.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -21,39 +27,20 @@ const firebaseConfig = {
   appId: Constants.expoConfig?.extra?.EXPO_PUBLIC_FIREBASE_APP_ID || process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
   measurementId: Constants.expoConfig?.extra?.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID || process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
-// Initialize Firebase
+
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-const db = getFirestore(app); // For storing/retrieving bird detection data
-
-
-// Analytics (Optional, only for supported environments)
-let analytics;
-analyticsIsSupported().then((supported) => {
-  if (supported) {
-    analytics = getAnalytics(app);
-    console.log(' Analytics initialized');
-  } else {
-    console.warn('Analytics not supported in this environment');
-  }
-});
-
-// Initialize Firebase Auth with platform-specific persistence
 let auth;
-
-if (Platform.OS === 'web') {
-  // Web-specific persistence
+if (Platform.OS === "web") {
   auth = getAuth(app);
-  auth.setPersistence(browserLocalPersistence); // Use localStorage for persistence
-  console.log('Auth initialized with browserLocalPersistence');
+  auth.setPersistence(browserLocalPersistence);
 } else {
-  // Mobile-specific persistence
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),
   });
-  console.log('Auth initialized with AsyncStorage persistence');
 }
 
-//TODO: uncomment googleProvider. can't get it to run currently while its there
-//export { db, auth, googleProvider, app };
-export { db, auth, app };
+const googleProvider = new GoogleAuthProvider();
+
+export { app, db, auth, googleProvider, API_BASE_URL };
