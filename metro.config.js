@@ -1,3 +1,9 @@
 const { getDefaultConfig } = require('expo/metro-config');
 
-module.exports = getDefaultConfig(__dirname);
+const defaultConfig = getDefaultConfig(__dirname);
+
+defaultConfig.resolver.extraNodeModules = {
+  "react-native-element-dropdown": require.resolve("react-native-element-dropdown"),
+};
+
+module.exports = defaultConfig;
