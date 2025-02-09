@@ -69,10 +69,12 @@ const HistoryScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
 
+      <View style={styles.searchContainer}>
         <SearchBar label='Search...' search={search} setSearch={setSearch} onSearch={handleSearch} />
+      </View>
 
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Filter Button */}
         <TouchableOpacity style={styles.filterButton}>
           <MaterialCommunityIcons
@@ -89,7 +91,7 @@ const HistoryScreen: React.FC = () => {
           <ActivityIndicator size="large" color={colors.primary} />
         ) : (
           Object.entries(groupedBirds).map(([month, birdsInMonth]) => (
-            <View key={month}>
+            <View key={month} style={styles.monthContainer}>
               {/* Month Header */}
               <Text style={styles.monthHeader}>{month}</Text>
               {/* Bird Entries */}
@@ -128,8 +130,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  searchContainer: {
+    marginVertical: 8,
+    marginHorizontal: 20,
+  },
   scrollContainer: {
-    padding: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
   },
   title: {
     fontFamily: "Caprasimo",
@@ -147,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-end",
     flexDirection: "row",
-    marginVertical: 20,
+    marginBottom: 20,
   },
   filterIcon: {
     marginRight: 5,
@@ -218,8 +225,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.accent,
     textAlign: "center",
-    marginTop: 20,
+    marginVertical: 20,
   },
+  monthContainer: {
+    marginBottom: 24,
+  }
 });
 
 export default HistoryScreen;

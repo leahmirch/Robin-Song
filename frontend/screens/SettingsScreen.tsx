@@ -21,8 +21,8 @@ const SettingsScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Account</Text>
 
-        <Card style={styles.accountCard}>
-          <View style={styles.row}>
+        <View style={styles.accountCard}>
+          {/* <View style={styles.row}>
             <View style={styles.leftSide}>
               <Image
                 source={require("../assets/img/robin.png")}
@@ -31,15 +31,36 @@ const SettingsScreen: React.FC = () => {
             </View>
             <Text style={styles.name}>Jodi Joven</Text>
           </View>
-          <View style={styles.row}> 
-            <Text style={[styles.label, styles.leftSide]}>Email</Text>
+          <View style={styles.row}>
+            <View style={styles.leftSide}>
+              <Text style={styles.label}>Email</Text>
+            </View>
             <Text style={styles.infoText}>jodijov@umich.edu</Text>
           </View>
           <View style={styles.row}>
-            <Text style={[styles.label, styles.leftSide]}>Location</Text>
+            <View style={styles.leftSide}>
+              <Text style={styles.label}>Location</Text>
+            </View>
+            <Text style={styles.infoText}>Dearborn, Michigan</Text>
+          </View> */}
+          <View style={styles.leftSide}>
+            <View style={styles.topRow}>
+              <Image
+                source={require("../assets/img/robin.png")}
+                style={styles.image}
+              />
+            </View>
+              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Location</Text>
+          </View>
+          <View>
+            <View style={styles.topRow}>
+              <Text style={styles.name}>Jodi Joven</Text>
+            </View>
+            <Text style={styles.infoText}>jodijov@umich.edu</Text>
             <Text style={styles.infoText}>Dearborn, Michigan</Text>
           </View>
-        </Card>
+        </View>
 
         <Text style={styles.title}>Settings</Text>
         
@@ -144,20 +165,33 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   accountCard: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    width: '100%', 
-    marginBottom: 24,
-  },
-  row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 24,
+    backgroundColor: colors.card,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    elevation: 5,
+    shadowRadius: 4,
   },
   leftSide: {
-    width: 100,
-    alignItems: 'flex-start',
+    width: 90,
   },
+  topRow: {
+    height: 75,
+    justifyContent: 'center',
+  },
+  // row: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  // },
+  // leftSide: {
+  //   width: 90,
+  //   alignItems: 'flex-start',
+  // },
   name: {
     fontFamily: 'Caprasimo',
     fontSize: 32,
