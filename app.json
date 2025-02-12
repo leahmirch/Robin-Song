@@ -30,7 +30,11 @@
       "googleServicesFile": "./backend/secrets/google-services.json"
     },
     "ios": {
-      "bundleIdentifier": "com.robinsong.robinsong"
+      "bundleIdentifier": "com.robinsong.robinsong",
+      "googleServicesFile": "./backend/secrets/GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     }
   },
   "plugins": [

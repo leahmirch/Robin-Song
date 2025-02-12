@@ -8,5 +8,4 @@ birdnet-env/
 *.dll
 backend/secrets/
 .expo/devices.json
-eas.json
 .expo/settings.json
