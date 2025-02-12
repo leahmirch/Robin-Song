@@ -1,35 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, View, Text, StyleSheet, Image } from 'react-native';
 import colors from '../assets/theme/colors';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Card from '../components/Card';
+import DropdownComponent from '../components/Dropdown';
 
 const ForecastScreen: React.FC = () => {
+  const [selectedValue, setSelectedValue] = useState<string | number | null>('American Robin');
+
+  const data = [
+    { label: 'American Robin', value: 'American Robin' },
+    { label: 'Blue Jay', value: 'Blue Jay' },
+    { label: 'Hawk', value: 'Hawk' },
+    { label: 'Goose', value: 'Goose' },
+    { label: 'Duck', value: 'Duck' },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Bird Preference Button */}
         <View style={styles.preferenceContainer}>
-          <View style={styles.preferenceButton}>
+          <View style={styles.preferenceLabel}>
             <Text style={styles.preferenceText}>Bird Preference</Text>
           </View>
-          <View style={styles.dropdown}>
-            <Text style={styles.dropdownText}>American Robin</Text>
-            <Ionicons
-              name="chevron-down"
-              size={20}
-              color={colors.text}
-              style={styles.dropdownIcon}
-            />
-          </View>
+          <DropdownComponent
+            data={data}
+            value={selectedValue}
+            onChange={(item) => setSelectedValue(item.value)}
+            placeholder="Select a species"
+          />
         </View>
 
         {/* Greeting */}
         <Text style={styles.greeting}>Good Morning, Jodi!</Text>
         <Text style={styles.description}>
-          You are most likely to see <Text style={styles.highlight}>American Robin</Text> at this location today:
+          You are most likely to see <Text style={styles.highlight}>{selectedValue}</Text> at this location today:
         </Text>
+
 
         {/* Location Name */}
         <Text style={styles.locationName}>Hines Park</Text>
@@ -75,50 +83,25 @@ const styles = StyleSheet.create({
   },
   preferenceContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  preferenceButton: {
+  preferenceLabel: {
+    width: '100%',
+    height: 50,
     backgroundColor: colors.accent,
     borderRadius: 15,
     paddingVertical: 12,
-    width: 300,
     alignItems: 'center',
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
+    justifyContent: 'center',
   },
   preferenceText: {
     fontFamily: 'Caprasimo',
     fontSize: 20,
     color: colors.white,
-  },
-  dropdown: {
-    backgroundColor: colors.card,
-    borderRadius: 15,
-    marginTop: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    width: 300,
-    borderWidth: 2,
-    borderColor: `${colors.primary}80`,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dropdownText: {
-    fontFamily: 'Radio Canada',
-    fontSize: 18,
-    color: colors.text,
-    textAlign: 'center',
-    flex: 1,
-  },
-  dropdownIcon: {
-    marginLeft: 10,
   },
   greeting: {
     fontFamily: 'Caprasimo',
@@ -132,7 +115,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   highlight: {
     color: colors.primary,
@@ -140,10 +123,10 @@ const styles = StyleSheet.create({
   },
   locationName: {
     fontFamily: 'Caprasimo',
-    fontSize: 48,
+    fontSize: 40,
     color: colors.secondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   mapContainer: {
     alignItems: 'center',

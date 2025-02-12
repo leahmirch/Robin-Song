@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, ScrollView, View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ActivityIndicator} from "react-native";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import { SafeAreaView, ScrollView, View, Text, StyleSheet, Image, ActivityIndicator} from "react-native";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../database/firebaseConfig";
 import SearchBar from "../components/SearchBar";
+import Filter from "../components/Filter";
 import colors from "../assets/theme/colors";
 
 // Interface for Firestore data
@@ -19,6 +19,8 @@ const HistoryScreen: React.FC = () => {
   const [birds, setBirds] = useState<BirdHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedSpecies, setSelectedSpecies] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const handleSearch = (query: string) => {
     setSearch(query);
@@ -46,6 +48,30 @@ const HistoryScreen: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  const handleFilterChange = (filterType: string, filterValue: string | { start?: Date; end?: Date } | null) => {
+    if (filterType === "species") {
+      setSelectedSpecies(filterValue as string);
+    } else if (filterType === "date") {
+      if (typeof filterValue === "object" && filterValue !== null) {
+        if (filterValue.start) {
+          setSelectedDate(filterValue.start);
+        }
+      } else {
+        setSelectedDate(filterValue as Date | null);
+      }
+    }
+  };
+
+  const filteredBirds = birds.filter((bird) => {
+    const matchesSearch = bird.bird.toLowerCase().includes(search.toLowerCase());
+    const matchesSpecies = selectedSpecies ? bird.bird === selectedSpecies : true;
+    const matchesDate = selectedDate
+      ? bird.timestamp.toDateString() === selectedDate.toDateString()
+      : true;
+
+    return matchesSearch && matchesSpecies && matchesDate;
+  });
+
   // Group birds by month
   const groupByMonth = (data: BirdHistory[]) => {
     const grouped: { [key: string]: BirdHistory[] } = {};
@@ -62,34 +88,32 @@ const HistoryScreen: React.FC = () => {
     return grouped;
   };
 
-  const filteredBirds = birds.filter((bird) =>
-    bird.bird?.toLowerCase().includes(search.toLowerCase())
-  );
   const groupedBirds = groupByMonth(filteredBirds);
+
+  const uniqueSpeciesList = Array.from(new Set(birds.map((b) => b.bird)))
+  .map((species) => ({ label: species, value: species }))
+  .sort((a, b) => a.label.localeCompare(b.label));
 
   return (
     <SafeAreaView style={styles.container}>
+
+      <View style={styles.searchContainer}>
+        <SearchBar label='Search...' search={search} setSearch={setSearch} onSearch={handleSearch} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContainer}>
 
-        <SearchBar label='Search...' search={search} setSearch={setSearch} onSearch={handleSearch} />
-
-        {/* Filter Button */}
-        <TouchableOpacity style={styles.filterButton}>
-          <MaterialCommunityIcons
-            name="filter-variant"
-            size={16}
-            color={colors.chatGPTCardBackground}
-            style={styles.filterIcon}
-          />
-          <Text style={styles.filterText}>Filter</Text>
-        </TouchableOpacity>
+        <Filter
+          speciesList={uniqueSpeciesList}
+          onFilterChange={handleFilterChange}
+        />
 
         {/* Loading Indicator */}
         {loading ? (
           <ActivityIndicator size="large" color={colors.primary} />
         ) : (
           Object.entries(groupedBirds).map(([month, birdsInMonth]) => (
-            <View key={month}>
+            <View key={month} style={styles.monthContainer}>
               {/* Month Header */}
               <Text style={styles.monthHeader}>{month}</Text>
               {/* Bird Entries */}
@@ -128,8 +152,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  searchContainer: {
+    marginVertical: 8,
+    marginHorizontal: 20,
+  },
   scrollContainer: {
-    padding: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
   },
   title: {
     fontFamily: "Caprasimo",
@@ -137,26 +166,6 @@ const styles = StyleSheet.create({
     color: colors.secondary,
     textAlign: "center",
     marginBottom: 20,
-  },
-  filterButton: {
-    backgroundColor: colors.accent,
-    borderRadius: 20,
-    height: 35,
-    width: 90,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "flex-end",
-    flexDirection: "row",
-    marginVertical: 20,
-  },
-  filterIcon: {
-    marginRight: 5,
-  },
-  filterText: {
-    fontFamily: "Radio Canada",
-    fontSize: 16,
-    color: colors.white,
-    fontWeight: "bold",
   },
   monthHeader: {
     fontFamily: "Radio Canada",
@@ -218,8 +227,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.accent,
     textAlign: "center",
-    marginTop: 20,
+    marginVertical: 20,
   },
+  monthContainer: {
+    marginBottom: 24,
+  }
 });
 
 export default HistoryScreen;

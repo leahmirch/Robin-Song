@@ -131,6 +131,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 16,
+    fontFamily: 'Radio Canada',
     color: colors.accent,
   },
   descriptionContainer: {

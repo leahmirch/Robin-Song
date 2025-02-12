@@ -3,6 +3,7 @@
     "name": "robin-song",
     "slug": "robin-song",
     "scheme": "robinsong",
+    "orientation": "portrait",
     "icon": "./frontend/assets/img/logos/robinAppIcon.png",
     "extra": {
       "eas": {
