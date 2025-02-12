@@ -9,6 +9,7 @@ interface DropdownProps {
   onChange: (item: { label: string; value: string | number }) => void;
   placeholder?: string;
   maxHeight?: number;
+  style?: object;
 }
 
 const DropdownComponent: React.FC<DropdownProps> = ({
@@ -17,6 +18,7 @@ const DropdownComponent: React.FC<DropdownProps> = ({
   onChange,
   placeholder = 'Select a species',
   maxHeight = 300,
+  style,
 }) => {
   const renderItem = (item: { label: string; value: string | number }) => (
     <View style={styles.item}>
@@ -26,7 +28,7 @@ const DropdownComponent: React.FC<DropdownProps> = ({
 
   return (
     <Dropdown
-      style={styles.dropdown}
+      style={[styles.dropdown, style]} // Apply styles
       containerStyle={styles.container}
       placeholderStyle={styles.placeholderStyle}
       selectedTextStyle={styles.selectedTextStyle}
