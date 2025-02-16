@@ -13,7 +13,7 @@ from pytz import timezone
 from firebase_admin import credentials, firestore
 from tensorflow.lite.python.interpreter import Interpreter
 import logging
-import requests  # Added for sending bird data to backend
+import requests
 
 sys.stdout = open(os.devnull, 'w')
 sys.stderr = open(os.devnull, 'w')
@@ -25,7 +25,7 @@ logging.getLogger("pyaudio").setLevel(logging.ERROR)
 from dotenv import load_dotenv
 load_dotenv()
 
-SERVICE_ACCOUNT_FILE = "C:\\Users\\janai\\OneDrive\\Desktop\\Robin-Song-1\\backend\\secrets\\firebase-admin-key.json"
+SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_ADMIN_CREDENTIALS", "backend/secrets/firebase-admin-key.json")
 
 cred = credentials.Certificate(SERVICE_ACCOUNT_FILE)
 firebase_admin.initialize_app(cred)

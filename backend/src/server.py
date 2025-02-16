@@ -1,20 +1,21 @@
 from flask import Flask, jsonify, request
 import subprocess
 import psutil
+import os
+import signal
 from firebase_admin import credentials, firestore, initialize_app
 import bcrypt
 import firebase_admin
 from firebase_admin import auth
 from flask_cors import CORS
-import json  # Import json to load bird data
+import json
 from bs4 import BeautifulSoup
 import requests
 
 app = Flask(__name__)
 CORS(app)
 
-# Initialize Firebase
-cred = credentials.Certificate("C:\\Users\\janai\\OneDrive\\Desktop\\Robin-Song-1\\backend\\secrets\\firebase-admin-key.json")
+cred = credentials.Certificate(os.path.join(os.getcwd(), "backend/secrets/firebase-admin-key.json"))
 initialize_app(cred)
 db = firestore.client()
 
@@ -80,22 +81,17 @@ def scrape_bird_info():
         if media_data:
             picture_tag = media_data.find("picture")
             if picture_tag:
-                # Try to get the image URL from the <img> tag
                 img_tag = picture_tag.find("img")
                 if img_tag and "data-srcset" in img_tag.attrs:
                     # Extract the first image URL from the srcset
                     image_url = img_tag["data-srcset"].split(" ")[0]
                 elif img_tag and "src" in img_tag.attrs:
-                    # Fallback: Use the src attribute if data-srcset is not available
                     image_url = img_tag["src"]
                 else:
-                    # Fallback: Try to get the image URL from the <source> tag
                     source_tag = picture_tag.find("source")
                     if source_tag and "data-srcset" in source_tag.attrs:
-                        # Extract the first image URL from the srcset
                         image_url = source_tag["data-srcset"].split(" ")[0]
                     elif source_tag and "srcset" in source_tag.attrs:
-                        # Fallback: Use the srcset attribute if data-srcset is not available
                         image_url = source_tag["srcset"].split(" ")[0]
 
         # Debug log
@@ -105,7 +101,7 @@ def scrape_bird_info():
             "description": description_text,
             "at_a_glance": at_a_glance_text,
             "habitat": habitat_text,
-            "image_url": image_url,  # Add the image URL to the response
+            "image_url": image_url, 
         })
     except requests.RequestException as e:
         print(f"Error fetching URL: {e}")
