@@ -13,6 +13,7 @@ from pytz import timezone
 from firebase_admin import credentials, firestore
 from tensorflow.lite.python.interpreter import Interpreter
 import logging
+import requests  # Added for sending bird data to backend
 
 sys.stdout = open(os.devnull, 'w')
 sys.stderr = open(os.devnull, 'w')
@@ -24,7 +25,7 @@ logging.getLogger("pyaudio").setLevel(logging.ERROR)
 from dotenv import load_dotenv
 load_dotenv()
 
-SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_ADMIN_CREDENTIALS", "backend/secrets/firebase-admin-key.json")
+SERVICE_ACCOUNT_FILE = "C:\\Users\\janai\\OneDrive\\Desktop\\Robin-Song-1\\backend\\secrets\\firebase-admin-key.json"
 
 cred = credentials.Certificate(SERVICE_ACCOUNT_FILE)
 firebase_admin.initialize_app(cred)
@@ -72,6 +73,20 @@ analyzer = Analyzer()
 analyzer.verbose = False 
 buffer = 100  
 
+def send_bird_to_backend(bird_name):
+    """Send the detected bird name to the backend."""
+    try:
+        response = requests.post(
+            "http://127.0.0.1:5000/detected-bird",
+            json={"bird": bird_name}
+        )
+        if response.status_code == 200:
+            print(f"Successfully sent {bird_name} to backend.")
+        else:
+            print(f"Failed to send {bird_name} to backend. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Error sending {bird_name} to backend: {e}")
+
 def save_and_analyze(full_data):
     global file_count
     duration = len(full_data) / RATE
@@ -100,6 +115,10 @@ def save_and_analyze(full_data):
         eastern = timezone('US/Eastern')
         current_time = datetime.now().astimezone(eastern) 
         for bird in birds:
+            # Send the detected bird to the backend
+            send_bird_to_backend(bird)
+
+            # Save the bird data to Firestore
             bird_data = {
                 "bird": bird,
                 "latitude": g.latlng[0],
@@ -140,7 +159,6 @@ try:
                 save_and_analyze(np.array(full_data)) 
                 full_data = []
             buffer = 100 
-
 
 except KeyboardInterrupt:
     print("Recording stopped by user.")

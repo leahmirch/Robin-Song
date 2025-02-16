@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, View,  Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity} from "react-native";
+import { SafeAreaView, View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "../../database/firebaseConfig";
 import axios from "axios";
 import colors from "frontend/assets/theme/colors";
 import Card from "../components/Card";
-import Constants from 'expo-constants';
 
-// Unsplash API Key; access key from environment variables
-const UNSPLASH_ACCESS_KEY =
-  process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY ||
-  Constants.expoConfig?.extra?.UNSPLASH_ACCESS_KEY;
-
-console.log('Unsplash API Key:', UNSPLASH_ACCESS_KEY);
-  
 interface BirdData {
   bird: string;
   latitude: number;
   longitude: number;
   timestamp: Date;
+}
+
+interface BirdInfo {
+  description: string;
+  at_a_glance: string;
+  habitat: string;
+  image_url: string;
 }
 
 const IdentifyScreen: React.FC = () => {
@@ -28,6 +27,7 @@ const IdentifyScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectionStatus, setDetectionStatus] = useState("Not Identifying Birds");
+  const [birdInfo, setBirdInfo] = useState<BirdInfo | null>(null);
 
   useEffect(() => {
     // Fetch the latest bird data
@@ -45,64 +45,66 @@ const IdentifyScreen: React.FC = () => {
         };
         setLatestBird(birdData);
 
-        // Fetch bird image
-        await fetchBirdImage(birdData.bird);
+        // Fetch bird info and image
+        await fetchBirdInfo(birdData.bird);
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  const fetchBirdImage = async (birdName: string) => {
-  setLoading(true);
-  try {
-    console.log('Fetching bird image with API Key:', UNSPLASH_ACCESS_KEY);
-
+  const fetchBirdInfo = async (birdName: string) => {
+    try {
+      // Fetch the bird's URL from bird_data.json
+      const urlResponse = await axios.get<{ name: string; url: string }>("http://127.0.0.1:5000/bird-info", {
+        params: { bird: birdName },
+      });
+      const birdUrl = urlResponse.data.url;
   
-    const response = await axios.get<{
-      results: { urls: { small: string } }[];
-    }>("https://api.unsplash.com/search/photos", {
-      params: {
-        query: birdName,
-        per_page: 1,
-      },
-      headers: {
-        Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`,
-      },
-    });
-      const images = response.data.results;
-      setBirdImage(images.length > 0 ? images[0].urls.small : null);
+      // Scrape the bird's information from the Audubon page
+      const scrapeResponse = await axios.get<{
+        description: string;
+        at_a_glance: string;
+        habitat: string;
+        image_url: string;
+      }>("http://127.0.0.1:5000/scrape-bird-info", {
+        params: { url: birdUrl },
+      });
+  
+      // Debug logs
+      console.log("Scrape Response:", scrapeResponse.data);
+      console.log("Bird Image URL:", scrapeResponse.data.image_url);
+  
+      // Set the bird info and image URL
+      setBirdInfo(scrapeResponse.data);
+      setBirdImage(scrapeResponse.data.image_url);
     } catch (error) {
-      console.error("Error fetching bird image:", error);
+      console.error("Error fetching bird info:", error);
+      setBirdInfo(null);
       setBirdImage(null);
-    } finally {
-      setLoading(false);
     }
   };
 
-    // Toggle detection state and trigger backend
-    const toggleDetection = async () => {
-      try {
-        setIsDetecting((prev) => !prev);
-        if (!isDetecting) {
-          setDetectionStatus("Identifying Birds");
-          // Start detection
-          await axios.post("http://127.0.0.1:5000/start-detection");
-        } else {
-          setDetectionStatus("Not Identifying Birds");
-          // Stop detection
-          await axios.post("http://127.0.0.1:5000/stop-detection");
-        }
-      } catch (error) {
-        console.error("Error toggling detection:", error);
+  const toggleDetection = async () => {
+    try {
+      setIsDetecting((prev) => !prev);
+      if (!isDetecting) {
+        setDetectionStatus("Identifying Birds");
+        // Start detection
+        await axios.post("http://127.0.0.1:5000/start-detection");
+      } else {
+        setDetectionStatus("Not Identifying Birds");
+        // Stop detection
+        await axios.post("http://127.0.0.1:5000/stop-detection");
       }
-    };
+    } catch (error) {
+      console.error("Error toggling detection:", error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* <Text style={styles.title}>Identification</Text> */}
-
         {/* Status Badges with Central Button */}
         <View style={styles.statusContainer}>
           <Card style={styles.badge}>
@@ -133,7 +135,6 @@ const IdentifyScreen: React.FC = () => {
         </View>
 
         {/* Species Name */}
-
         <Text style={styles.speciesName}>
           {latestBird ? latestBird.bird : "American Robin"}
         </Text>
@@ -141,7 +142,7 @@ const IdentifyScreen: React.FC = () => {
           {latestBird ? "Dynamic Bird Info" : "Turdus Migratorius"}
         </Text>
 
-        {/* Robin Image */}
+        {/* Bird Image */}
         <View style={styles.robinContainer}>
           {loading ? (
             <ActivityIndicator size="large" color={colors.primary} />
@@ -152,57 +153,29 @@ const IdentifyScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Sections with Lines */}
+        {/* Description Section */}
         <View>
-          <Text style={styles.sectionHeading}>Physical Description</Text>
+          <Text style={styles.sectionHeading}>Description</Text>
           <Text style={styles.sectionText}>
-
-            American Robins are fairly large songbirds with a large, round body,
-            long legs, and fairly long tail. Robins are the largest North
-            American thrushes, and their profile offers a good chance to learn
-            the basic shape of most thrushes. Robins make a good reference point
-            for comparing the size and shape of other birds, too. American
-            Robins are gray-brown birds with warm orange underparts and dark
-            heads. In light, a white patch on the lower belly and under the tail
-            can be conspicuous. Compared with males, females have paler heads
-            that contrast less with the gray back.
-
-            American Robins are fairly large songbirds with a large, round body, long legs, and fairly long tail. Robins are the largest North American thrushes, and their profile offers a good chance to learn the basic shape of most thrushes. Robins make a good reference point for comparing the size and shape of other birds, too. American Robins are gray-brown birds with warm orange underparts and dark heads. In light, a white patch on the lower belly and under the tail can be conspicuous. Compared with males, females have paler heads that contrast less with the gray back.
-
+            {birdInfo?.description || "No description available."}
           </Text>
         </View>
         <View style={styles.separator} />
 
+        {/* At a Glance Section */}
         <View>
-          <Text style={styles.sectionHeading}>Overview</Text>
+          <Text style={styles.sectionHeading}>At a Glance</Text>
           <Text style={styles.sectionText}>
-
-            A very familiar bird over most of North America, running and
-            hopping on lawns with upright stance, often nesting on porches and
-            windowsills. The Robin's rich caroling is among the earliest bird
-            songs heard at dawn in spring and summer, often beginning just
-            before first light. In fall and winter, robins may gather by the
-            hundreds in roaming flocks, concentrating at sources of food.
-
-            A very familiar bird over most of North America, running and hopping on lawns with upright stance, often nesting on porches and windowsills. The Robin's rich caroling is among the earliest bird songs heard at dawn in spring and summer, often beginning just before first light. In fall and winter, robins may gather by the hundreds in roaming flocks, concentrating at sources of food.
-
+            {birdInfo?.at_a_glance || "No 'At a Glance' information available."}
           </Text>
         </View>
         <View style={styles.separator} />
 
+        {/* Habitat Section */}
         <View>
           <Text style={styles.sectionHeading}>Habitat</Text>
           <Text style={styles.sectionText}>
-
-            Cities, towns, lawns, farmland, forests; in winter, berry-bearing
-            trees. Over most of the continent, summers occur wherever there are
-            trees for nest sites and mud for nest material. In the arid
-            southwest, summers mainly occur in coniferous forests in mountains,
-            rarely in well-watered lowland suburbs. In winter, flocks gather in
-            wooded areas where trees or shrubs have good crops of berries.
-
-            Cities, towns, lawns, farmland, forests; in winter, berry-bearing trees. Over most of the continent, summers occur wherever there are trees for nest sites and mud for nest material. In the arid southwest, summers mainly occur in coniferous forests in mountains, rarely in well-watered lowland suburbs. In winter, flocks gather in wooded areas where trees or shrubs have good crops of berries.
-
+            {birdInfo?.habitat || "No habitat information available."}
           </Text>
         </View>
       </ScrollView>
@@ -236,7 +209,7 @@ const styles = StyleSheet.create({
     height: 110,
     justifyContent: "center",
     shadowRadius: 0,
-    elevation: 3, 
+    elevation: 3,
     padding: 0,
   },
   badgeText: {

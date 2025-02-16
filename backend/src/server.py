@@ -1,23 +1,29 @@
 from flask import Flask, jsonify, request
 import subprocess
 import psutil
-import os
-import signal
 from firebase_admin import credentials, firestore, initialize_app
 import bcrypt
 import firebase_admin
 from firebase_admin import auth
 from flask_cors import CORS
+import json  # Import json to load bird data
+from bs4 import BeautifulSoup
+import requests
 
 app = Flask(__name__)
 CORS(app)
 
-cred = credentials.Certificate(os.path.join(os.getcwd(), "backend/secrets/firebase-admin-key.json"))
+# Initialize Firebase
+cred = credentials.Certificate("C:\\Users\\janai\\OneDrive\\Desktop\\Robin-Song-1\\backend\\secrets\\firebase-admin-key.json")
 initialize_app(cred)
 db = firestore.client()
 
 is_running = False
 process = None  
+
+# Load bird data from JSON file
+with open("bird_data.json", "r", encoding="utf-8") as file:
+    bird_data = json.load(file)
 
 def terminate_process_and_children(proc_pid):
     try:
@@ -28,6 +34,102 @@ def terminate_process_and_children(proc_pid):
     except psutil.NoSuchProcess:
         pass
 
+# Bird Information Endpoints
+@app.route('/bird-info', methods=['GET'])
+def get_bird_info():
+    bird_name = request.args.get('bird')
+    if not bird_name:
+        return jsonify({"error": "Bird name is required"}), 400
+
+    # Fetch the bird's URL from bird_data.json
+    bird_url = bird_data.get(bird_name)
+    if not bird_url:
+        return jsonify({"error": "Bird not found"}), 404
+
+    return jsonify({"name": bird_name, "url": bird_url}), 200
+
+
+@app.route('/scrape-bird-info', methods=['GET'])
+def scrape_bird_info():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({"error": "URL is required"}), 400
+
+    try:
+        # Fetch the Audubon page
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # Extract the description
+        description = soup.find("div", class_="bird_info_item info_description")
+        description_text = description.find("div", class_="content").text.strip() if description else "No description available."
+
+        # Extract At a Glance
+        at_a_glance = soup.find("h2", id="at_a_glance")
+        at_a_glance_text = at_a_glance.find_next("div", class_="intro_text").text.strip() if at_a_glance else "No 'At a Glance' information available."
+
+        # Extract Habitat
+        habitat = soup.find("div", class_="bird_info_item info_habitat")
+        habitat_text = habitat.find("div", class_="content").text.strip() if habitat else "No habitat information available."
+
+        # Extract the image URL
+        media_data = soup.find("div", class_="media-data")
+        image_url = None
+
+        if media_data:
+            picture_tag = media_data.find("picture")
+            if picture_tag:
+                # Try to get the image URL from the <img> tag
+                img_tag = picture_tag.find("img")
+                if img_tag and "data-srcset" in img_tag.attrs:
+                    # Extract the first image URL from the srcset
+                    image_url = img_tag["data-srcset"].split(" ")[0]
+                elif img_tag and "src" in img_tag.attrs:
+                    # Fallback: Use the src attribute if data-srcset is not available
+                    image_url = img_tag["src"]
+                else:
+                    # Fallback: Try to get the image URL from the <source> tag
+                    source_tag = picture_tag.find("source")
+                    if source_tag and "data-srcset" in source_tag.attrs:
+                        # Extract the first image URL from the srcset
+                        image_url = source_tag["data-srcset"].split(" ")[0]
+                    elif source_tag and "srcset" in source_tag.attrs:
+                        # Fallback: Use the srcset attribute if data-srcset is not available
+                        image_url = source_tag["srcset"].split(" ")[0]
+
+        # Debug log
+        print("Scraped Image URL:", image_url)
+
+        return jsonify({
+            "description": description_text,
+            "at_a_glance": at_a_glance_text,
+            "habitat": habitat_text,
+            "image_url": image_url,  # Add the image URL to the response
+        })
+    except requests.RequestException as e:
+        print(f"Error fetching URL: {e}")
+        return jsonify({"error": f"Error fetching URL: {str(e)}"}), 500
+    except Exception as e:
+        print(f"Error scraping bird info: {e}")
+        print(f"HTML content: {soup.prettify() if 'soup' in locals() else 'No HTML content available.'}")
+        return jsonify({"error": f"Error scraping bird info: {str(e)}"}), 500
+
+# Detected Bird Endpoint
+@app.route('/detected-bird', methods=['POST'])
+def handle_detected_bird():
+    data = request.json
+    bird_name = data.get("bird")
+    if not bird_name:
+        return jsonify({"error": "Bird name is required"}), 400
+    
+    # Store the detected bird in Firestore
+    db.collection("birds").add({
+        "bird": bird_name,
+        "timestamp": firestore.SERVER_TIMESTAMP
+    })
+    
+    return jsonify({"message": "Bird detected and stored successfully"}), 200
 
 # Bird Detection Endpoints
 @app.route('/start-detection', methods=['POST'])
@@ -43,7 +145,6 @@ def start_detection():
     else:
         return jsonify({"message": "Bird detection is already running"}), 400
 
-
 @app.route('/stop-detection', methods=['POST'])
 def stop_detection():
     global is_running, process
@@ -58,12 +159,10 @@ def stop_detection():
     else:
         return jsonify({"message": "Bird detection is not running"}), 400
 
-
 @app.route('/status', methods=['GET'])
 def status():
     global is_running
     return jsonify({"running": is_running})
-
 
 # Login, Register and Logout Endpoints
 @app.route('/register', methods=['POST'])
