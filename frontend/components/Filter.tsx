@@ -86,7 +86,8 @@ const Filter: React.FC<FilterProps> = ({ speciesList, onFilterChange }) => {
 const styles = StyleSheet.create({
   container: { 
     alignItems: 'center', 
-    marginBottom: 20
+    marginBottom: 20,
+    marginRight: 20,
   },
   filterButton: { 
     backgroundColor: colors.accent, 
