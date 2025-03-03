@@ -42,7 +42,6 @@ const HistoryScreen: React.FC = () => {
   const [selectedSpecies, setSelectedSpecies] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Fetch initial batch of birds
   useEffect(() => {
     fetchBirds(true);
   }, []);
@@ -90,7 +89,6 @@ const HistoryScreen: React.FC = () => {
     }
   };
 
-  // Group birds by month
   const groupByMonth = (data: BirdHistory[]) => {
     return data.reduce((acc, bird) => {
       const month = bird.timestamp.toLocaleString("default", {
@@ -105,7 +103,6 @@ const HistoryScreen: React.FC = () => {
     }, {} as { [key: string]: BirdHistory[] });
   };
 
-  // Filter birds based on search, species, and date
   const filteredBirds = Object.entries(groupedBirds).reduce((acc, [month, birdsInMonth]) => {
     const filtered = birdsInMonth.filter((bird) => {
       const matchesSearch = bird.bird.toLowerCase().includes(search.toLowerCase());
@@ -120,7 +117,6 @@ const HistoryScreen: React.FC = () => {
     return acc;
   }, {} as { [key: string]: BirdHistory[] });
 
-  // Create data format for FlatList (grouped by month)
   const formattedData = Object.entries(filteredBirds).map(([month, birds]) => ({
     title: month,
     data: birds,
@@ -153,17 +149,19 @@ const HistoryScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.searchContainer}>
-        <SearchBar label="Search..." search={search} setSearch={setSearch} onSearch={setSearch} />
-      </View>
+      <View style={styles.topBar}>
+        <View style={styles.searchBar}>
+          <SearchBar label="Search..." search={search} setSearch={setSearch} onSearch={setSearch} />
+        </View>
 
-      <Filter
-        speciesList={Array.from(new Set(birds.map((b) => ({ label: b.bird, value: b.bird }))))}
-        onFilterChange={(type, value) => {
-          if (type === "species") setSelectedSpecies(value as string);
-          if (type === "date") setSelectedDate(value as Date | null);
-        }}
-      />
+        <Filter
+            speciesList={Array.from(new Set(birds.map((b) => ({ label: b.bird, value: b.bird }))))}
+            onFilterChange={(type, value) => {
+              if (type === "species") setSelectedSpecies(value as string);
+              if (type === "date") setSelectedDate(value as Date | null);
+            }}
+          />
+      </View>
 
       {loading ? (
         <ActivityIndicator size="large" color={colors.primary} />
@@ -183,18 +181,22 @@ const HistoryScreen: React.FC = () => {
   );
 };
 
+export default HistoryScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-  searchContainer: {
+  topBar: {
+    flexDirection: 'row',
     marginVertical: 8,
-    marginHorizontal: 20,
+    marginLeft: 20,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  scrollContainer: {
-    paddingBottom: 20,
-    paddingHorizontal: 20,
+  searchBar: {
+    width: '70%',
   },
   title: {
     fontFamily: "Caprasimo",
@@ -270,5 +272,3 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   }
 });
-
-export default HistoryScreen;

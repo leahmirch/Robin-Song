@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import DropdownComponent from './Dropdown';
 import Button from './Button';
 import colors from '../assets/theme/colors';
@@ -54,7 +55,13 @@ const Filter: React.FC<FilterProps> = ({ speciesList, onFilterChange }) => {
       <Modal visible={isModalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Filter Options</Text>
+            <View style={styles.modalTopBar}>
+              <Text style={styles.modalTitle}>Filter Options</Text>
+              <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
+                <Ionicons name="close" size={30} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+            
               <DropdownComponent
                 data={speciesList}
                 value={selectedSpecies}
@@ -85,13 +92,12 @@ const Filter: React.FC<FilterProps> = ({ speciesList, onFilterChange }) => {
 
 const styles = StyleSheet.create({
   container: { 
-    alignItems: 'center', 
-    marginBottom: 20,
+    alignItems: 'center',
     marginRight: 20,
   },
   filterButton: { 
     backgroundColor: colors.accent, 
-    paddingHorizontal: 14, 
+    paddingHorizontal: 10, 
     paddingVertical: 8,
     borderRadius: 50, 
     flexDirection: 'row',
@@ -119,12 +125,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background, 
     borderRadius: 10 
   },
+  modalTopBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
   modalTitle: { 
     fontSize: 18, 
     fontWeight: 'bold',
     fontFamily: 'Radio Canada',
     color: colors.secondary,
-    marginBottom: 15,
   },
   label: { 
     fontSize: 16, 
@@ -133,6 +144,18 @@ const styles = StyleSheet.create({
   },
   dropdown: { 
      marginLeft: 0,
+  },
+  closeButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 });
 
