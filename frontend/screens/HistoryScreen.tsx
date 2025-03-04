@@ -46,6 +46,12 @@ const HistoryScreen: React.FC = () => {
     fetchBirds(true);
   }, []);
 
+  useEffect(() => {
+    if (search === "") {
+      fetchBirds(true);
+    }
+  }, [search]);
+
   const fetchBirds = async (reset = false) => {
     if (!hasMore && !reset) return;
 
@@ -151,7 +157,16 @@ const HistoryScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
         <View style={styles.searchBar}>
-          <SearchBar label="Search..." search={search} setSearch={setSearch} onSearch={setSearch} />
+          <SearchBar label="Search..."
+            search={search}
+            setSearch={(value) => {
+              setSearch(value);
+              if (value === "") {
+                fetchBirds(true);
+              }
+            }}
+            onSearch={setSearch} 
+          />
         </View>
 
         <Filter
@@ -173,7 +188,21 @@ const HistoryScreen: React.FC = () => {
             renderItem={renderItem}
             onEndReached={loadMoreBirds}
             onEndReachedThreshold={0.5}
-            ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+            ListFooterComponent={
+              loadingMore ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : !hasMore ? ( 
+                <Text style={styles.endOfHistory}>End of History.</Text>
+              ) : null
+            }
+            initialNumToRender={20}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            getItemLayout={(data, index) => ({
+              length: 100,
+              offset: 100 * index,
+              index
+            })}
           />
         </View>
       )}
