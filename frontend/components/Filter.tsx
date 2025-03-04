@@ -52,7 +52,7 @@ const Filter: React.FC<FilterProps> = ({ speciesList, onFilterChange }) => {
         <Text style={styles.filterButtonText}>Filter</Text>
       </TouchableOpacity>
 
-      <Modal visible={isModalVisible} animationType="slide" transparent>
+      <Modal visible={isModalVisible} animationType="fade" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalTopBar}>
