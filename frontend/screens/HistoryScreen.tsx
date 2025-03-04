@@ -15,6 +15,7 @@ import {
   limit,
   startAfter,
   getDocs,
+  where,
 } from "firebase/firestore";
 import { db } from "../../database/firebaseConfig";
 import SearchBar from "../components/SearchBar";
@@ -31,6 +32,11 @@ interface BirdHistory {
   timestamp: Date;
 }
 
+interface Species {
+  label: string;
+  value: string;
+}
+
 const HistoryScreen: React.FC = () => {
   const [birds, setBirds] = useState<BirdHistory[]>([]);
   const [groupedBirds, setGroupedBirds] = useState<{ [key: string]: BirdHistory[] }>({});
@@ -41,26 +47,53 @@ const HistoryScreen: React.FC = () => {
   const [search, setSearch] = useState("");
   const [selectedSpecies, setSelectedSpecies] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [speciesList, setSpeciesList] = useState<Species[]>([]);
+
+  useEffect(() => {
+    const loadSpecies = async () => {
+      const species = await fetchAllUniqueSpecies();
+      const speciesData = species.map((species) => ({ label: species, value: species }));
+      setSpeciesList(speciesData);
+    };
+    
+    loadSpecies();
+  }, []); 
 
   useEffect(() => {
     fetchBirds(true);
   }, []);
 
   useEffect(() => {
-    if (search === "") {
-      fetchBirds(true);
+    fetchBirds(true);
+  }, [search, selectedSpecies]);
+
+  const fetchAllUniqueSpecies = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "birds"));
+      const speciesSet = new Set<string>();
+  
+      snapshot.forEach((doc) => {
+        const bird = doc.data().bird;
+        if (bird) {
+          speciesSet.add(bird);
+        }
+      });
+  
+      const sortedSpecies = Array.from(speciesSet).sort((a, b) => a.localeCompare(b));
+  
+      return sortedSpecies;
+    } catch (error) {
+      console.error("Error fetching unique species:", error);
+      return [];
     }
-  }, [search]);
+  };
+  
 
   const fetchBirds = async (reset = false) => {
     if (!hasMore && !reset) return;
 
     try {
-      if (reset) {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
+      reset ? setLoading(true) : setLoadingMore(true);
 
       let q = query(
         collection(db, "birds"),
@@ -68,18 +101,26 @@ const HistoryScreen: React.FC = () => {
         limit(PAGE_SIZE)
       );
 
+      if (selectedSpecies) {
+        q = query(collection(db, "birds"), where("bird", "==", selectedSpecies), orderBy("timestamp", "desc"), limit(PAGE_SIZE));
+      }
+
       if (!reset && lastDoc) {
         q = query(q, startAfter(lastDoc));
       }
 
       const snapshot = await getDocs(q);
-      const birdData = snapshot.docs.map((doc) => ({
+      let birdData = snapshot.docs.map((doc) => ({
         id: doc.id,
         bird: doc.data().bird || "Unknown Bird",
         latitude: doc.data().latitude || 0,
         longitude: doc.data().longitude || 0,
         timestamp: doc.data().timestamp?.toDate() || new Date(),
       }));
+
+      if (search) {
+        birdData = birdData.filter(bird => bird.bird.toLowerCase().includes(search.toLowerCase()));
+      }
 
       const newBirds = reset ? birdData : [...birds, ...birdData];
 
@@ -109,21 +150,13 @@ const HistoryScreen: React.FC = () => {
     }, {} as { [key: string]: BirdHistory[] });
   };
 
-  const filteredBirds = Object.entries(groupedBirds).reduce((acc, [month, birdsInMonth]) => {
-    const filtered = birdsInMonth.filter((bird) => {
-      const matchesSearch = bird.bird.toLowerCase().includes(search.toLowerCase());
-      const matchesSpecies = selectedSpecies ? bird.bird === selectedSpecies : true;
-      const matchesDate = selectedDate ? bird.timestamp.toDateString() === selectedDate.toDateString() : true;
-      return matchesSearch && matchesSpecies && matchesDate;
-    });
-
-    if (filtered.length > 0) {
-      acc[month] = filtered;
+  const handleFilterChange = (type: string, value: string | null) => {
+    if (type === "species") {
+      setSelectedSpecies(value as string);
     }
-    return acc;
-  }, {} as { [key: string]: BirdHistory[] });
+  };
 
-  const formattedData = Object.entries(filteredBirds).map(([month, birds]) => ({
+  const formattedData = Object.entries(groupedBirds).map(([month, birds]) => ({
     title: month,
     data: birds,
   }));
@@ -170,12 +203,9 @@ const HistoryScreen: React.FC = () => {
         </View>
 
         <Filter
-            speciesList={Array.from(new Set(birds.map((b) => ({ label: b.bird, value: b.bird }))))}
-            onFilterChange={(type, value) => {
-              if (type === "species") setSelectedSpecies(value as string);
-              if (type === "date") setSelectedDate(value as Date | null);
-            }}
-          />
+          speciesList={speciesList}
+          onFilterChange={handleFilterChange}
+        />
       </View>
 
       {loading ? (
@@ -252,6 +282,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
+    elevation: 3,
   },
   birdImage: {
     width: 50,
@@ -294,7 +325,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.accent,
     textAlign: "center",
-    marginVertical: 20,
+    marginBottom: 60,
   },
   monthContainer: {
     marginBottom: 24,
