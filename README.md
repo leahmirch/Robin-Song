@@ -129,7 +129,7 @@ Replace `your_unsplash_api_key` with your actual Unsplash API key from your Unsp
 
 Before creating any development builds, download the Google services files from [Firebase](https://console.firebase.google.com/u/3/project/robin-server-45ac7/settings/general/android:com.robinsong.robinsong). 
 
-Then, create a folder in the root directory called `google-services` and place both Google service files within that folder. **Do not push these files to the repo**. They can't currently be added to the .gitignore because of the access required to create the build, but they **cannot** be pushed to the repo.
+Then, create a folder in the root directory called `google-services` and place both Google service files within that folder. **Do not push these files to the repo**. They can't currently be added to the .gitignore because of the access required to create the build, but they **cannot** be pushed to the repo. You may have to replace the relative paths with absolute paths if the files cannot be found when you try to create a build.
 
 ##### Android Emulator
 1. Members of the Robin team must be added into the Expo "robin-song" organization. Please ask Jodi to be added into the org upon making an Expo account.
@@ -211,6 +211,7 @@ Then, create a folder in the root directory called `google-services` and place b
 ```bash
    eas build --platform ios --profile development
 ```
+   Depending
 
 7. Turn on developer mode:
    Open **Settings > Privacy & Security**, scroll down to developer mode, and enable the setting. You will be prompted to restart the device because developer mode reduce your device's security.

@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "robin-song",
+    "slug": "robin-song",
+    "scheme": "robinsong",
+    "orientation": "portrait",
+    "icon": "./frontend/assets/img/logos/robinAppIcon.png",
+    "extra": {
+      "eas": {
+        "projectId": "1a6b53c7-9874-4c72-93cf-b6b6799eef84"
+      },
+      "FIREBASE_API_KEY": "${FIREBASE_API_KEY}",
+      "FIREBASE_AUTH_DOMAIN": "${FIREBASE_AUTH_DOMAIN}",
+      "FIREBASE_PROJECT_ID": "${FIREBASE_PROJECT_ID}",
+      "FIREBASE_STORAGE_BUCKET": "${FIREBASE_STORAGE_BUCKET}",
+      "FIREBASE_MESSAGING_SENDER_ID": "${FIREBASE_MESSAGING_SENDER_ID}",
+      "FIREBASE_APP_ID": "${FIREBASE_APP_ID}",
+      "FIREBASE_MEASUREMENT_ID": "${FIREBASE_MEASUREMENT_ID}",
+      "UNSPLASH_ACCESS_KEY": "${EXPO_PUBLIC_UNSPLASH_ACCESS_KEY}"
+    },
+    "owner": "robin-song",
+    "android": {
+      "jsEngine": "hermes",
+      "package": "com.robinsong.robinsong",
+      "googleServicesFile": "./backend/secrets/google-services.json"
+    },
+    "ios": {
+      "bundleIdentifier": "com.robinsong.robinsong",
+      "googleServicesFile": "./backend/secrets/GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  },
+  "plugins": [
+    "expo-font"
+  ]
+}

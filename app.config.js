@@ -9,11 +9,11 @@ module.exports = {
       android: {
         jsEngine: "hermes",
         package: "com.robinsong.robinsong",
-        googleServicesFile: process.env.GOOGLE_SERVICES_JSON || './google-services/google-services.json'
+        googleServicesFile: process.env.GOOGLE_SERVICES_JSON || '.\\google-services\\google-services.json'
       },
       ios: {
         bundleIdentifier: "com.robinsong.robinsong",
-        googleServicesFile: process.env.GOOGLE_SERVICES_INFO || 'C:\\Users\\joven\\OneDrive\\Desktop\\woman in stem\\uni\\year 4\\Robin-Song\\google-services\\GoogleService-Info.plist',
+        googleServicesFile: process.env.GOOGLE_SERVICES_INFO || '.\\google-services\\GoogleService-Info.plist',
         infoPlist: {
           ITSAppUsesNonExemptEncryption: false
         }
