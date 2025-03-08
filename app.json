@@ -20,11 +20,6 @@
     },
     "owner": "robin-song",
     "android": {
-      "splash": {
-        "image": "./frontend/assets/img/logos/robin72.png",
-        "imageSize": 50,
-        "backgroundColor": "#ECA08D"
-      },
       "jsEngine": "hermes",
       "package": "com.robinsong.robinsong",
       "googleServicesFile": "./backend/secrets/google-services.json"

@@ -9,3 +9,5 @@ birdnet-env/
 backend/secrets/
 .expo/devices.json
 .expo/settings.json
+.expo/packager-info.json
+.expo/settings.json
