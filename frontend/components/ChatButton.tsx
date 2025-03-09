@@ -29,6 +29,8 @@ const ChatButton: React.FC<ChatButtonProps> = ({ onPress, position, hiddenScreen
   
   return (
     <TouchableOpacity
+      accessibilityLabel='Talk with ChatGPT'
+      accessibilityRole='button'
       style={[
         styles.button, 
         position && { ...position },

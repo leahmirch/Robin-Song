@@ -101,17 +101,25 @@ const IdentifyScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* <Text style={styles.title}>Identification</Text> */}
 
         {/* Status Badges with Central Button */}
-        <View style={styles.statusContainer}>
+        <View
+          accessible={true}
+          accessibilityRole="summary"
+          accessibilityLabel={`Bird identification status. ${detectionStatus}. 
+          ${latestBird ? `Last bird identified on ${latestBird.timestamp.toLocaleString()}` : "No bird detected yet"}.
+          Double tap to ${isDetecting ? 'stop' : 'start'} identifying birds.`}
+          style={styles.statusContainer}
+        >
           <Card style={styles.badge}>
-            <Text style={styles.badgeDate}></Text>
             <Text style={styles.badgeText}>{detectionStatus}</Text>
-            <Text style={styles.badgeDate}></Text>
           </Card>
 
           <TouchableOpacity
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel='Bird identification'
+            accessibilityHint={`Double tap to ${isDetecting ? 'stop' : 'start'} identifying birds`}
             style={styles.listeningButton}
             onPress={toggleDetection}
           >
@@ -142,7 +150,12 @@ const IdentifyScreen: React.FC = () => {
         </Text>
 
         {/* Robin Image */}
-        <View style={styles.robinContainer}>
+        <View 
+          accessible={true}
+          accessibilityRole="image"
+          accessibilityLabel="Bird image"
+          style={styles.robinContainer}
+        >
           {loading ? (
             <ActivityIndicator size="large" color={colors.primary} />
           ) : birdImage ? (

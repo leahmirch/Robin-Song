@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import colors from '../assets/theme/colors';
-import Card from '../components/Card';
 import Accordion from '../components/Accordion';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
@@ -19,33 +18,14 @@ const SettingsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Account</Text>
+        <Text accessibilityRole="header" style={styles.title}>Account</Text>
 
         <View style={styles.accountCard}>
-          {/* <View style={styles.row}>
-            <View style={styles.leftSide}>
-              <Image
-                source={require("../assets/img/robin.png")}
-                style={styles.image}
-              />
-            </View>
-            <Text style={styles.name}>Jodi Joven</Text>
-          </View>
-          <View style={styles.row}>
-            <View style={styles.leftSide}>
-              <Text style={styles.label}>Email</Text>
-            </View>
-            <Text style={styles.infoText}>jodijov@umich.edu</Text>
-          </View>
-          <View style={styles.row}>
-            <View style={styles.leftSide}>
-              <Text style={styles.label}>Location</Text>
-            </View>
-            <Text style={styles.infoText}>Dearborn, Michigan</Text>
-          </View> */}
           <View style={styles.leftSide}>
             <View style={styles.topRow}>
               <Image
+                accessible={true}
+                accessibilityLabel='Account Profile Picture'
                 source={require("../assets/img/robin.png")}
                 style={styles.image}
               />
@@ -62,7 +42,7 @@ const SettingsScreen: React.FC = () => {
           </View>
         </View>
 
-        <Text style={styles.title}>Settings</Text>
+        <Text accessibilityRole="header" style={styles.title}>Settings</Text>
         
         <Accordion title="Change Name" startIcon="account-edit-outline">
           <TextFormField
@@ -124,7 +104,7 @@ const SettingsScreen: React.FC = () => {
         />
 
         <Toggle
-          title="Enable Location for Predictions"
+          title="Enable Location for Forecast"
           startIcon="map-marker-outline"
           onToggle={(value) => console.log('Toggle is', value ? 'On' : 'Off')}
           description="Enable your location for personalized bird species predictions for your area. Locaiton access is required in order to receive bird forecast predictions."

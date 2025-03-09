@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, View, Text, StyleSheet, Image } from 'react-native';
+import { SafeAreaView, ScrollView, View, Text, KeyboardAvoidingView, Platform, StyleSheet, Image } from 'react-native';
 import colors from '../assets/theme/colors';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import Card from '../components/Card';
 import DropdownComponent from '../components/Dropdown';
 
@@ -19,49 +18,63 @@ const ForecastScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.preferenceContainer}>
-          <View style={styles.preferenceLabel}>
-            <Text style={styles.preferenceText}>Bird Preference</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.preferenceContainer}>
+            <View style={styles.preferenceLabel}>
+              <Text
+                accessibilityLabel='Bird Preference Label'
+                style={styles.preferenceText}
+              >
+                Bird Preference
+              </Text>
+            </View>
+            <DropdownComponent
+              data={data}
+              value={selectedValue}
+              onChange={(item) => setSelectedValue(item.value)}
+              placeholder="Select a species"
+              disableScroll={true}
+            />
           </View>
-          <DropdownComponent
-            data={data}
-            value={selectedValue}
-            onChange={(item) => setSelectedValue(item.value)}
-            placeholder="Select a species"
-          />
-        </View>
 
-        {/* Greeting */}
-        <Text style={styles.greeting}>Good Morning, Jodi!</Text>
-        <Text style={styles.description}>
-          You are most likely to see <Text style={styles.highlight}>{selectedValue}</Text> at this location today:
-        </Text>
-
-
-        {/* Location Name */}
-        <Text style={styles.locationName}>Hines Park</Text>
-
-        {/* Map */}
-        <View style={styles.mapContainer}>
-          <Image
-            source={require('../assets/img/hines.png')}
-            style={styles.mapImage}
-          />
-        </View>
-
-        {/* Address Box */}
-        <Card style={styles.addressContainer}>
-          <View style={styles.addressLine}>
-            <MaterialCommunityIcons name="map-marker-radius-outline" size={24} color={colors.primary} />
-            <Text style={styles.addressLabel}>Address</Text>
-          </View>
-          <Text style={styles.addressText}>
-            7651 N Merriman Rd,{'\n'}Westland, MI 48185
+          {/* Greeting */}
+          <Text style={styles.greeting}>Good Morning, Jodi!</Text>
+          <Text style={styles.description}>
+            You are most likely to see <Text style={styles.highlight}>{selectedValue}</Text> at this location today:
           </Text>
-        </Card>
 
-      </ScrollView>
+
+          {/* Location Name */}
+          <Text style={styles.locationName}>Hines Park</Text>
+
+          {/* Map */}
+          <View style={styles.mapContainer}>
+            <Image
+              source={require('../assets/img/hines.png')}
+              style={styles.mapImage}
+            />
+          </View>
+
+          {/* Address Box */}
+          <Card style={styles.addressContainer}>
+            <View style={styles.addressLine}>
+              <MaterialCommunityIcons name="map-marker-radius-outline" size={24} color={colors.primary} />
+              <Text style={styles.addressLabel}>Address</Text>
+            </View>
+            <Text style={styles.addressText}>
+              7651 N Merriman Rd,{'\n'}Westland, MI 48185
+            </Text>
+          </Card>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

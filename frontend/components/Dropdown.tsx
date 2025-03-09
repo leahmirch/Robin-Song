@@ -10,6 +10,7 @@ interface DropdownProps {
   placeholder?: string;
   maxHeight?: number;
   style?: object;
+  disableScroll?: boolean;
 }
 
 const DropdownComponent: React.FC<DropdownProps> = ({
@@ -19,6 +20,7 @@ const DropdownComponent: React.FC<DropdownProps> = ({
   placeholder = 'Select a species',
   maxHeight = 300,
   style,
+  disableScroll = false,
 }) => {
   const renderItem = (item: { label: string; value: string | number }) => (
     <View style={styles.item}>
@@ -28,7 +30,8 @@ const DropdownComponent: React.FC<DropdownProps> = ({
 
   return (
     <Dropdown
-      style={[styles.dropdown, style]} // Apply styles
+      accessibilityLabel='Bird species selection dropdown'
+      style={[styles.dropdown, style]}
       containerStyle={styles.container}
       placeholderStyle={styles.placeholderStyle}
       selectedTextStyle={styles.selectedTextStyle}
