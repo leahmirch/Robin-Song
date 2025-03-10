@@ -123,6 +123,31 @@ const IdentifyScreen: React.FC = () => {
       setLoading(false);
     }
   };
+  // Start recording
+ const startRecording = async () => {
+  try {
+    const { status } = await Audio.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert("Permission required", "Enable microphone access in settings.");
+      return;
+    }
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+      interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+      shouldDuckAndroid: true,
+      interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+    });
+    const { recording } = await Audio.Recording.createAsync(
+      Audio.RecordingOptionsPresets.HIGH_QUALITY
+    );
+    recordingRef.current = recording;
+    console.log("Recording started.");
+  } catch (error) {
+    console.error("Error starting recording:", error);
+  }
+};
+
 
   // Toggle detection state
   const toggleDetection = () => {
