@@ -1,23 +1,38 @@
-from flask import Flask, jsonify, request
-import subprocess
-import psutil
 import os
-import signal
-from firebase_admin import credentials, firestore, initialize_app
-import bcrypt
-import firebase_admin
-from firebase_admin import auth
+import logging
+import wave
+import numpy as np
+from datetime import datetime
+from pytz import timezone
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+from firebase_admin import credentials, firestore, initialize_app, auth
+import firebase_admin
+import bcrypt
+import psutil
+import signal
+import subprocess
+import werkzeug
+from pydub import AudioSegment
+
+from birdnetlib import Recording
+from birdnetlib.analyzer import Analyzer
+
+
+NOISE_FLOOR_THRESHOLD = 1e6
+ALPHA = 0.9
 
 app = Flask(__name__)
 CORS(app)
 
 cred = credentials.Certificate(os.path.join(os.getcwd(), "backend/secrets/firebase-admin-key.json"))
-initialize_app(cred)
+firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-is_running = False
-process = None  
+analyzer = Analyzer()
+analyzer.verbose = False
+logging.getLogger("birdnetlib").setLevel(logging.ERROR)
+
 
 def terminate_process_and_children(proc_pid):
     try:
@@ -28,44 +43,50 @@ def terminate_process_and_children(proc_pid):
     except psutil.NoSuchProcess:
         pass
 
-
-# Bird Detection Endpoints
-@app.route('/start-detection', methods=['POST'])
-def start_detection():
-    global is_running, process
-    if not is_running:
-        try:
-            process = subprocess.Popen(["python", "detect_birds.py"])
-            is_running = True
-            return jsonify({"message": "Bird detection started"})
-        except Exception as e:
-            return jsonify({"message": f"Error starting detection: {str(e)}"}), 500
-    else:
-        return jsonify({"message": "Bird detection is already running"}), 400
+def adjust_floor(current_thresh, observed_power, alpha=0.9):
+    """
+    Blends the current threshold with the observed power to adapt the noise floor.
+    If you only want to lower the threshold when it's quieter, call this conditionally.
+    """
+    return alpha * current_thresh + (1 - alpha) * observed_power
 
 
-@app.route('/stop-detection', methods=['POST'])
-def stop_detection():
-    global is_running, process
-    if is_running and process:
-        try:
-            terminate_process_and_children(process.pid)
-            process = None
-            is_running = False
-            return jsonify({"message": "Bird detection stopped"})
-        except Exception as e:
-            return jsonify({"message": f"Error stopping detection: {str(e)}"}), 500
-    else:
-        return jsonify({"message": "Bird detection is not running"}), 400
+@app.route('/upload', methods=['POST'])
+def upload():
+    global NOISE_FLOOR_THRESHOLD, ALPHA
 
+    if 'file' not in request.files:
+        return jsonify({"error": "No file found"}), 400
 
-@app.route('/status', methods=['GET'])
-def status():
-    global is_running
-    return jsonify({"running": is_running})
+    uploaded_file = request.files['file']
+    raw_filename = "incoming.m4a"
+    uploaded_file.save(raw_filename)
 
+    wav_filename = "temp.wav"
+    try:
+        audio_data = AudioSegment.from_file(raw_filename, format="m4a")
+        audio_data.export(wav_filename, format="wav")
+    except Exception as e:
+        print("Error converting to WAV:", e)
+        if os.path.exists(raw_filename):
+            os.remove(raw_filename)
+        return jsonify({"error": "Failed to convert M4A to WAV"}), 500
 
-# Login, Register and Logout Endpoints
+    os.remove(raw_filename)
+
+    lat = 0.0
+    lon = 0.0
+
+    with wave.open(wav_filename, 'rb') as wf:
+        frames = wf.readframes(wf.getnframes())
+        audio_data_np = np.frombuffer(frames, dtype=np.int16)
+
+    fft_data = np.fft.fft(audio_data_np)
+    power_spectrum = np.abs(fft_data) ** 2
+    max_power = np.max(power_spectrum)
+
+    
+
 @app.route('/register', methods=['POST'])
 def register():
     """Register a new user."""
