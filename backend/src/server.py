@@ -8,11 +8,15 @@ import bcrypt
 import firebase_admin
 from firebase_admin import auth
 from flask_cors import CORS
+import math
 
 app = Flask(__name__)
 CORS(app)
 
-cred = credentials.Certificate(os.path.join(os.getcwd(), "backend/secrets/firebase-admin-key.json"))
+cred = credentials.Certificate(
+    os.path.join(os.path.dirname(os.path.dirname(__file__)),
+    "secrets/firebase-admin-key.json")
+)
 initialize_app(cred)
 db = firestore.client()
 
@@ -20,6 +24,7 @@ is_running = False
 process = None  
 
 def terminate_process_and_children(proc_pid):
+    """Gracefully terminate a process and any child processes."""
     try:
         parent = psutil.Process(proc_pid)
         for child in parent.children(recursive=True):
@@ -28,8 +33,6 @@ def terminate_process_and_children(proc_pid):
     except psutil.NoSuchProcess:
         pass
 
-
-# Bird Detection Endpoints
 @app.route('/start-detection', methods=['POST'])
 def start_detection():
     global is_running, process
@@ -61,11 +64,10 @@ def stop_detection():
 
 @app.route('/status', methods=['GET'])
 def status():
+    """Check if the bird detection process is running."""
     global is_running
     return jsonify({"running": is_running})
 
-
-# Login, Register and Logout Endpoints
 @app.route('/register', methods=['POST'])
 def register():
     """Register a new user."""
@@ -83,7 +85,9 @@ def register():
         except firebase_admin.auth.UserNotFoundError:
             pass  
 
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        hashed_password = bcrypt.hashpw(
+            password.encode('utf-8'), bcrypt.gensalt()
+        ).decode('utf-8')
 
         user = auth.create_user(email=email, password=password)
 
@@ -93,7 +97,7 @@ def register():
             "email": email,
             "password": hashed_password,
             "voiceCommandsEnabled": False,
-            "locationPreferences": "Unknown City, Uknown State",
+            "locationPreferences": False,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
         db.collection("users").document(user.uid).set(user_data)
@@ -119,11 +123,15 @@ def google_register():
         if not email or not uid:
             return jsonify({"error": "Missing required fields"}), 400
 
+        # Check if user is in Firestore
         user_query = db.collection("users").where("email", "==", email).stream()
         existing_user = next(user_query, None)
 
         if existing_user:
-            return jsonify({"message": "User already exists in Firestore", "userId": existing_user.id}), 200
+            return jsonify({
+                "message": "User already exists in Firestore",
+                "userId": existing_user.id
+            }), 200
 
         user_data = {
             "firstName": first_name,
@@ -132,12 +140,15 @@ def google_register():
             "uid": uid,
             "password": "Google Account",
             "voiceCommandsEnabled": False,
-            "locationPreferences": "Unknown City, State",
+            "locationPreferences": False,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
         new_user_ref = db.collection("users").add(user_data)
 
-        return jsonify({"message": "Google user registered successfully", "userId": new_user_ref[1].id}), 201
+        return jsonify({
+            "message": "Google user registered successfully",
+            "userId": new_user_ref[1].id
+        }), 201
 
     except Exception as e:
         return jsonify({"error": f"Error registering Google user: {str(e)}"}), 500
@@ -176,7 +187,6 @@ def login():
         return jsonify({"error": f"Error logging in: {str(e)}"}), 500
 
 
-# User Endpoints
 @app.route('/users', methods=['POST'])
 def add_user():
     """Add a new user."""
@@ -214,8 +224,23 @@ def update_user_preferences(user_id):
     except Exception as e:
         return jsonify({"error": f"Error updating preferences: {str(e)}"}), 500
 
+@app.route('/users/<user_id>', methods=['GET'])
+def get_user(user_id):
+    """
+    Fetch the user document for the given user_id.
+    Returns the user's data as JSON, or 404 if not found.
+    """
+    try:
+        doc_ref = db.collection("users").document(user_id).get()
+        if not doc_ref.exists:
+            return jsonify({"error": "User not found"}), 404
 
-# Chat Endpoints
+        user_data = doc_ref.to_dict()
+        return jsonify(user_data), 200
+    except Exception as e:
+        return jsonify({"error": f"Error fetching user: {str(e)}"}), 500
+
+
 @app.route('/chats/<user_id>', methods=['GET'])
 def get_user_chats(user_id):
     """Fetch all chats for a user."""
@@ -271,5 +296,66 @@ def get_chat_messages(chat_id):
         return jsonify({"error": f"Error fetching messages: {str(e)}"}), 500
 
 
-if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=5000)
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculate distance in KM between two lat/lon points using Haversine.
+    We'll convert to miles below if we want that.
+    """
+    R = 6371.0  # Earth radius in km
+    d_lat = math.radians(lat2 - lat1)
+    d_lon = math.radians(lon2 - lon1)
+    a = (math.sin(d_lat / 2) ** 2 +
+         math.cos(math.radians(lat1)) *
+         math.cos(math.radians(lat2)) *
+         math.sin(d_lon / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+
+@app.route("/get-hotspot", methods=["GET"])
+def get_hotspot():
+    bird = request.args.get("bird", "robins")
+    month = int(request.args.get("month", 1))
+
+    # optional lat/lon
+    user_lat = request.args.get("lat", type=float)
+    user_lon = request.args.get("lon", type=float)
+
+    # 1) fetch the single doc
+    doc_ref = (
+        db.collection("forecasts")
+          .document(bird)
+          .collection("topHotspots")
+          .document(str(month))
+          .get()
+    )
+    if not doc_ref.exists:
+        return jsonify({"error": "No precomputed topHotspots for this bird/month"}), 404
+
+    data = doc_ref.to_dict()  
+
+    if "topHotspots" not in data or not data["topHotspots"]:
+        return jsonify({"error": "No hotspots found"}), 404
+
+    hotspots = data["topHotspots"]  
+
+    if user_lat is not None and user_lon is not None:
+        for h in hotspots:
+            dist_km = haversine_distance(user_lat, user_lon, h["lat"], h["lon"])
+            dist_mi = dist_km * 0.621371
+            h["distance_miles"] = dist_mi
+
+        hotspots.sort(key=lambda x: (x["distance_miles"], -x["reliability_score"]))
+
+        best_hotspot = hotspots[0]
+    else:
+        hotspots.sort(key=lambda x: x["reliability_score"], reverse=True)
+        best_hotspot = hotspots[0]
+
+    return jsonify(best_hotspot), 200
+
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
