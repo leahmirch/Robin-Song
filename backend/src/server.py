@@ -85,8 +85,33 @@ def upload():
     power_spectrum = np.abs(fft_data) ** 2
     max_power = np.max(power_spectrum)
 
-    
+    if max_power < NOISE_FLOOR_THRESHOLD:
+        NOISE_FLOOR_THRESHOLD = adjust_floor(NOISE_FLOOR_THRESHOLD, max_power, ALPHA)
+        os.remove(wav_filename)
+        return jsonify({
+            "message": "Below noise threshold, skipping BirdNET",
+            "birds": []
+        })
+    else:
+        recording = Recording(analyzer, wav_filename, lat=lat, lon=lon, date=datetime.now(), min_conf=0.25)
+        recording.analyze()
+        birds = list({item['common_name'] for item in recording.detections})
 
+        eastern = timezone('US/Eastern')
+        current_time = datetime.now().astimezone(eastern)
+        for bird in birds:
+            db.collection("birds").add({
+                "bird": bird,
+                "latitude": lat,
+                "longitude": lon,
+                "timestamp": current_time
+            })
+
+        os.remove(wav_filename)
+        return jsonify({
+            "message": "File processed successfully",
+            "birds": birds
+        })
 @app.route('/register', methods=['POST'])
 def register():
     """Register a new user."""
@@ -102,12 +127,10 @@ def register():
             if existing_user:
                 return jsonify({"error": "This email is already in use."}), 400
         except firebase_admin.auth.UserNotFoundError:
-            pass  
+            pass
 
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
         user = auth.create_user(email=email, password=password)
-
         user_data = {
             "firstName": first_name,
             "lastName": last_name,
@@ -197,7 +220,6 @@ def login():
         return jsonify({"error": f"Error logging in: {str(e)}"}), 500
 
 
-# User Endpoints
 @app.route('/users', methods=['POST'])
 def add_user():
     """Add a new user."""
@@ -236,7 +258,6 @@ def update_user_preferences(user_id):
         return jsonify({"error": f"Error updating preferences: {str(e)}"}), 500
 
 
-# Chat Endpoints
 @app.route('/chats/<user_id>', methods=['GET'])
 def get_user_chats(user_id):
     """Fetch all chats for a user."""
