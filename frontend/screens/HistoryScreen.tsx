@@ -19,7 +19,6 @@ import {
 } from "firebase/firestore";
 import { db } from "../../database/firebaseConfig";
 import SearchBar from "../components/SearchBar";
-import Filter from "../components/Filter";
 import colors from "../assets/theme/colors";
 
 const PAGE_SIZE = 20;
@@ -46,18 +45,6 @@ const HistoryScreen: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedSpecies, setSelectedSpecies] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [speciesList, setSpeciesList] = useState<Species[]>([]);
-
-  useEffect(() => {
-    const loadSpecies = async () => {
-      const species = await fetchAllUniqueSpecies();
-      const speciesData = species.map((species) => ({ label: species, value: species }));
-      setSpeciesList(speciesData);
-    };
-    
-    loadSpecies();
-  }, []); 
 
   useEffect(() => {
     fetchBirds(true);
@@ -66,28 +53,6 @@ const HistoryScreen: React.FC = () => {
   useEffect(() => {
     fetchBirds(true);
   }, [search, selectedSpecies]);
-
-  const fetchAllUniqueSpecies = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, "birds"));
-      const speciesSet = new Set<string>();
-  
-      snapshot.forEach((doc) => {
-        const bird = doc.data().bird;
-        if (bird) {
-          speciesSet.add(bird);
-        }
-      });
-  
-      const sortedSpecies = Array.from(speciesSet).sort((a, b) => a.localeCompare(b));
-  
-      return sortedSpecies;
-    } catch (error) {
-      console.error("Error fetching unique species:", error);
-      return [];
-    }
-  };
-  
 
   const fetchBirds = async (reset = false) => {
     if (!hasMore && !reset) return;
@@ -189,7 +154,6 @@ const HistoryScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
-        <View style={styles.searchBar}>
           <SearchBar label="Search..."
             search={search}
             setSearch={(value) => {
@@ -200,12 +164,6 @@ const HistoryScreen: React.FC = () => {
             }}
             onSearch={setSearch} 
           />
-        </View>
-
-        <Filter
-          speciesList={speciesList}
-          onFilterChange={handleFilterChange}
-        />
       </View>
 
       {loading ? (
@@ -248,14 +206,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   topBar: {
-    flexDirection: 'row',
     marginVertical: 8,
-    marginLeft: 20,
-    justifyContent: 'space-between',
+    marginHorizontal: 15,
     alignItems: 'center',
-  },
-  searchBar: {
-    width: '70%',
   },
   title: {
     fontFamily: "Caprasimo",
