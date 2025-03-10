@@ -189,10 +189,35 @@ const stopRecordingAndUpload = async () => {
     await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
   }
 };
-
-
-
-
+ // Continuous detection cycle
+ useEffect(() => {
+  let intervalId: NodeJS.Timeout | null = null;
+  const startDetectionCycle = async () => {
+    console.log("Detection started.");
+    setDetectionStatus("Identifying Birds");
+    await startRecording();
+    intervalId = setInterval(async () => {
+      if (!isDetecting) return;
+      await stopRecordingAndUpload();
+      if (isDetecting) {
+        await startRecording();
+      }
+    }, 3000);
+  };
+  if (isDetecting) {
+    startDetectionCycle();
+  } else {
+    console.log("Detection stopped.");
+    setDetectionStatus("Not Identifying Birds");
+    if (intervalId) clearInterval(intervalId);
+    stopRecordingAndUpload();
+    setLatestBird(null);
+    setBirdImage(null);
+  }
+  return () => {
+    if (intervalId) clearInterval(intervalId);
+  };
+}, [isDetecting]);
 
   // Toggle detection state
   const toggleDetection = () => {
