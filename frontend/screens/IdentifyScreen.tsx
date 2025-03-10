@@ -148,6 +148,51 @@ const IdentifyScreen: React.FC = () => {
   }
 };
 
+const stopRecordingAndUpload = async () => {
+  if (!recordingRef.current) return;
+  try {
+    await recordingRef.current.stopAndUnloadAsync();
+    console.log("Recording stopped.");
+    const uri = recordingRef.current.getURI();
+    if (uri) {
+      const formData = new FormData();
+      formData.append('file', {
+        uri,
+        name: 'recording.wav',
+        type: 'audio/wav',
+      } as any);
+      formData.append("latitude", String(latitude ?? 0));
+      formData.append("longitude", String(longitude ?? 0));
+      const response = await axios.post<UploadResponse>(
+        'http://192.168.1.108:5000/upload',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      if (isDetecting && response.data.birds?.length) {
+        for (const bird of response.data.birds) {
+          if (!isDetecting) break;
+          console.log(`Detected: ${bird}`);
+          setLatestBird({
+            bird,
+            latitude: latitude ?? 0,
+            longitude: longitude ?? 0,
+            timestamp: new Date(),
+          });
+          await fetchBirdImage(bird);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error uploading audio:", error);
+  } finally {
+    recordingRef.current = null;
+    await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+  }
+};
+
+
+
+
 
   // Toggle detection state
   const toggleDetection = () => {
