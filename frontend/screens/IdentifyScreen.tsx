@@ -81,6 +81,28 @@ const IdentifyScreen: React.FC = () => {
     fetchLastBird();
   }, []);
 
+   // Get device location once on mount
+ useEffect(() => {
+  const fetchInitialLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert("Permission required", "Enable location access for detection logs.");
+        return;
+      }
+      let loc = await Location.getCurrentPositionAsync({});
+      if (loc && loc.coords) {
+        setLatitude(loc.coords.latitude);
+        setLongitude(loc.coords.longitude);
+      }
+    } catch (err) {
+      console.error("Error fetching location:", err);
+    }
+  };
+  fetchInitialLocation();
+}, []);
+
+
 
   // Fetch bird image from Unsplash
   const fetchBirdImage = async (birdName: string) => {
