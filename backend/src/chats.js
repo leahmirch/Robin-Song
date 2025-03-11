@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const admin = require('firebase-admin');
+const { sendMessageToChatGPT } = require('../src/chatController');
 
 const db = admin.firestore();
 const chatsCollection = db.collection('chats');
@@ -43,24 +44,9 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.post('/:chatId/message', async (req, res) => {
-    const { chatId } = req.params;
-    const { content } = req.body;
-
-    try {
-        const message = {
-            content,
-            timestamp: admin.firestore.Timestamp.now(),
-        };
-
-        const messagesCollection = chatsCollection.doc(chatId).collection('messages');
-        const messageRef = await messagesCollection.add(message);
-
-        res.status(201).json({ message: 'Message added successfully', messageId: messageRef.id });
-    } catch (error) {
-        console.error('Error adding message to chat:', error);
-        res.status(500).json({ error: 'Error adding message to chat' });
-    }
+router.post('/message', async (req, res) => {
+    console.log("Received ChatGPT request from frontend...");
+    await sendMessageToChatGPT(req, res);
 });
 
 router.get('/:chatId/messages', async (req, res) => {

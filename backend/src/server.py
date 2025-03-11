@@ -8,6 +8,14 @@ import bcrypt
 import firebase_admin
 from firebase_admin import auth
 from flask_cors import CORS
+import openai
+from dotenv import load_dotenv
+load_dotenv()
+import os
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("Missing OpenAI API Key. Set OPENAI_API_KEY in your environment variables.")
 
 app = Flask(__name__)
 CORS(app)
@@ -243,20 +251,37 @@ def create_chat():
         return jsonify({"error": f"Error creating chat: {str(e)}"}), 500
 
 
-@app.route('/chats/<chat_id>/messages', methods=['POST'])
-def add_message_to_chat(chat_id):
-    """Add a message to an existing chat."""
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("Missing OpenAI API Key. Set OPENAI_API_KEY in your environment variables.")
+
+openai.api_key = OPENAI_API_KEY
+
+@app.route('/api/chats/message', methods=['POST'])
+def send_message_to_chatgpt():
+    """Route to send messages directly to ChatGPT and return a response."""
     try:
         data = request.json
-        message = {
-            "content": data["content"],
-            "timestamp": firestore.SERVER_TIMESTAMP
-        }
-        messages_ref = db.collection("chats").document(chat_id).collection("messages")
-        message_ref = messages_ref.add(message)
-        return jsonify({"message": "Message added", "messageId": message_ref[1].id})
+        user_message = data.get("message")
+
+        if not user_message:
+            return jsonify({"error": "Message content is required"}), 400
+
+        print(f"Received message: {user_message}")
+
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": user_message}]
+        )
+
+        bot_message = response["choices"][0]["message"]["content"]
+        print(f"ChatGPT Response: {bot_message}")
+
+        return jsonify({"botMessage": bot_message})
+
     except Exception as e:
-        return jsonify({"error": f"Error adding message: {str(e)}"}), 500
+        print(f"Error calling ChatGPT API: {str(e)}")
+        return jsonify({"error": f"Error calling ChatGPT API: {str(e)}"}), 500
 
 
 @app.route('/chats/<chat_id>/messages', methods=['GET'])

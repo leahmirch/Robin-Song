@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -19,6 +19,10 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ChatQuestion from './ChatQuestion';
 import SearchBar from './SearchBar';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+const auth = getAuth();
+import { db, API_BASE_URL } from '../../database/firebaseConfig';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, Timestamp } from 'firebase/firestore';
 
 interface ChatModalProps {
   visible: boolean;
@@ -27,94 +31,229 @@ interface ChatModalProps {
 
 const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose }) => {
   const [chatListVisible, setChatListVisible] = useState(false);
-  const [chats, setChats] = useState([
-    { id: '1', title: 'Robin diet discussion', date: new Date('2025-02-4T10:30:00') },
-    { id: '2', title: 'Life cycle of a Robin', date: new Date('2025-02-01T10:30:00') },
-    { id: '3', title: 'Robin migration patterns', date: new Date('2025-01-28T10:30:00') },
-    { id: '4', title: 'Birdwatching techniques', date: new Date('2024-12-31T10:30:00') },
-    { id: '5', title: 'Similar bird species', date: new Date('2024-12-16T10:30:00') },
-  ]);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<{ [key: string]: { id: string; content: string; sender: string }[] }>({});
+  const [chats, setChats] = useState<{ id: string; title: string; date: Date }[]>([]);
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<
+  { id: string; content: string; sender: string }[]
+>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const openChatList = () => setChatListVisible(true);
-  const closeChatList = () => setChatListVisible(false);
-  const selectChat = (title: string) => {
-    setSelectedChat(title);
-    setChatListVisible(false);
-  };
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("User detected:", user.uid);
+        setUserId(user.uid);
+      } else {
+        console.log("No user detected");
+      }
+    });
+    return () => unsubscribe();
+  }, []);  
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      console.log('User Message:', message);
-      setMessage('');
+  useEffect(() => {
+    const q = query(collection(db, 'chats'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, snapshot => {
+      const fetchedChats = snapshot.docs.map(doc => ({
+        id: doc.id,
+        title: doc.data().title,
+        date: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date(),
+      }));
+      setChats(fetchedChats);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (selectedChat) {
+      const q = query(collection(db, 'chats', selectedChat, 'messages'), orderBy('timestamp', 'asc'));
+      const unsubscribe = onSnapshot(q, snapshot => {
+        const fetchedMessages = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as { id: string; content: string; sender: string }[];
+  
+        console.log(`Fetched messages for thread ${selectedChat}:`, fetchedMessages);
+        setChatMessages(prev => ({ ...prev, [selectedChat]: fetchedMessages }));
+      });
+      return () => unsubscribe();
+    }
+  }, [selectedChat]);  
+
+  const startNewChat = async (message: string) => {
+    if (!userId) {
+      console.log("startNewChat: No user ID found.");
+      return null;
+    }
+  
+    try {
+      console.log("Creating a new chat with message:", message);
+      const chatTitle = message.substring(0, 20); // Limit title length
+  
+      // Generate a thread ID for Firebase
+      const newChatRef = await addDoc(collection(db, 'chats'), {
+        userId,
+        title: chatTitle,
+        createdAt: Timestamp.now(),
+      });
+  
+      const threadID = newChatRef.id;
+      console.log("New chat created with ID:", threadID);
+  
+      setChats(prev => [{ id: threadID, title: chatTitle, date: new Date() }, ...prev]);
+      setSelectedChat(threadID);
+  
+      await sendMessage(threadID, message);
+  
+      return threadID;
+    } catch (error) {
+      console.error('Error creating new chat:', error);
+      return null;
     }
   };
+  
+  const sendMessage = async (threadID: string, message: string) => {
+    console.log(`Sending message to ChatGPT under thread: ${threadID}`);
+  
+    if (!userId || !threadID) {
+      console.log("sendMessage aborted: Missing user ID or thread ID.", { userId, threadID });
+      return;
+    }
+  
+    try {
+      console.log(`Storing message in Firestore under thread ${threadID}`);
+      const messageRef = collection(db, 'chats', threadID, 'messages');
+  
+      await addDoc(messageRef, {
+        role: 'user',
+        content: message,
+        sender: userId,
+        timestamp: Timestamp.now(),
+      });
+  
+      console.log("Message stored. Sending request to ChatGPT...");
+  
+      const response = await fetch(`${API_BASE_URL}/api/chats/${threadID}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threadID, userId, message }),
+      });
+  
+      console.log(`Response Status: ${response.status}`);
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`ChatGPT API request failed with status ${response.status}: ${errorText}`);
+      }
+  
+      const data = await response.json();
+      console.log("ChatGPT Response received:", data);
+  
+      if (data && data.botMessage) {
+        console.log(`Storing bot response under thread ${threadID}`);
+        await addDoc(messageRef, {
+          role: 'assistant',
+          content: data.botMessage,
+          sender: 'AI',
+          timestamp: Timestamp.now(),
+        });
+  
+        console.log("Bot response stored successfully.");
+        
+        setChatMessages(prev => ({
+          ...prev,
+          [threadID]: [...(prev[threadID] || []), { id: Date.now().toString() + "_bot", content: data.botMessage, sender: "AI" }],
+        }));
+      } else {
+        console.warn("ChatGPT response is missing 'botMessage'", data);
+      }
+  
+      setMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };  
 
+  const handleSendMessage = async () => {
+    if (!message.trim()) {
+      console.log("No message entered.");
+      return;
+    }
+  
+    let threadID = selectedChat;
+    
+    if (!threadID) {
+      console.log("No chat selected, starting a new chat.");
+      threadID = await startNewChat(message);
+      if (!threadID) {
+        console.error("Failed to create a new chat.");
+        return;
+      }
+      setSelectedChat(threadID);
+    }
+  
+    await sendMessage(threadID, message);
+  };
+  
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.background}>
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={{ flex: 1 }}>
               {chatListVisible ? (
-                <ChatListScreen chats={chats} onSelectChat={selectChat} onClose={closeChatList} />
+                <ChatListScreen chats={chats} onSelectChat={setSelectedChat} onClose={() => setChatListVisible(false)} />
               ) : (
                 <>
                   <View style={styles.topBarContainer}>
-                    <TouchableOpacity style={styles.newChatContainer} onPress={openChatList}>
-                      <Text style={styles.newChatText}> {selectedChat ? selectedChat : 'New Chat'} </Text>
-                      <MaterialCommunityIcons name="chevron-down" size={20} color={colors.secondary}/>
+                  <TouchableOpacity style={styles.newChatContainer} onPress={() => {
+                    setSelectedChat(null);
+                    setChatListVisible(true);
+                  }}>
+                    <Text style={styles.newChatText}>{selectedChat ? chats.find(c => c.id === selectedChat)?.title : 'New Chat'}</Text>
+                      <MaterialCommunityIcons name="chevron-down" size={20} color={colors.secondary} />
                     </TouchableOpacity>
-
-                    <View style={{ flexDirection: 'row', marginRight: 16 }}>
-                      <TouchableOpacity style={{ marginRight: 8 }} onPress={() => Alert.alert('New Chat Button Pressed')}>
-                        <MaterialCommunityIcons name="square-edit-outline" size={30} color={colors.primary}/>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                        <Ionicons name="close" size={30} color={colors.primary} />
-                      </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                      <Ionicons name="close" size={30} color={colors.primary} />
+                    </TouchableOpacity>
                   </View>
-                  
-
-                  <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-                    <View style={styles.bottomBlock}>
-                      <View style={styles.iconContainer}>
-                        <MaterialCommunityIcons name="bird" size={30} color={colors.text}/>
+                  <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 10, paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
+                    {selectedChat ? (
+                      chatMessages[selectedChat]?.map((msg) => (
+                        <View key={msg.id} style={[styles.chatBubble, msg.sender === "user" ? styles.userBubble : styles.aiBubble]}>
+                          <Text style={styles.chatText}>{msg.content}</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <View style={styles.homeScreen}>
+                        <Text style={styles.heading}>Hi Jodi, I’m Robin! Tweet Tweet!</Text>
+                        <Text style={styles.subHeading}>How can I help you?</Text>
+                        <Text style={styles.suggestionsHeading}>Suggestions</Text>
+                        <ChatQuestion title="What does a Robin eat?" onPress={() => startNewChat("What does a Robin eat?")} />
+                        <ChatQuestion title="Tell me about a Robin's life cycle." onPress={() => startNewChat("Tell me about a Robin's life cycle.")} />
+                        <ChatQuestion title="What is the most common region to find a Robin?" onPress={() => startNewChat("What is the most common region to find a Robin?")} />
+                        <ChatQuestion title="What are some species similar to Robins?" onPress={() => startNewChat("What are some species similar to Robins?")} />
                       </View>
-
-                      <Text style={styles.heading}>Hi Jodi, I’m Robin! Tweet Tweet!</Text>
-                      <Text style={styles.subHeading}>How can I help you?</Text>
-
-                      <Text style={styles.suggestionsHeading}>Suggestions</Text>
-                      <ChatQuestion title="What does a Robin eat?" onPress={() => Alert.alert('Question Button Pressed')}/>
-                      <ChatQuestion title="Tell me about a Robin's life cycle." onPress={() => Alert.alert('Question Button Pressed')}/>
-                      <ChatQuestion title="What is the most common region to find a Robin?" onPress={() => Alert.alert('Question Button Pressed')}/>
-                      <ChatQuestion title="What are some species similar to Robins?" onPress={() => Alert.alert('Question Button Pressed')}/>
-
-                      <View style={styles.inputContainer}>
-                        <TextInput
-                          style={styles.inputField}
-                          selectionColor={colors.primary}
-                          placeholder="Ask me about birds or select a question..."
-                          placeholderTextColor={colors.accent}
-                        />
-                        <TouchableOpacity style={styles.arrowButton} onPress={() => Alert.alert('Send Button Pressed')}>
-                          <Ionicons name="arrow-up" size={25} color={colors.primary} />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
+                    )}
                   </ScrollView>
+                    <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.inputField}
+                      placeholder="Ask me about birds..."
+                      placeholderTextColor={colors.accent}
+                      value={message}
+                      onChangeText={setMessage}
+                      onSubmitEditing={(event) => {
+                        console.log("TextInput submit event triggered:", event.nativeEvent.text);
+                        handleSendMessage();
+                      }}
+                      blurOnSubmit={false}
+                    />
+                      <TouchableOpacity style={styles.arrowButton} onPress={handleSendMessage}>
+                        <Ionicons name="arrow-up" size={25} color={colors.primary} />
+                      </TouchableOpacity>
+                    </View>
                 </>
               )}
             </View>
@@ -392,6 +531,32 @@ const styles = StyleSheet.create({
     fontWeight: 500,
     color: colors.offwhite,
   },
+  chatBubble: {
+    maxWidth: "80%",
+    padding: 10,
+    borderRadius: 15,
+    marginVertical: 5,
+    alignSelf: "flex-start",
+  },
+  userBubble: {
+    backgroundColor: colors.primary,
+    alignSelf: "flex-end",
+  },
+  
+  aiBubble: {
+    backgroundColor: colors.secondary,
+    alignSelf: "flex-start",
+  },
+  chatText: {
+    fontFamily: "Radio Canada",
+    fontSize: 14,
+    color: colors.white,
+  },
+  homeScreen: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },  
 });
 
 export default ChatModal;
