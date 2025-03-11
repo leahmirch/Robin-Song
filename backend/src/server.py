@@ -56,6 +56,10 @@ def terminate_process_and_children(proc_pid):
 def adjust_floor(current_thresh, observed_power, alpha=0.9):
     return alpha * current_thresh + (1 - alpha) * observed_power
 
+# ======================
+# New Web Scraping Endpoints
+# ======================
+
 @app.route('/bird-info', methods=['GET'])
 def get_bird_info():
     """
@@ -116,7 +120,129 @@ def scrape_bird_info():
                     elif "src" in img_tag.attrs:
                         image_url = img_tag["src"]
 
-        
+        # Extract feeding behavior
+        feeding_elem = soup.find("div", class_="bird_info_item info_feeding")
+        feeding_text = (
+            feeding_elem.find("div", class_="content").get_text(strip=True)
+            if feeding_elem else "No feeding info available."
+        )
+
+        # Extract diet information
+        diet_elem = soup.find("div", class_="bird_info_item info_diet")
+        diet_text = (
+            diet_elem.find("div", class_="content").get_text(strip=True)
+            if diet_elem else "No diet info available."
+        )
+
+        # Extract scientific name (subtitle)
+        subtitle_elem = soup.find("div", class_="subtitle")
+        subtitle_text = subtitle_elem.get_text(strip=True) if subtitle_elem else ""
+
+        # Extract size information
+        size_elem = soup.find("div", class_="tax-item icons_dictionary_before size_icon")
+        size_text = (
+            size_elem.find("div", class_="tax-value").get_text(strip=True)
+            if size_elem else "No size info available."
+        )
+
+        # Extract color information
+        color_elem = soup.find("div", class_="tax-item icons_dictionary_before eye_icon")
+        color_text = (
+            color_elem.find("div", class_="tax-value").get_text(strip=True)
+            if color_elem else "No color info available."
+        )
+
+        # Extract wing shape
+        wing_elem = soup.find("div", class_="tax-item icons_dictionary_before binoculars_icon")
+        wing_text = (
+            wing_elem.find("div", class_="tax-value").get_text(strip=True)
+            if wing_elem else "No wing shape info available."
+        )
+
+        # Extract tail shape
+        tail_elem = soup.find("div", class_="tax-item icons_dictionary_before tail_icon")
+        tail_text = (
+            tail_elem.find("div", class_="tax-value").get_text(strip=True)
+            if tail_elem else "No tail shape info available."
+        )
+
+        # Extract migration text
+        migration_elem = soup.find("div", class_="bird_info_item info_migration")
+        migration_text = (
+            migration_elem.find("div", class_="content").get_text(strip=True)
+            if migration_elem else "No migration info available."
+        )
+
+        # -------------------------------------------
+        # Now, the migration map extraction with debug prints:
+        migration_map_url = ""
+        # We expect a <div class="bird-rangemap"> based on your HTML
+        rangemap_div = soup.find("div", class_="bird-rangemap")
+        if rangemap_div:
+            print("\nDEBUG: Found .bird-rangemap:\n", rangemap_div.prettify())
+            picture_tag = rangemap_div.find("picture")
+            if picture_tag:
+                print("DEBUG: Found <picture> in bird-rangemap:\n", picture_tag.prettify())
+                # Try <img> first
+                img_tag = picture_tag.find("img")
+                if img_tag:
+                    print("DEBUG: Found <img> in <picture>:", img_tag)
+                    if "data-srcset" in img_tag.attrs:
+                        migration_map_url = img_tag["data-srcset"].split(" ")[0]
+                        print("DEBUG: Using <img> data-srcset ->", migration_map_url)
+                    elif "srcset" in img_tag.attrs:
+                        migration_map_url = img_tag["srcset"].split(" ")[0]
+                        print("DEBUG: Using <img> srcset ->", migration_map_url)
+                    elif "src" in img_tag.attrs:
+                        migration_map_url = img_tag["src"]
+                        print("DEBUG: Using <img> src ->", migration_map_url)
+                    else:
+                        print("DEBUG: <img> has no data-srcset, srcset, or src")
+                else:
+                    source_tags = picture_tag.find_all("source")
+                    if source_tags:
+                        print("DEBUG: Found <source> tags:", source_tags)
+                        for source_tag in source_tags:
+                            if "data-srcset" in source_tag.attrs:
+                                migration_map_url = source_tag["data-srcset"].split(" ")[0]
+                                print("DEBUG: Using <source> data-srcset ->", migration_map_url)
+                                break
+                            elif "srcset" in source_tag.attrs:
+                                migration_map_url = source_tag["srcset"].split(" ")[0]
+                                print("DEBUG: Using <source> srcset ->", migration_map_url)
+                                break
+                            elif "src" in source_tag.attrs:
+                                migration_map_url = source_tag["src"]
+                                print("DEBUG: Using <source> src ->", migration_map_url)
+                                break
+                    else:
+                        print("DEBUG: No <source> or <img> found in <picture>.")
+            else:
+                print("DEBUG: No <picture> found in .bird-rangemap")
+        else:
+            print("DEBUG: No .bird-rangemap found in HTML")
+        # -------------------------------------------
+
+        return jsonify({
+            "description": description_text,
+            "at_a_glance": at_a_glance_text,
+            "habitat": habitat_text,
+            "image_url": image_url,
+            "feeding_behavior": feeding_text,
+            "diet": diet_text,
+            "scientific_name": subtitle_text,
+            "size": size_text,
+            "color": color_text,
+            "wing_shape": wing_text,
+            "tail_shape": tail_text,
+            "migration_text": migration_text,
+            "migration_map_url": migration_map_url
+        })
+    except Exception as e:
+        return jsonify({"error": f"Error scraping bird info: {str(e)}"}), 500
+
+
+
 # ======================
 # Existing Endpoints (e.g., /upload, /register, /login, etc.)
 # ======================
@@ -184,42 +310,6 @@ def upload():
             "message": "File processed successfully",
             "birds": birds
         })
-
-@app.route('/start-detection', methods=['POST'])
-def start_detection():
-    global is_running, process
-    if not is_running:
-        try:
-            process = subprocess.Popen(["python", "detect_birds.py"])
-            is_running = True
-            print("Detection started.")
-            return jsonify({"message": "Bird detection started"})
-        except Exception as e:
-            print(f"Error starting detection: {str(e)}")
-            return jsonify({"message": f"Error starting detection: {str(e)}"}), 500
-    else:
-        return jsonify({"message": "Bird detection is already running"}), 400
-
-@app.route('/stop-detection', methods=['POST'])
-def stop_detection():
-    global is_running, process
-    if is_running and process:
-        try:
-            terminate_process_and_children(process.pid)
-            process = None
-            is_running = False
-            print("Detection stopped.")
-            return jsonify({"message": "Bird detection stopped"})
-        except Exception as e:
-            print(f"Error stopping detection: {str(e)}")
-            return jsonify({"message": f"Error stopping detection: {str(e)}"}), 500
-    else:
-        return jsonify({"message": "Bird detection is not running"}), 400
-
-@app.route('/status', methods=['GET'])
-def status():
-    global is_running
-    return jsonify({"running": is_running})
 
 @app.route('/register', methods=['POST'])
 def register():
