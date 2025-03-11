@@ -311,6 +311,42 @@ def upload():
             "birds": birds
         })
 
+@app.route('/start-detection', methods=['POST'])
+def start_detection():
+    global is_running, process
+    if not is_running:
+        try:
+            process = subprocess.Popen(["python", "detect_birds.py"])
+            is_running = True
+            print("Detection started.")
+            return jsonify({"message": "Bird detection started"})
+        except Exception as e:
+            print(f"Error starting detection: {str(e)}")
+            return jsonify({"message": f"Error starting detection: {str(e)}"}), 500
+    else:
+        return jsonify({"message": "Bird detection is already running"}), 400
+
+@app.route('/stop-detection', methods=['POST'])
+def stop_detection():
+    global is_running, process
+    if is_running and process:
+        try:
+            terminate_process_and_children(process.pid)
+            process = None
+            is_running = False
+            print("Detection stopped.")
+            return jsonify({"message": "Bird detection stopped"})
+        except Exception as e:
+            print(f"Error stopping detection: {str(e)}")
+            return jsonify({"message": f"Error stopping detection: {str(e)}"}), 500
+    else:
+        return jsonify({"message": "Bird detection is not running"}), 400
+
+@app.route('/status', methods=['GET'])
+def status():
+    global is_running
+    return jsonify({"running": is_running})
+
 @app.route('/register', methods=['POST'])
 def register():
     try:
