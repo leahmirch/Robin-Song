@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { 
   View,
   Text, 
@@ -6,7 +6,6 @@ import {
   Switch, 
   TouchableOpacity,
   LayoutAnimation,
-  Animated,
   Platform,
   UIManager,
 } from 'react-native';
@@ -20,31 +19,16 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 interface ToggleProps {
   title: string;
   startIcon: string;
-  initialValue?: boolean;
+  value: boolean;
   description?: string;
-  onToggle?: (value: boolean) => void;
+  onToggle: (value: boolean) => void;
 }
 
-const Toggle: React.FC<ToggleProps> = ({ title, startIcon, initialValue = false, description, onToggle }) => {
-  const [isToggled, setIsToggled] = useState(initialValue);
+const Toggle: React.FC<ToggleProps> = ({ title, startIcon, value, description, onToggle }) => {
   const [showDescription, setShowDescription] = useState(false);
-  const expandAnim = useRef(new Animated.Value(0)).current;
-
-  const handleToggle = (value: boolean) => {
-    setIsToggled(value);
-    if (onToggle) {
-      onToggle(value);
-    }
-  };
 
   const toggleDescription = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-  
-    Animated.timing(expandAnim, {
-      toValue: isToggled ? 0 : 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
     setShowDescription(!showDescription);
   };
 
@@ -60,27 +44,29 @@ const Toggle: React.FC<ToggleProps> = ({ title, startIcon, initialValue = false,
         <Text style={styles.title}>{title}</Text>
         <View style={styles.toggleContainer}>
           <Switch
-            value={isToggled}
-            onValueChange={handleToggle}
+            value={value}
+            onValueChange={onToggle}
             thumbColor={colors.bottomnav}
             trackColor={{ true: colors.secondary, false: colors.bottomnav }}
           />
         </View>
       </View>
-      <TouchableOpacity style={styles.infoBox} onPress={toggleDescription}>
-        <MaterialCommunityIcons
+      {description ? (
+        <TouchableOpacity style={styles.infoBox} onPress={toggleDescription}>
+          <MaterialCommunityIcons
             name="information-outline"
             size={24}
             color={colors.accent}
             style={styles.iconStart}
           />
-        <Text style={styles.infoText}>What is this?</Text>
-      </TouchableOpacity>
-      {showDescription && (
+          <Text style={styles.infoText}>What is this?</Text>
+        </TouchableOpacity>
+      ) : null}
+      {showDescription && description ? (
         <View style={styles.descriptionContainer}>
           <Text style={styles.descriptionText}>{description}</Text>
         </View>
-      )}
+      ) : null}
     </View>
   );
 };
@@ -118,11 +104,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  toggleText: {
-    marginLeft: 10,
-    fontSize: 16,
-    color: colors.text,
-  },
   infoBox: {
     flexDirection: "row",
     paddingLeft: 15,
@@ -135,9 +116,8 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
   descriptionContainer: {
-    padding: 10,
-    backgroundColor: colors.background,
-    borderRadius: 5,
+    paddingHorizontal: 15,
+    paddingBottom: 15,
   },
   descriptionText: {
     fontSize: 14,

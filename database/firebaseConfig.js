@@ -11,9 +11,9 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
-const LOCAL_SERVER_IP = "192.168.0.3";  
+const LOCAL_SERVER_IP = "192.168.1.108";  
 const API_BASE_URL = Platform.OS === "ios" 
-  ? "http://192.168.0.3:5000" 
+  ? "http://192.168.1.108:5000" 
   : Platform.OS === "android" 
     ? "http://10.0.2.2:5000" 
     : "http://localhost:5000";

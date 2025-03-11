@@ -1,319 +1,490 @@
-import React, { useState, useEffect } from "react";
-import { SafeAreaView, View,  Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import {SafeAreaView, View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, Alert} from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
-import { db } from "../../database/firebaseConfig";
 import axios from "axios";
 import colors from "frontend/assets/theme/colors";
 import Card from "../components/Card";
-import Constants from 'expo-constants';
+import Constants from "expo-constants";
+import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from "expo-av";
+import * as Location from "expo-location";
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "../../database/firebaseConfig";
 
-// Unsplash API Key; access key from environment variables
-const UNSPLASH_ACCESS_KEY =
-  process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY ||
-  Constants.expoConfig?.extra?.UNSPLASH_ACCESS_KEY;
 
-console.log('Unsplash API Key:', UNSPLASH_ACCESS_KEY);
-  
 interface BirdData {
-  bird: string;
-  latitude: number;
-  longitude: number;
-  timestamp: Date;
+ bird: string;
+ latitude: number;
+ longitude: number;
+ timestamp: Date;
+}
+
+
+interface UploadResponse {
+ birds: string[];
+ message: string;
+}
+
+interface BirdInfo {
+ description: string;
+ at_a_glance: string;
+ habitat: string;
+ image_url: string;
+ feeding_behavior: string;
+ diet: string;
+ scientific_name: string;
+ size?: string;      
+ color?: string;     
+ wing_shape?: string;
+ tail_shape?: string;
+ migration_text?: string;
+ migration_map_url?: string;
 }
 
 const IdentifyScreen: React.FC = () => {
-  const [latestBird, setLatestBird] = useState<BirdData | null>(null);
-  const [birdImage, setBirdImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [detectionStatus, setDetectionStatus] = useState("Not Identifying Birds");
+ const [latestBird, setLatestBird] = useState<BirdData | null>(null);
+ const [birdInfo, setBirdInfo] = useState<BirdInfo | null>(null);
+ const [birdImage, setBirdImage] = useState<string | null>(null);
+ const [loading, setLoading] = useState(false);
+ const [isDetecting, setIsDetecting] = useState(false);
+ const [detectionStatus, setDetectionStatus] = useState("Not Identifying Birds");
+ const [latitude, setLatitude] = useState<number | null>(null);
+ const [longitude, setLongitude] = useState<number | null>(null);
+ const recordingRef = useRef<Audio.Recording | null>(null);
 
-  useEffect(() => {
-    // Fetch the latest bird data
-    const birdsCollection = collection(db, "birds");
-    const q = query(birdsCollection, orderBy("timestamp", "desc"), limit(1));
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const birdData: BirdData = {
-          bird: doc.data().bird,
-          latitude: doc.data().latitude,
-          longitude: doc.data().longitude,
-          timestamp: doc.data().timestamp.toDate(),
-        };
-        setLatestBird(birdData);
+ useEffect(() => {
+   const fetchLastBird = async () => {
+     try {
+       const birdsRef = collection(db, "birds");
+       const q = query(birdsRef, orderBy("timestamp", "desc"), limit(1));
+       const querySnap = await getDocs(q);
+       if (!querySnap.empty) {
+         const doc = querySnap.docs[0];
+         const data = doc.data();
+         const docTimestamp = data.timestamp ? data.timestamp.toDate() : new Date();
+         setLatestBird({
+           bird: data.bird,
+           latitude: data.latitude || 0,
+           longitude: data.longitude || 0,
+           timestamp: docTimestamp,
+         });
+         await fetchBirdInfo(data.bird);
+       }
+     } catch (err) {
+       console.error("Error fetching last bird from Firestore:", err);
+     }
+   };
+   fetchLastBird();
+ }, []);
 
-        // Fetch bird image
-        await fetchBirdImage(birdData.bird);
-      }
-    });
+ useEffect(() => {
+   const fetchInitialLocation = async () => {
+     try {
+       let { status } = await Location.requestForegroundPermissionsAsync();
+       if (status !== "granted") {
+         Alert.alert("Permission required", "Enable location access for detection logs.");
+         return;
+       }
+       let loc = await Location.getCurrentPositionAsync({});
+       if (loc?.coords) {
+         setLatitude(loc.coords.latitude);
+         setLongitude(loc.coords.longitude);
+       }
+     } catch (err) {
+       console.error("Error fetching location:", err);
+     }
+   };
+   fetchInitialLocation();
+ }, []);
 
-    return () => unsubscribe();
-  }, []);
+ const fetchBirdInfo = async (birdName: string) => {
+   setLoading(true);
+   try {
+     const urlResponse = await axios.get<{ name: string; url: string }>(
+       "http://192.168.1.108:5000/bird-info",
+       { params: { bird: birdName } }
+     );
+     const birdUrl = urlResponse.data.url;
 
-  const fetchBirdImage = async (birdName: string) => {
-  setLoading(true);
-  try {
-    console.log('Fetching bird image with API Key:', UNSPLASH_ACCESS_KEY);
+     const scrapeResponse = await axios.get<BirdInfo>(
+       "http://192.168.1.108:5000/scrape-bird-info",
+       { params: { url: birdUrl } }
+     );
+     setBirdInfo(scrapeResponse.data);
+     setBirdImage(scrapeResponse.data.image_url);
+   } catch (error) {
+     console.error("Error fetching bird info:", error);
+     setBirdInfo(null);
+     setBirdImage(null);
+   } finally {
+     setLoading(false);
+   }
+ };
 
-  
-    const response = await axios.get<{
-      results: { urls: { small: string } }[];
-    }>("https://api.unsplash.com/search/photos", {
-      params: {
-        query: birdName,
-        per_page: 1,
-      },
-      headers: {
-        Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`,
-      },
-    });
-      const images = response.data.results;
-      setBirdImage(images.length > 0 ? images[0].urls.small : null);
-    } catch (error) {
-      console.error("Error fetching bird image:", error);
-      setBirdImage(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+ const startRecording = async () => {
+   try {
+     const { status } = await Audio.requestPermissionsAsync();
+     if (status !== "granted") {
+       Alert.alert("Permission required", "Enable microphone access in settings.");
+       return;
+     }
+     await Audio.setAudioModeAsync({
+       allowsRecordingIOS: true,
+       playsInSilentModeIOS: true,
+       interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+       shouldDuckAndroid: true,
+       interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+     });
+     const { recording } = await Audio.Recording.createAsync(
+       Audio.RecordingOptionsPresets.HIGH_QUALITY
+     );
+     recordingRef.current = recording;
+   } catch (error) {
+     console.error("Error starting recording:", error);
+   }
+ };
 
-    // Toggle detection state and trigger backend
-    const toggleDetection = async () => {
-      try {
-        setIsDetecting((prev) => !prev);
-        if (!isDetecting) {
-          setDetectionStatus("Identifying Birds");
-          // Start detection
-          await axios.post("http://127.0.0.1:5000/start-detection");
-        } else {
-          setDetectionStatus("Not Identifying Birds");
-          // Stop detection
-          await axios.post("http://127.0.0.1:5000/stop-detection");
-        }
-      } catch (error) {
-        console.error("Error toggling detection:", error);
-      }
-    };
+ const stopRecordingAndUpload = async () => {
+   if (!recordingRef.current) return;
+   try {
+     await recordingRef.current.stopAndUnloadAsync();
+     const uri = recordingRef.current.getURI();
+     if (uri) {
+       const formData = new FormData();
+       formData.append("file", {
+         uri,
+         name: "recording.wav",
+         type: "audio/wav",
+       } as any);
+       formData.append("latitude", String(latitude ?? 0));
+       formData.append("longitude", String(longitude ?? 0));
+       const response = await axios.post<UploadResponse>(
+         "http://192.168.1.108:5000/upload",
+         formData,
+         { headers: { "Content-Type": "multipart/form-data" } }
+       );
+       if (isDetecting && response.data.birds?.length) {
+         for (const bird of response.data.birds) {
+           console.log(`Detected: ${bird}`);
+           setLatestBird({
+             bird,
+             latitude: latitude ?? 0,
+             longitude: longitude ?? 0,
+             timestamp: new Date(),
+           });
+           await fetchBirdInfo(bird);
+         }
+       }
+     }
+   } catch (error) {
+     console.error("Error uploading audio:", error);
+   } finally {
+     recordingRef.current = null;
+     await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+   }
+ };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* <Text style={styles.title}>Identification</Text> */}
+ useEffect(() => {
+   let intervalId: NodeJS.Timeout | null = null;
+   const startDetectionCycle = async () => {
+     console.log("Detection started.");
+     setDetectionStatus("Identifying Birds");
+     await startRecording();
+     intervalId = setInterval(async () => {
+       if (!isDetecting) return;
+       await stopRecordingAndUpload();
+       if (isDetecting) {
+         await startRecording();
+       }
+     }, 3000);
+   };
 
-        {/* Status Badges with Central Button */}
-        <View style={styles.statusContainer}>
-          <Card style={styles.badge}>
-            <Text style={styles.badgeDate}></Text>
-            <Text style={styles.badgeText}>{detectionStatus}</Text>
-            <Text style={styles.badgeDate}></Text>
-          </Card>
+   if (isDetecting) {
+     startDetectionCycle();
+   } else {
+     console.log("Detection stopped.");
+     setDetectionStatus("Not Identifying Birds");
+     if (intervalId) clearInterval(intervalId);
+     stopRecordingAndUpload();
+   }
 
-          <TouchableOpacity
-            style={styles.listeningButton}
-            onPress={toggleDetection}
-          >
-            <MaterialCommunityIcons
-              name={isDetecting ? "microphone" : "microphone-off"}
-              size={36}
-              color={colors.card}
-            />
-          </TouchableOpacity>
+   return () => {
+     if (intervalId) clearInterval(intervalId);
+   };
+ }, [isDetecting]);
 
-          <Card style={styles.badge}>
-            <Text style={styles.badgeText}>Bird Last Identified On</Text>
-            <Text style={styles.badgeDate}>
-              {latestBird
-                ? latestBird.timestamp.toLocaleString()
-                : "No bird detected yet"}
-            </Text>
-          </Card>
-        </View>
 
-        {/* Species Name */}
+ const toggleDetection = () => {
+   setIsDetecting((prev) => !prev);
+ };
 
-        <Text style={styles.speciesName}>
-          {latestBird ? latestBird.bird : "American Robin"}
-        </Text>
-        <Text style={styles.speciesLatin}>
-          {latestBird ? "Dynamic Bird Info" : "Turdus Migratorius"}
-        </Text>
+ return (
+   <SafeAreaView style={styles.container}>
+     <ScrollView contentContainerStyle={styles.scrollContainer}>
+       <View style={styles.statusContainer}>
+         <Card style={styles.badge}>
+           <Text style={styles.badgeDate}></Text>
+           <Text style={styles.badgeText}>{detectionStatus}</Text>
+           <Text style={styles.badgeDate}></Text>
+         </Card>
+         <TouchableOpacity style={styles.listeningButton} onPress={toggleDetection}>
+           <MaterialCommunityIcons
+             name={isDetecting ? "microphone" : "microphone-off"}
+             size={36}
+             color={colors.card}
+           />
+         </TouchableOpacity>
+         <Card style={styles.badge}>
+           <Text style={styles.badgeText}>Bird Last Identified On</Text>
+           <Text style={styles.badgeDate}>
+             {latestBird ? latestBird.timestamp.toLocaleString() : "No bird detected yet"}
+           </Text>
+         </Card>
+       </View>
 
-        {/* Robin Image */}
-        <View style={styles.robinContainer}>
-          {loading ? (
-            <ActivityIndicator size="large" color={colors.primary} />
-          ) : birdImage ? (
-            <Image source={{ uri: birdImage }} style={styles.robinImage} />
-          ) : (
-            <Text style={styles.sectionText}>No image available.</Text>
-          )}
-        </View>
+       <Text style={styles.speciesName}>
+         {latestBird ? latestBird.bird : "No Bird Found Yet"}
+       </Text>
+       <Text style={styles.speciesLatin}>
+         {birdInfo?.scientific_name || ""}
+       </Text>
 
-        {/* Sections with Lines */}
-        <View>
-          <Text style={styles.sectionHeading}>Physical Description</Text>
-          <Text style={styles.sectionText}>
 
-            American Robins are fairly large songbirds with a large, round body,
-            long legs, and fairly long tail. Robins are the largest North
-            American thrushes, and their profile offers a good chance to learn
-            the basic shape of most thrushes. Robins make a good reference point
-            for comparing the size and shape of other birds, too. American
-            Robins are gray-brown birds with warm orange underparts and dark
-            heads. In light, a white patch on the lower belly and under the tail
-            can be conspicuous. Compared with males, females have paler heads
-            that contrast less with the gray back.
+       <View style={styles.robinContainer}>
+         {loading ? (
+           <ActivityIndicator size="large" color={colors.primary} />
+         ) : birdImage ? (
+           <Image source={{ uri: birdImage }} style={styles.robinImage} />
+         ) : (
+           <Text style={styles.sectionText}>No image available.</Text>
+         )}
+       </View>
 
-            American Robins are fairly large songbirds with a large, round body, long legs, and fairly long tail. Robins are the largest North American thrushes, and their profile offers a good chance to learn the basic shape of most thrushes. Robins make a good reference point for comparing the size and shape of other birds, too. American Robins are gray-brown birds with warm orange underparts and dark heads. In light, a white patch on the lower belly and under the tail can be conspicuous. Compared with males, females have paler heads that contrast less with the gray back.
+       <View>
+         <Text style={styles.sectionHeading}>Description</Text>
+         <View style={styles.combinedContainer}>
+           {/* Main descriptive paragraph */}
+           <Text style={styles.sectionText}>
+             {birdInfo?.description || "No description available."}
+           </Text>
 
-          </Text>
-        </View>
-        <View style={styles.separator} />
+           {/* Example: Size */}
+           {birdInfo?.size && (
+             <View style={styles.iconRow}>
+               <MaterialCommunityIcons name="ruler-square" size={20} color={colors.secondary} />
+               <Text style={styles.iconText}> {birdInfo.size}</Text>
+             </View>
+           )}
 
-        <View>
-          <Text style={styles.sectionHeading}>Overview</Text>
-          <Text style={styles.sectionText}>
+           {/* Example: Color */}
+           {birdInfo?.color && (
+             <View style={styles.iconRow}>
+               <MaterialCommunityIcons name="palette" size={20} color={colors.secondary} />
+               <Text style={styles.iconText}> {birdInfo.color}</Text>
+             </View>
+           )}
 
-            A very familiar bird over most of North America, running and
-            hopping on lawns with upright stance, often nesting on porches and
-            windowsills. The Robin's rich caroling is among the earliest bird
-            songs heard at dawn in spring and summer, often beginning just
-            before first light. In fall and winter, robins may gather by the
-            hundreds in roaming flocks, concentrating at sources of food.
 
-            A very familiar bird over most of North America, running and hopping on lawns with upright stance, often nesting on porches and windowsills. The Robin's rich caroling is among the earliest bird songs heard at dawn in spring and summer, often beginning just before first light. In fall and winter, robins may gather by the hundreds in roaming flocks, concentrating at sources of food.
+           {/* Example: Wing Shape */}
+           {birdInfo?.wing_shape && (
+             <View style={styles.iconRow}>
+               <MaterialCommunityIcons name="binoculars" size={20} color={colors.secondary} />
+               <Text style={styles.iconText}> {birdInfo.wing_shape}</Text>
+             </View>
+           )}
 
-          </Text>
-        </View>
-        <View style={styles.separator} />
+           {/* Example: Tail Shape */}
+           {birdInfo?.tail_shape && (
+             <View style={styles.iconRow}>
+               <MaterialCommunityIcons name="tailwind" size={20} color={colors.secondary} />
+               <Text style={styles.iconText}> {birdInfo.tail_shape}</Text>
+             </View>
+           )}
+         </View>
+       </View>
 
-        <View>
-          <Text style={styles.sectionHeading}>Habitat</Text>
-          <Text style={styles.sectionText}>
+       <View style={styles.separator} />
+       <View>
+         <Text style={styles.sectionHeading}>At a Glance</Text>
+         <Text style={styles.sectionText}>
+           {birdInfo?.at_a_glance || "No 'At a Glance' information available."}
+         </Text>
+       </View>
+       <View style={styles.separator} />
+       <View>
+         <Text style={styles.sectionHeading}>Habitat</Text>
+         <Text style={styles.sectionText}>
+           {birdInfo?.habitat || "No habitat information available."}
+         </Text>
+       </View>
+       <View style={styles.separator} />
+ <Text style={styles.sectionHeading}>Migration & Range</Text>
 
-            Cities, towns, lawns, farmland, forests; in winter, berry-bearing
-            trees. Over most of the continent, summers occur wherever there are
-            trees for nest sites and mud for nest material. In the arid
-            southwest, summers mainly occur in coniferous forests in mountains,
-            rarely in well-watered lowland suburbs. In winter, flocks gather in
-            wooded areas where trees or shrubs have good crops of berries.
 
-            Cities, towns, lawns, farmland, forests; in winter, berry-bearing trees. Over most of the continent, summers occur wherever there are trees for nest sites and mud for nest material. In the arid southwest, summers mainly occur in coniferous forests in mountains, rarely in well-watered lowland suburbs. In winter, flocks gather in wooded areas where trees or shrubs have good crops of berries.
+ {/* Migration text */}
+ <Text style={styles.sectionText}>
+   {birdInfo?.migration_text || "No migration info available."}
+ </Text>
 
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+
+ {/* Migration map image */}
+ <View style={styles.robinContainer}>
+ {loading ? (
+   <ActivityIndicator size="large" color={colors.primary} />
+ ) : birdInfo?.migration_map_url ? (
+   <Image
+     source={{ uri: birdInfo.migration_map_url }}
+     style={styles.migrationImage}
+   />
+ ) : (
+   <Text style={styles.sectionText}>No migration map available.</Text>
+ )}
+</View>
+
+
+<View style={styles.separator} />
+
+
+       <View>
+         <Text style={styles.sectionHeading}>Feeding Behavior</Text>
+         <Text style={styles.sectionText}>
+           {birdInfo?.feeding_behavior || "No feeding info available."}
+         </Text>
+       </View>
+       <View style={styles.separator} />
+
+
+       <View>
+         <Text style={styles.sectionHeading}>Diet</Text>
+         <Text style={styles.sectionText}>
+           {birdInfo?.diet || "No diet info available."}
+         </Text>
+       </View>
+       <View style={styles.separator} />
+     </ScrollView>
+   </SafeAreaView>
+ );
 };
 
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContainer: {
-    padding: 20,
-  },
-  title: {
-    fontFamily: "Caprasimo",
-    fontSize: 48,
-    color: colors.secondary,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  statusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  badge: {
-    width: "35%",
-    height: 110,
-    justifyContent: "center",
-    shadowRadius: 0,
-    elevation: 3, 
-    padding: 0,
-  },
-  badgeText: {
-    fontFamily: "Caprasimo",
-    fontSize: 16,
-    color: colors.primary,
-    textAlign: "center",
-  },
-  badgeDate: {
-    fontFamily: "Radio Canada",
-    fontSize: 12,
-    color: colors.text,
-    textAlign: "center",
-  },
-  listeningButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.accent,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  speciesName: {
-    fontFamily: "Caprasimo",
-    fontSize: 36,
-    color: colors.secondary,
-    textAlign: "center",
-    marginBottom: 5,
-  },
-  speciesLatin: {
-    fontFamily: "Radio Canada Italic",
-    fontSize: 20,
-    color: colors.text,
-    textAlign: "center",
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  robinContainer: {
-    alignItems: "center",
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  robinImage: {
-    width: 350,
-    height: 250,
-    borderRadius: 20,
-    borderWidth: 5,
-    borderColor: colors.primary,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  sectionText: {
-    fontFamily: "Radio Canada",
-    fontSize: 16,
-    color: colors.text,
-    textAlign: "left",
-    lineHeight: 24,
-  },
-  sectionHeading: {
-    fontFamily: "Caprasimo",
-    fontSize: 28,
-    color: colors.secondary,
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  separator: {
-    height: 2,
-    backgroundColor: colors.accent,
-    marginVertical: 10,
-  },
+ container: {
+   flex: 1,
+   backgroundColor: colors.background,
+ },
+ scrollContainer: {
+   padding: 20,
+ },
+ migrationImage: {
+   width: 300,
+   height: 200,
+   resizeMode: 'contain',
+   marginTop: 10,
+ },
+ statusContainer: {
+   flexDirection: "row",
+   alignItems: "center",
+   justifyContent: "space-between",
+   marginBottom: 20,
+ },
+ badge: {
+   width: "35%",
+   height: 110,
+   justifyContent: "center",
+   shadowRadius: 0,
+   elevation: 3,
+   padding: 0,
+ },
+ badgeText: {
+   fontFamily: "Caprasimo",
+   fontSize: 16,
+   color: colors.primary,
+   textAlign: "center",
+ },
+ badgeDate: {
+   fontFamily: "Radio Canada",
+   fontSize: 12,
+   color: colors.text,
+   textAlign: "center",
+ },
+ listeningButton: {
+   width: 80,
+   height: 80,
+   borderRadius: 40,
+   backgroundColor: colors.accent,
+   justifyContent: "center",
+   alignItems: "center",
+   shadowColor: "#000",
+   shadowOffset: { width: 0, height: 2 },
+   shadowOpacity: 0.2,
+   shadowRadius: 4,
+   elevation: 5,
+ },
+ speciesName: {
+   fontFamily: "Caprasimo",
+   fontSize: 36,
+   color: colors.secondary,
+   textAlign: "center",
+   marginBottom: 5,
+ },
+ speciesLatin: {
+   fontFamily: "Radio Canada Italic",
+   fontSize: 20,
+   color: colors.text,
+   textAlign: "center",
+   fontWeight: "bold",
+   marginBottom: 20,
+ },
+ robinContainer: {
+   alignItems: "center",
+   justifyContent: "center",
+   marginBottom: 20,
+ },
+ robinImage: {
+   width: 350,
+   height: 250,
+   borderRadius: 20,
+   borderWidth: 5,
+   borderColor: colors.primary,
+   shadowColor: colors.black,
+   shadowOffset: { width: 0, height: 2 },
+   shadowOpacity: 0.2,
+   shadowRadius: 4,
+ },
+ sectionText: {
+   fontFamily: "Radio Canada",
+   fontSize: 16,
+   color: colors.text,
+   textAlign: "left",
+   lineHeight: 24,
+ },
+ sectionHeading: {
+   fontFamily: "Caprasimo",
+   fontSize: 28,
+   color: colors.secondary,
+   textAlign: "center",
+   marginBottom: 10,
+ },
+ separator: {
+   height: 2,
+   backgroundColor: colors.accent,
+   marginVertical: 10,
+ },
+ combinedContainer: {
+   marginTop: 10,
+ },
+ iconRow: {
+   flexDirection: "row",
+   alignItems: "center",
+   marginTop: 5,
+ },
+ iconText: {
+   fontFamily: "Radio Canada",
+   fontSize: 16,
+   color: colors.text,
+   marginLeft: 5,
+   lineHeight: 20,
+ },
 });
 
 export default IdentifyScreen;
