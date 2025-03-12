@@ -10,14 +10,12 @@ import * as Location from "expo-location";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "../../database/firebaseConfig";
 
-
 interface BirdData {
  bird: string;
  latitude: number;
  longitude: number;
  timestamp: Date;
 }
-
 
 interface UploadResponse {
  birds: string[];
@@ -50,7 +48,6 @@ const IdentifyScreen: React.FC = () => {
  const [latitude, setLatitude] = useState<number | null>(null);
  const [longitude, setLongitude] = useState<number | null>(null);
  const recordingRef = useRef<Audio.Recording | null>(null);
-
 
  useEffect(() => {
    const fetchLastBird = async () => {
@@ -213,7 +210,6 @@ const IdentifyScreen: React.FC = () => {
    };
  }, [isDetecting]);
 
-
  const toggleDetection = () => {
    setIsDetecting((prev) => !prev);
  };
@@ -320,12 +316,10 @@ const IdentifyScreen: React.FC = () => {
        <View style={styles.separator} />
  <Text style={styles.sectionHeading}>Migration & Range</Text>
 
-
  {/* Migration text */}
  <Text style={styles.sectionText}>
    {birdInfo?.migration_text || "No migration info available."}
  </Text>
-
 
  {/* Migration map image */}
  <View style={styles.robinContainer}>
@@ -341,10 +335,7 @@ const IdentifyScreen: React.FC = () => {
  )}
 </View>
 
-
 <View style={styles.separator} />
-
-
        <View>
          <Text style={styles.sectionHeading}>Feeding Behavior</Text>
          <Text style={styles.sectionText}>
@@ -352,7 +343,6 @@ const IdentifyScreen: React.FC = () => {
          </Text>
        </View>
        <View style={styles.separator} />
-
 
        <View>
          <Text style={styles.sectionHeading}>Diet</Text>
@@ -365,7 +355,6 @@ const IdentifyScreen: React.FC = () => {
    </SafeAreaView>
  );
 };
-
 
 const styles = StyleSheet.create({
  container: {

@@ -22,6 +22,7 @@ interface ButtonProps {
 const Button: React.FC<ButtonProps> = ({ title, onPress, variant = 'primary', style, textStyle, icon }) => {
   return (
     <TouchableOpacity
+      accessibilityRole='button'
       style={[
         styles.button,
         variant === 'primary' && styles.primary,

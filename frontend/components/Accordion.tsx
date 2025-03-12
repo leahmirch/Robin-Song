@@ -45,7 +45,14 @@ const Accordion: React.FC<AccordionProps> = ({ title, children, startIcon }) => 
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={toggleExpand} style={styles.header}>
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        accessibilityState={{ expanded }}
+        accessibilityHint={`Double tap to ${expanded ? 'collapse' : 'expand'} section`}
+        onPress={toggleExpand} 
+        style={styles.header}
+      >
         <MaterialCommunityIcons
               name={startIcon}
               size={24}

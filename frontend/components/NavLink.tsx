@@ -18,7 +18,11 @@ const NavLink: React.FC<NavLinkProps> = ({ text, targetTab, style, textStyle }) 
   };
 
   return (
-    <Pressable onPress={handlePress} style={style}>
+    <Pressable 
+      accessibilityRole='button'
+      onPress={handlePress} 
+      style={style}
+    >
       <Text style={[styles.linkText, textStyle]}>{text}</Text>
     </Pressable>
   );

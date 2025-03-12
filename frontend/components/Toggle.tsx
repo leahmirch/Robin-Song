@@ -35,15 +35,26 @@ const Toggle: React.FC<ToggleProps> = ({ title, startIcon, value, description, o
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <MaterialCommunityIcons
-          name={startIcon}
-          size={24}
-          color={colors.secondary}
-          style={styles.iconStart}
-        />
-        <Text style={styles.title}>{title}</Text>
+        <View accessible={true} style={{ flexDirection: 'row', flex: 1 }}>
+          <MaterialCommunityIcons
+            name={startIcon}
+            size={24}
+            color={colors.secondary}
+            style={styles.iconStart}
+          />
+          <Text
+            accessibilityLabel={`${title} Setting`}
+            style={styles.title}
+          >
+              {title}
+          </Text>
+        </View>
         <View style={styles.toggleContainer}>
           <Switch
+            accessible={true}
+            accessibilityRole='switch'
+            accessibilityState={{ checked: isToggled }}
+            accessibilityHint={`Double tap to ${isToggled ? 'disable' : 'enable'} ${title.replace(/^(Enable|Disable)\s+/i, '').toLowerCase()}`}
             value={value}
             onValueChange={onToggle}
             thumbColor={colors.bottomnav}
@@ -51,6 +62,15 @@ const Toggle: React.FC<ToggleProps> = ({ title, startIcon, value, description, o
           />
         </View>
       </View>
+      <TouchableOpacity
+        accessible={true}
+        accessibilityRole='button'
+        accessibilityLabel="Purpose of toggle"
+        accessibilityState={{ expanded: showDescription }}
+        accessibilityHint={`Double tap to ${showDescription ? 'collapse' : 'expand'} the description for this toggle button`}
+        style={styles.infoBox} 
+        onPress={toggleDescription}
+      >
       {description ? (
         <TouchableOpacity style={styles.infoBox} onPress={toggleDescription}>
           <MaterialCommunityIcons
@@ -59,6 +79,14 @@ const Toggle: React.FC<ToggleProps> = ({ title, startIcon, value, description, o
             color={colors.accent}
             style={styles.iconStart}
           />
+        <Text style={styles.infoText}>What is this?</Text>
+      </TouchableOpacity>
+      {showDescription && (
+        <View
+          accessibilityLabel={description}
+          accessibilityRole='text'
+          style={styles.descriptionContainer}
+        >
           <Text style={styles.infoText}>What is this?</Text>
         </TouchableOpacity>
       ) : null}

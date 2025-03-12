@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import colors from '../assets/theme/colors';
-import Card from '../components/Card';
 import Accordion from '../components/Accordion';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
@@ -41,11 +40,17 @@ const SettingsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Account</Text>
+        <Text accessibilityRole="header" style={styles.title}>Account</Text>
+
         <View style={styles.accountCard}>
           <View style={styles.leftSide}>
             <View style={styles.topRow}>
-              <Image source={require("../assets/img/robin.png")} style={styles.image} />
+              <Image
+                accessible={true}
+                accessibilityLabel='Account Profile Picture'
+                source={require("../assets/img/robin.png")}
+                style={styles.image}
+              />
             </View>
             <Text style={styles.label}>Email</Text>
             <Text style={styles.label}>Location</Text>
@@ -59,7 +64,8 @@ const SettingsScreen: React.FC = () => {
           </View>
         </View>
 
-        <Text style={styles.title}>Settings</Text>
+        <Text accessibilityRole="header" style={styles.title}>Settings</Text>
+        
         <Accordion title="Change Name" startIcon="account-edit-outline">
           <TextFormField
             label="Change First Name"
@@ -121,7 +127,7 @@ const SettingsScreen: React.FC = () => {
         />
 
         <Toggle
-          title="Enable Location for Predictions"
+          title="Enable Location for Forecast"
           startIcon="map-marker-outline"
           value={locationEnabled}
           onToggle={async (newValue) => {
