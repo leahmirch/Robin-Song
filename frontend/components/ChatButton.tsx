@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { TouchableOpacity, StyleSheet, ViewStyle, Image } from 'react-native';
 import { useNavigationState } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import colors from '../assets/theme/colors';
@@ -36,8 +36,8 @@ const ChatButton: React.FC<ChatButtonProps> = ({ onPress, position, hiddenScreen
       ]}
       onPress={onPress}
     >
-        <MaterialCommunityIcons name="bird" size={30} color={ colors.black } />
-    </TouchableOpacity>
+    <Image source={require('../assets/img/chatbotlogo.png')} style={styles.logoImage} />
+        </TouchableOpacity>
   );
 };
 
@@ -61,6 +61,11 @@ const styles = StyleSheet.create({
   text: {
     color: colors.text,
     fontWeight: 'bold',
+  },
+  logoImage: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
   },
 });
 

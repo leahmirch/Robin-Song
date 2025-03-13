@@ -31,8 +31,8 @@ const ChatQuestion: React.FC<ChatQuestionProps> = ({ title, onPress, style, text
 const styles = StyleSheet.create({
   button: {
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: colors.card,
+    paddingHorizontal: 8,
+    backgroundColor: '#C0483A',
     borderRadius: 20,
     justifyContent: 'center',
     marginVertical: 6,
@@ -43,9 +43,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonText: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'Radio Canada',
-    color: colors.text,
+    color: '#FFF8F4',
   },
 });
 

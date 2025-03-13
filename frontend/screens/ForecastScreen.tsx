@@ -26,8 +26,8 @@ interface HotspotResponse {
 
 const ForecastScreen: React.FC = () => {
   // Hardcoded for now
-  const userId = "CQsoyFEnAxWfG20BWvULv9hJSZa2"; 
-  const API_URL = "http://10.0.0.4:5000/get-hotspot";
+  const userId = "FsDwDpHUD6XQU3egNNCOJLCTiNg1";
+  const API_URL = "http://10.0.0.140:5000/get-hotspot";
 
   const [selectedValue, setSelectedValue] = useState<string>('American Robin');
   const [hotspot, setHotspot] = useState<HotspotResponse | null>(null);
@@ -178,10 +178,10 @@ const ForecastScreen: React.FC = () => {
               provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
               style={styles.map}
               initialRegion={{
-                latitude: hotspot.lat,
-                longitude: hotspot.lon,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
+                latitude: userCoords?.latitude ?? hotspot?.lat ?? 43.0125,
+                longitude: userCoords?.longitude ?? hotspot?.lon ?? -83.6875,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
               }}
               onPress={() => {
                 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${hotspot.lat},${hotspot.lon}`;

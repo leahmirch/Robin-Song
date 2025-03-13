@@ -19,6 +19,7 @@ from birdnetlib.analyzer import Analyzer
 import json
 from bs4 import BeautifulSoup
 import requests
+import openai
 
 
 app = Flask(__name__)
@@ -30,6 +31,10 @@ cred = credentials.Certificate(
 )
 initialize_app(cred)
 db = firestore.client()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+DEFAULT_USER_ID = "FsDwDpHUD6XQU3egNNCOJLCTiNg1"
 
 # BirdNET init
 analyzer = Analyzer()
@@ -367,11 +372,9 @@ def register():
         }
         db.collection("users").document(user.uid).set(user_data)
 
-        print(f"User registered successfully: {user.uid}")
         return jsonify({"message": "User registered successfully", "userId": user.uid})
 
     except Exception as e:
-        print(f"Error creating user: {str(e)}")
         return jsonify({"error": f"Error creating user: {str(e)}"}), 500
 
 
@@ -506,59 +509,167 @@ def get_user(user_id):
         return jsonify({"error": f"Error fetching user: {str(e)}"}), 500
 
 
-@app.route('/chats/<user_id>', methods=['GET'])
-def get_user_chats(user_id):
-    """Fetch all chats for a user."""
-    try:
-        chats = db.collection("chats").where("userId", "==", user_id).stream()
-        chat_list = [{"chatId": chat.id, **chat.to_dict()} for chat in chats]
-        return jsonify(chat_list)
-    except Exception as e:
-        return jsonify({"error": f"Error fetching chats: {str(e)}"}), 500
-
-
-@app.route('/chats', methods=['POST'])
+@app.route("/chats", methods=["POST"])
 def create_chat():
-    """Create a new chat for a user."""
+    """Create a new chat thread for the default user."""
     try:
         data = request.json
-        chat = {
-            "userId": data["userId"],
-            "title": data["title"],
-            "createdAt": firestore.SERVER_TIMESTAMP
+        title = data.get("title", "New Chat")
+
+        existing_chats = db.collection("chats").where("title", "==", title).where("userId", "==", DEFAULT_USER_ID).stream()
+        for chat in existing_chats:
+            return jsonify({"message": "Chat already exists", "chatId": chat.id})
+
+        chat_data = {
+            "userId": DEFAULT_USER_ID,
+            "title": title,
+            "createdAt": firestore.SERVER_TIMESTAMP,
         }
-        chat_ref = db.collection("chats").add(chat)
+        chat_ref = db.collection("chats").add(chat_data)
         return jsonify({"message": "Chat created", "chatId": chat_ref[1].id})
     except Exception as e:
         return jsonify({"error": f"Error creating chat: {str(e)}"}), 500
 
 
-@app.route('/chats/<chat_id>/messages', methods=['POST'])
-def add_message_to_chat(chat_id):
-    """Add a message to an existing chat."""
+@app.route("/chats/<chat_id>/message", methods=["POST"])
+def send_message_to_chat(chat_id):
+    """Send a user message to ChatGPT and store the conversation."""
     try:
         data = request.json
-        message = {
-            "content": data["content"],
-            "timestamp": firestore.SERVER_TIMESTAMP
-        }
+        user_message = data["message"]
+
         messages_ref = db.collection("chats").document(chat_id).collection("messages")
-        message_ref = messages_ref.add(message)
-        return jsonify({"message": "Message added", "messageId": message_ref[1].id})
+        messages_ref.add({
+            "content": user_message,
+            "role": "user",
+            "sender": DEFAULT_USER_ID,
+            "timestamp": firestore.SERVER_TIMESTAMP
+        })
+
+        system_prompt = (
+            "You are a birdwatching assistant answering with enthusiasm! You are roleplaying as the bird the user is asking about. "
+            "Keep your responses strictly 1-2 sentences long. Be concise but informative. "
+            "Do not tell the user that you are roleplaying or that you are pretending to be a bird. "
+            "Answer questions that are only related to birds. "
+            "If a question is outside bird-related topics, respond politely, mentioning that you only answer bird-related questions."
+        )
+
+        example_messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": "Are you a territorial species?"},
+            {"role": "assistant", "content": "Yes, I'm quite territorial! I'll fiercely defend my nesting area and food from other birds or animals who come too close!"},
+            {"role": "user", "content": "What does a Robin eat?"},
+            {"role": "assistant", "content": "My diet is diverse and includes tasty seeds, nuts, insects, and berries—anything nutritious I can find!"}
+        ]
+
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=example_messages + [{"role": "user", "content": user_message}],
+            max_tokens=75  # Limiting token count to encourage shorter responses
+        )
+
+        bot_message = response["choices"][0]["message"]["content"]
+
+        messages_ref.add({
+            "content": bot_message,
+            "role": "assistant",
+            "sender": "AI",
+            "timestamp": firestore.SERVER_TIMESTAMP
+        })
+
+        return jsonify({"botMessage": bot_message})
     except Exception as e:
-        return jsonify({"error": f"Error adding message: {str(e)}"}), 500
+        return jsonify({"error": f"Error sending message: {str(e)}"}), 500
 
 
-@app.route('/chats/<chat_id>/messages', methods=['GET'])
+@app.route("/chats/<chat_id>/messages", methods=["GET"])
 def get_chat_messages(chat_id):
-    """Fetch all messages for a chat."""
+    """Fetch all messages in a chat thread."""
     try:
         messages_ref = db.collection("chats").document(chat_id).collection("messages")
-        snapshot = messages_ref.order_by("timestamp").stream()
-        messages = [{"messageId": message.id, **message.to_dict()} for message in snapshot]
+        messages_snapshot = messages_ref.order_by("timestamp").stream()
+        messages = [{"messageId": msg.id, **msg.to_dict()} for msg in messages_snapshot]
         return jsonify(messages)
     except Exception as e:
         return jsonify({"error": f"Error fetching messages: {str(e)}"}), 500
+
+@app.route("/chats", methods=["GET"])
+def get_all_chats():
+    """Fetch all chat threads for the default user."""
+    try:
+        chats_ref = db.collection("chats").where("userId", "==", DEFAULT_USER_ID).stream()
+        chat_list = [{"chatId": chat.id, **chat.to_dict()} for chat in chats_ref]
+        return jsonify(chat_list)
+    except Exception as e:
+        return jsonify({"error": f"Error fetching chats: {str(e)}"}), 500
+    
+
+@app.route("/chats/<chat_id>", methods=["DELETE"])
+def delete_chat(chat_id):
+    """Delete a chat thread and its messages."""
+    try:
+        messages_ref = db.collection("chats").document(chat_id).collection("messages")
+        for msg in messages_ref.stream():
+            msg.reference.delete()
+
+        db.collection("chats").document(chat_id).delete()
+        return jsonify({"message": "Chat deleted successfully"})
+    except Exception as e:
+        return jsonify({"error": f"Error deleting chat: {str(e)}"}), 500
+    
+
+@app.route("/chats/<chat_id>/messages/<message_id>", methods=["DELETE"])
+def delete_message(chat_id, message_id):
+    """Delete a specific message within a chat."""
+    try:
+        db.collection("chats").document(chat_id).collection("messages").document(message_id).delete()
+        return jsonify({"message": "Message deleted successfully"})
+    except Exception as e:
+        return jsonify({"error": f"Error deleting message: {str(e)}"}), 500
+    
+@app.route("/bird-questions", methods=["GET"])
+def get_bird_questions():
+    """Return a set of random bird-related questions for chat suggestions."""
+    try:
+        bird_questions = [
+            "What does a robin eat?",
+            "Where do robins build their nests?",
+            "How long do robins live?",
+            "Why do robins have red chests?",
+            "Do robins migrate in winter?",
+            "When do robins lay eggs?",
+            "How can I attract robins to my garden?",
+            "What sound does a robin make?",
+            "Are robins territorial birds?",
+            "How do robins find worms?",
+            "What predators do robins have?",
+            "Do male and female robins look different?",
+            "How many eggs do robins typically lay?",
+            "Do robins return to the same nest?",
+            "What birds stay active during winter?",
+            "How do birds navigate during migration?",
+            "What's the fastest flying bird?",
+            "How do birds sleep?",
+            "Why do birds sing in the morning?",
+            "How do birds stay warm in winter?",
+            "What's the difference between a hawk and a falcon?",
+            "How do hummingbirds hover?",
+            "Which birds are the best mimics?",
+            "What should I feed wild birds in my backyard?",
+            "How do birds communicate with each other?",
+            "What's the smartest bird species?",
+            "How do birds find their way home?",
+            "Why do birds flock together?",
+            "How do birds stay cool in summer?"
+        ]
+        
+        import random
+        selected_questions = random.sample(bird_questions, 4)
+        
+        return jsonify({"questions": selected_questions})
+    except Exception as e:
+        return jsonify({"error": f"Error fetching bird questions: {str(e)}"}), 500
+
 
 
 
