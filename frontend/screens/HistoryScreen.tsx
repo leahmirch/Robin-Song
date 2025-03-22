@@ -295,7 +295,13 @@ useEffect(() => {
       const imageUrl = data.imageUrl;
       const audubonUrl = data.audubonUrl;
       return (
-        <View style={styles.historyCard} key={item.id}>
+        <View 
+          accessible={true} 
+          accessibilityLabel={`${item.bird}. Identified on ${item.timestamp.toLocaleDateString()} at ${item.timestamp.toLocaleTimeString()}`}
+          accessibilityHint={`Double tap to open the Audobon.com website for ${item.bird}. This will leave the app and open an external browser.`}
+          style={styles.historyCard} 
+          key={item.id}
+        >
           <Image
             source={
               imageUrl
@@ -334,7 +340,13 @@ useEffect(() => {
 
   const renderSectionHeader = useCallback(
     ({ section: { title } }: { section: { title: string } }) => (
-      <Text style={styles.monthHeader}>{title}</Text>
+      <Text
+        accessibilityRole="header"
+        accessibilityHint={`Continue forward to view birds you've identified in ${title}`}
+        style={styles.monthHeader}
+      >
+        {title}
+      </Text>
     ),
     []
   );
@@ -348,7 +360,11 @@ useEffect(() => {
       </View>
 
       <View style={styles.topButtons}>
-        <TouchableOpacity style={[styles.refreshButton, { width: '50%' }]} onPress={handleRefresh}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityHint="Double tap to refresh your bird history."
+          style={[styles.refreshButton, { width: '50%' }]} onPress={handleRefresh}
+        >
           <Text style={styles.refreshButtonText}>Refresh History</Text>
         </TouchableOpacity>
 

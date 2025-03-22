@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, Animated } from "react-native";
+import { Text, StyleSheet, Animated } from "react-native";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import colors from "../assets/theme/colors";
 
 type Props = {
@@ -21,12 +22,12 @@ export default function ErrorMessage({ message }: Props) {
         Animated.parallel([
           Animated.timing(fadeAnim, {
             toValue: 0,
-            duration: 2000,
+            duration: 8000,
             useNativeDriver: false,
           }),
           Animated.timing(heightAnim, {
             toValue: 0,
-            duration: 2000,
+            duration: 8000,
             useNativeDriver: false, 
           }),
         ]).start(() => setIsVisible(false)); 
@@ -40,6 +41,12 @@ export default function ErrorMessage({ message }: Props) {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, height: heightAnim }]}>
+      <MaterialCommunityIcons
+        name="alert-circle-outline"
+        size={24}
+        color={colors.primary}
+        style={styles.icon}
+      />
       <Text style={styles.text}>{message}</Text>
     </Animated.View>
   );
@@ -47,8 +54,9 @@ export default function ErrorMessage({ message }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.secondary, 
-    borderColor: colors.secondary,
+    flexDirection: 'row',
+    backgroundColor: colors.card, 
+    borderColor: colors.chatGPTBackground,
     borderWidth: 3, 
     borderRadius: 8,
     marginBottom: 12,
@@ -60,10 +68,13 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   text: {
-    color: colors.text,
-    fontSize: 16,
+    color: colors.primary,
+    fontSize: 18,
     fontWeight: "bold",
     fontFamily: "Radio Canada",
     textAlign: "center",
+  },
+  icon: {
+    marginRight: 4,
   },
 });

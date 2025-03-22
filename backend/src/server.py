@@ -30,7 +30,6 @@ from flask import session, jsonify
 from flask_session import Session
 from flask import Flask, request
 
-
 app = Flask(__name__)
 
 app.secret_key = os.getenv("FLASK_SECRET_KEY")

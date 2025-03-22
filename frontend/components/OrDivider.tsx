@@ -4,7 +4,11 @@ import colors from '../assets/theme/colors';
 
 const OrDivider = () => {
   return (
-    <View style={styles.container}>
+    <View
+      accessible={true}
+      accessibilityLabel='Content divider.'
+      style={styles.container}
+    >
       <View style={styles.line}/>
       <Text style={styles.text}>or</Text>
       <View style={styles.line}/>

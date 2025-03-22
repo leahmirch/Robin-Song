@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import {SafeAreaView, View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, Alert} from "react-native";
+import {SafeAreaView, View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, Alert, AccessibilityInfo, findNodeHandle} from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import axios from "axios";
 import colors from "frontend/assets/theme/colors";
 import Card from "../components/Card";
-import Constants from "expo-constants";
 import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from "expo-av";
 import * as Location from "expo-location";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "../../database/firebaseConfig";
 import { API_BASE_URL } from "../../database/firebaseConfig";
-
 
 interface BirdData {
  bird: string;
@@ -18,7 +16,6 @@ interface BirdData {
  longitude: number;
  timestamp: Date;
 }
-
 
 interface UploadResponse {
  birds: string[];
@@ -51,7 +48,7 @@ const IdentifyScreen: React.FC = () => {
  const [latitude, setLatitude] = useState<number | null>(null);
  const [longitude, setLongitude] = useState<number | null>(null);
  const recordingRef = useRef<Audio.Recording | null>(null);
-
+ const birdNameRef = useRef(null);
 
  useEffect(() => {
      const fetchLastBirdFromServer = async () => {
@@ -101,6 +98,16 @@ const IdentifyScreen: React.FC = () => {
    };
    fetchInitialLocation();
  }, []);
+
+ useEffect(() => {
+  if (latestBird && birdNameRef.current) {
+    const birdNode = findNodeHandle(birdNameRef.current);
+    if (birdNode) {
+      AccessibilityInfo.announceForAccessibility(`New bird identified: ${latestBird.bird}`);
+      AccessibilityInfo.setAccessibilityFocus(birdNode);
+    }
+  }
+}, [latestBird]);
 
  const fetchBirdInfo = async (birdName: string) => {
    setLoading(true);
@@ -220,7 +227,6 @@ const IdentifyScreen: React.FC = () => {
    };
  }, [isDetecting]);
 
-
  const toggleDetection = () => {
    setIsDetecting((prev) => !prev);
  };
@@ -228,11 +234,16 @@ const IdentifyScreen: React.FC = () => {
  return (
    <SafeAreaView style={styles.container}>
      <ScrollView contentContainerStyle={styles.scrollContainer}>
-       <View style={styles.statusContainer}>
+        <View 
+          accessible={true}
+          accessibilityRole="summary"
+          accessibilityLabel={`Bird identification status. ${detectionStatus}.
+          Double tap to ${isDetecting ? 'stop' : 'start'} identifying birds.
+          ${latestBird ? `Last bird identified on ${latestBird.timestamp.toLocaleString()}` : "No bird detected yet"}.`}
+          style={styles.statusContainer}
+        >
          <Card style={styles.badge}>
-           <Text style={styles.badgeDate}></Text>
            <Text style={styles.badgeText}>{detectionStatus}</Text>
-           <Text style={styles.badgeDate}></Text>
          </Card>
          <TouchableOpacity style={styles.listeningButton} onPress={toggleDetection}>
            <MaterialCommunityIcons
@@ -249,15 +260,26 @@ const IdentifyScreen: React.FC = () => {
          </Card>
        </View>
 
-       <Text style={styles.speciesName}>
+       <Text
+        ref={birdNameRef}
+        accessible={true}
+        accessibilityLabel={`Bird identified: ${latestBird ? latestBird.bird : "No bird found yet."}`}
+        style={styles.speciesName}
+       >
          {latestBird ? latestBird.bird : "No Bird Found Yet"}
        </Text>
-       <Text style={styles.speciesLatin}>
+       <Text
+        accessibilityLabel={`Scientific name: ${birdInfo?.scientific_name}`}
+        style={styles.speciesLatin}
+       >
          {birdInfo?.scientific_name || ""}
        </Text>
 
 
-       <View style={styles.robinContainer}>
+       <View
+        accessible={true}
+        accessibilityLabel={`Image of ${latestBird?.bird}`}
+        style={styles.robinContainer}>
          {loading ? (
            <ActivityIndicator size="large" color={colors.primary} />
          ) : birdImage ? (
@@ -268,36 +290,58 @@ const IdentifyScreen: React.FC = () => {
        </View>
 
        <View>
-         <Text style={styles.sectionHeading}>Description</Text>
+          <Text 
+            accessibilityLabel="Physical description"
+            accessibilityRole="header"
+            style={styles.sectionHeading}
+          >
+            Description
+          </Text>
          <View style={styles.combinedContainer}>
            <Text style={styles.sectionText}>
              {birdInfo?.description || "No description available."}
            </Text>
 
            {birdInfo?.size && (
-             <View style={styles.iconRow}>
-               <MaterialCommunityIcons name="ruler-square" size={20} color={colors.secondary} />
-               <Text style={styles.iconText}> {birdInfo.size}</Text>
-             </View>
+            <View
+              accessible={true}
+              accessibilityLabel={`Size of ${latestBird?.bird}: ${birdInfo.size}`}
+              style={styles.iconRow}
+            >
+              <MaterialCommunityIcons name="ruler-square" size={20} color={colors.secondary} />
+              <Text style={styles.iconText}> {birdInfo.size}</Text>
+            </View>
            )}
 
            {birdInfo?.color && (
-             <View style={styles.iconRow}>
-               <MaterialCommunityIcons name="palette" size={20} color={colors.secondary} />
-               <Text style={styles.iconText}> {birdInfo.color}</Text>
-             </View>
+            <View
+              accessible={true}
+              accessibilityLabel={`Color of ${latestBird?.bird}: ${birdInfo.color}`}
+              style={styles.iconRow}
+            >
+              <MaterialCommunityIcons name="palette" size={20} color={colors.secondary} />
+              <Text style={styles.iconText}> {birdInfo.color}</Text>
+            </View>
            )}
 
 
            {birdInfo?.wing_shape && (
-             <View style={styles.iconRow}>
-               <MaterialCommunityIcons name="binoculars" size={20} color={colors.secondary} />
-               <Text style={styles.iconText}> {birdInfo.wing_shape}</Text>
-             </View>
+            <View
+              accessible={true}
+              accessibilityLabel={`Wing Shape of ${latestBird?.bird}: ${birdInfo.wing_shape}`}
+              style={styles.iconRow}
+            >
+              <MaterialCommunityIcons name="binoculars" size={20} color={colors.secondary} />
+              <Text style={styles.iconText}> {birdInfo.wing_shape}</Text>
+            </View>
            )}
 
            {birdInfo?.tail_shape && (
-             <View style={styles.iconRow}>
+            <View
+              accessible={true}
+              accessibilityLabel={`Tail Shape of ${latestBird?.bird}: ${birdInfo.tail_shape}`}
+              style={styles.iconRow}
+            >
                <MaterialCommunityIcons name="tailwind" size={20} color={colors.secondary} />
                <Text style={styles.iconText}> {birdInfo.tail_shape}</Text>
              </View>
@@ -307,55 +351,53 @@ const IdentifyScreen: React.FC = () => {
 
        <View style={styles.separator} />
        <View>
-         <Text style={styles.sectionHeading}>At a Glance</Text>
+         <Text accessibilityRole="header" style={styles.sectionHeading}>At a Glance</Text>
          <Text style={styles.sectionText}>
            {birdInfo?.at_a_glance || "No 'At a Glance' information available."}
          </Text>
        </View>
        <View style={styles.separator} />
        <View>
-         <Text style={styles.sectionHeading}>Habitat</Text>
+         <Text accessibilityRole="header" style={styles.sectionHeading}>Habitat</Text>
          <Text style={styles.sectionText}>
            {birdInfo?.habitat || "No habitat information available."}
          </Text>
        </View>
        <View style={styles.separator} />
- <Text style={styles.sectionHeading}>Migration & Range</Text>
-
+ <Text accessibilityRole="header" style={styles.sectionHeading}>Migration & Range</Text>
 
  <Text style={styles.sectionText}>
    {birdInfo?.migration_text || "No migration info available."}
  </Text>
 
-
- <View style={styles.robinContainer}>
- {loading ? (
-   <ActivityIndicator size="large" color={colors.primary} />
- ) : birdInfo?.migration_map_url ? (
-   <Image
-     source={{ uri: birdInfo.migration_map_url }}
-     style={styles.migrationImage}
-   />
- ) : (
-   <Text style={styles.sectionText}>No migration map available.</Text>
- )}
-</View>
-
+ {/* Migration map image */}
+  <View
+    accessible={true}
+    style={styles.robinContainer}
+  >
+  {loading ? (
+    <ActivityIndicator size="large" color={colors.primary} />
+  ) : birdInfo?.migration_map_url ? (
+    <Image
+      source={{ uri: birdInfo.migration_map_url }}
+      style={styles.migrationImage}
+    />
+  ) : (
+    <Text style={styles.sectionText}>No migration map available.</Text>
+  )}
+  </View>
 
 <View style={styles.separator} />
-
-
        <View>
-         <Text style={styles.sectionHeading}>Feeding Behavior</Text>
+         <Text accessibilityRole="header" style={styles.sectionHeading}>Feeding Behavior</Text>
          <Text style={styles.sectionText}>
            {birdInfo?.feeding_behavior || "No feeding info available."}
          </Text>
        </View>
        <View style={styles.separator} />
 
-
        <View>
-         <Text style={styles.sectionHeading}>Diet</Text>
+         <Text accessibilityRole="header" style={styles.sectionHeading}>Diet</Text>
          <Text style={styles.sectionText}>
            {birdInfo?.diet || "No diet info available."}
          </Text>
@@ -365,7 +407,6 @@ const IdentifyScreen: React.FC = () => {
    </SafeAreaView>
  );
 };
-
 
 const styles = StyleSheet.create({
  container: {
@@ -391,7 +432,10 @@ const styles = StyleSheet.create({
    width: "35%",
    height: 110,
    justifyContent: "center",
-   shadowRadius: 0,
+   shadowColor: '#000',
+   shadowOffset: { width: 0, height: 2 },
+   shadowOpacity: 0.2,
+   shadowRadius: 4,
    elevation: 3,
    padding: 0,
  },

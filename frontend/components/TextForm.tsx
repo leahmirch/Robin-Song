@@ -30,7 +30,7 @@ const TextFormField: React.FC<TextFormFieldProps> = ({
 
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text accessibilityRole="header" style={styles.label}>{label}</Text>}
       <View style={styles.inputContainer}>
         <TextInput
           style={[
@@ -47,9 +47,16 @@ const TextFormField: React.FC<TextFormFieldProps> = ({
           {...props}
         />
         {isPassword && (
-          <TouchableOpacity onPress={togglePasswordVisibility} style={styles.icon}>
+          <TouchableOpacity 
+            accessibilityRole='button'
+            accessibilityLabel={
+              isPasswordVisible ? 'Hide password' : 'Show password'
+            }
+            onPress={togglePasswordVisibility} 
+            style={styles.icon}
+          >
             <MaterialCommunityIcons
-              name={isPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
+              name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
               size={24}
               color={colors.secondary}
               style={styles.eye}

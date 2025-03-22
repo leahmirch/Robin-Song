@@ -20,6 +20,8 @@ interface ChatQuestionProps {
 const ChatQuestion: React.FC<ChatQuestionProps> = ({ title, onPress, style, textStyle }) => {
   return (
     <TouchableOpacity
+      accessibilityLabel={`Question suggestion: ${title}. Double tap to ask this question.`}
+      accessibilityRole='button'
       style={[styles.button, style]}
       onPress={onPress}
     >

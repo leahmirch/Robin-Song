@@ -13,7 +13,9 @@ import {
   Alert, 
   FlatList, 
   ScrollView,
-  Image
+  Image,
+  findNodeHandle,
+  AccessibilityInfo
 } from 'react-native';
 import colors from 'frontend/assets/theme/colors';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -54,8 +56,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose }) => {
   const [isTyping, setIsTyping] = useState(false);
   const typingDots = useRef(new Animated.Value(0)).current;
   const [inputHeight, setInputHeight] = useState(40);
-
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const userMessageRef = useRef(null);
 
   useEffect(() => {
     const fetchSuggestedQuestions = async () => {
@@ -164,6 +166,22 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose }) => {
         };
     }
   }, [selectedChat]);
+
+  useEffect(() => {
+    if (selectedChat) {
+      const latestMessages = chatMessages[selectedChat];
+      if (!latestMessages || latestMessages.length === 0) return;
+  
+      const lastMessage = latestMessages[latestMessages.length - 1];
+  
+      if (lastMessage.sender === 'user') {
+        const userNode = findNodeHandle(userMessageRef.current);
+        if (userNode) {
+          AccessibilityInfo.setAccessibilityFocus(userNode);
+        }
+      }
+    }
+  }, [chatMessages, selectedChat]);
 
   const sendMessage = async (threadID: string, message: string) => {
 
@@ -326,6 +344,9 @@ const handleSendMessage = async () => {
               <>
                 <View style={styles.topBarContainer}>
                   <TouchableOpacity
+                    accessibilityLabel='All chat list'
+                    accessibilityRole='button'
+                    accessibilityHint='Double tap to open a list of your chat history. Continue forward to continue the conversation.'
                     style={styles.newChatContainer}
                     onPress={() => {
                       setSelectedChat(null);
@@ -337,7 +358,13 @@ const handleSendMessage = async () => {
                     </Text>
                     <MaterialCommunityIcons name="chevron-down" size={20} color={colors.secondary} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                  <TouchableOpacity
+                    accessibilityLabel="Close"
+                    accessibilityRole="button"
+                    accessibilityHint="Double tap to close the ChatGPT screen. Continue forward to continue the conversation."
+                    style={styles.closeButton} 
+                    onPress={onClose}
+                  >
                     <Ionicons name="close" size={30} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
@@ -361,31 +388,44 @@ const handleSendMessage = async () => {
                   style={{ flex: 1 }}
                 >
                   {selectedChat ? (
-                    chatMessages[selectedChat]?.map((msg) => (
-                      <View
-                        key={msg.id}
-                        style={[styles.chatBubble, msg.sender === 'user' ? styles.userBubble : styles.aiBubble]}
-                      >
-                        <View style={{ flexDirection: 'column' }}>
-                          <Text style={styles.chatText}>{msg.content}</Text>
-                          <Text style={styles.chatTimestamp}>
-                            {msg.timestamp instanceof Date
-                              ? msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                              : 'N/A'}
-                          </Text>
+                    chatMessages[selectedChat]?.map((msg, index) => {
+                      const isUserMessage = msg.sender === 'user';
+
+                      return (
+                        <View
+                          ref={msg.sender === 'user' ? userMessageRef : null}
+                          accessible={true}
+                          accessibilityLabel={`${isUserMessage ? 'Your message says:' : `Robin's message says:`} ${msg.content}`}
+                          accessibilityHint='Continue forward to continue the conversation.'
+                          key={msg.id}
+                          style={[styles.chatBubble, isUserMessage ? styles.userBubble : styles.aiBubble]}
+                        >
+                          <View style={{ flexDirection: 'column' }}>
+                            <Text style={styles.chatText}>{msg.content}</Text>
+                            <Text style={styles.chatTimestamp}>{msg.timestamp instanceof Date ? msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</Text>
+                          </View>
                         </View>
-                      </View>
-                    ))
+                      );
+                    })
                   ) : (
                     <View style={styles.homeScreen}>
                       <View style={styles.leftContainer}>
-                        <Image
-                          source={require('frontend/assets/img/chatbotlogo.png')}
-                          style={styles.chatbotImage}
-                        />
-                        <Text style={styles.heading}>Hi {firstName}, I'm Robin!</Text>
-                        <Text style={styles.subHeading}>How can I help you?</Text>
-                        <Text style={styles.suggestionsHeading}>Suggestions</Text>
+                        <View accessible={true}>
+                          <Image
+                            source={require('frontend/assets/img/chatbotlogo.png')}
+                            style={styles.chatbotImage}
+                          />
+                          <Text style={styles.heading}>Hi {firstName}, I'm Robin!</Text>
+                          <Text style={styles.subHeading}>How can I help you?</Text>
+                        </View>
+                        
+                        <Text
+                          accessibilityRole='header'
+                          accessibilityHint='Continue forward to view a list of question suggestions.'
+                          style={styles.suggestionsHeading}
+                        >
+                          Suggestions
+                        </Text>
   
                         {suggestedQuestions.length > 0 ? (
                           suggestedQuestions.map((question, index) => (
@@ -399,6 +439,8 @@ const handleSendMessage = async () => {
                   )}
                   {isTyping && (
                     <View
+                      accessible={true}
+                      accessibilityLabel='Robin is thinking.'
                       style={[styles.chatBubble, styles.aiBubble, { alignSelf: 'flex-start', flexDirection: 'row' }]}
                     >
                       <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
@@ -410,6 +452,8 @@ const handleSendMessage = async () => {
                 <View style={styles.inputWrapper}>
                   <View style={styles.inputContainer}>
                     <TextInput
+                      accessibilityLabel="Text input field"
+                      accessibilityHint="Enter a message to send to Robin."
                       style={[styles.inputField, { minHeight: 25, maxHeight: 120 }]}
                       placeholder="Ask me about birds..."
                       placeholderTextColor={colors.accent}
@@ -419,7 +463,11 @@ const handleSendMessage = async () => {
                       multiline
                       blurOnSubmit={false}
                     />
-                    <TouchableOpacity style={styles.arrowButton} onPress={handleSendMessage}>
+                    <TouchableOpacity
+                      accessibilityLabel='Send message button. Double tap to send your message.'
+                      style={styles.arrowButton} 
+                      onPress={handleSendMessage}
+                    >
                       <Ionicons name="arrow-up" size={25} color={colors.primary} />
                     </TouchableOpacity>
                   </View>
@@ -505,16 +553,24 @@ const ChatListScreen: React.FC<{
   return (
     <View style={{ padding: 20 }}>
       <View style={styles.chatListTopBar}>
-        <TouchableOpacity onPress={onClose}>
+        <TouchableOpacity
+          accessibilityLabel='Back arrow button'
+          accessibilityHint='Double tap to go back to the chat home screen. Continue forward to view your chat history.'
+          onPress={onClose}
+        >
           <MaterialCommunityIcons name="chevron-left" size={30} color={colors.primary} />
         </TouchableOpacity>
 
-        <Text style={{ fontSize: 18, fontWeight: 'bold', fontFamily: 'Radio Canada' }}>All Chats</Text>
+        <Text accessible={false} style={{ fontSize: 18, fontWeight: 'bold', fontFamily: 'Radio Canada' }}>All Chats</Text>
         
-        <TouchableOpacity onPress={() => {
-          setSelectedChat(null); 
-          onClose(); 
-        }}>
+        <TouchableOpacity
+          accessibilityLabel='New chat button'
+          accessibilityHint='Double tap to start a new chat. Continue forward to view your chat history.'
+          onPress={() => {
+            setSelectedChat(null); 
+            onClose(); 
+          }}
+        >
           <MaterialCommunityIcons name="square-edit-outline" size={25} color={colors.primary}/>
         </TouchableOpacity>
       </View>
@@ -525,23 +581,44 @@ const ChatListScreen: React.FC<{
         {Object.keys(groupedChats).map((section) =>
           groupedChats[section].length > 0 && (
             <View key={section}>
-              <Text style={styles.chatSectionLabel}>{section}</Text>
+              <Text
+                accessibilityRole='header'
+                accessibilityHint={
+                  section === 'Today' || section === 'Older than 30 Days'
+                    ? `Continue forward to view chats you've had with Robin ${section}.`
+                    : `Continue forward to view chats you've had with Robin this ${section}.`
+                }
+                style={styles.chatSectionLabel}
+              >
+                {section}
+              </Text>
               <FlatList
                 data={groupedChats[section].sort((a, b) => b.date.getTime() - a.date.getTime())}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <View style={styles.chatItem}>
-                  <TouchableOpacity style={styles.chatDescription} onPress={() => {
-                    setSelectedChat(item.id); 
-                    onClose(); 
-                  }}>
-                  <MaterialCommunityIcons name="chat-processing-outline" size={25} color={colors.secondary} style={{marginRight: 6}}/>
-                  <Text style={styles.chatItemText} numberOfLines={1} ellipsizeMode="tail">
-                    {item.title}
-                  </Text>
-                    <Text style={styles.chatItemDate}>{item.date.toLocaleDateString()}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDeleteChat(item.id)}>
+                    <View
+                      accessible={true}
+                      accessibilityLabel={`Chat name: ${item.title}. Chat date: ${item.date.toLocaleDateString()}. `}
+                      accessibilityHint='Double tap to open this chat.'
+                    >
+                      <TouchableOpacity style={styles.chatDescription} onPress={() => {
+                        setSelectedChat(item.id); 
+                        onClose(); 
+                      }}>
+                      <MaterialCommunityIcons name="chat-processing-outline" size={25} color={colors.secondary} style={{marginRight: 6}}/>
+                      <Text style={styles.chatItemText} numberOfLines={1} ellipsizeMode="tail">
+                        {item.title}
+                      </Text>
+                      <Text style={styles.chatItemDate}>{item.date.toLocaleDateString()}</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                      accessibilityLabel='Delete chat button'
+                      accessibilityHint={`Double tap to delete the ${item.title} chat.`}
+                      onPress={() => handleDeleteChat(item.id)}
+                    >
                       <MaterialCommunityIcons name="trash-can-outline" size={25} color={colors.secondary}/>
                     </TouchableOpacity>
                   </View>

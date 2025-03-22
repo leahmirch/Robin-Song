@@ -12,8 +12,8 @@ import {
 import axios from 'axios';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
-import DropdownComponent from '../components/Dropdown';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Accordion from '../components/Accordion';
+import PickerComponent from '../components/Picker';
 import colors from '../assets/theme/colors';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from "../../database/firebaseConfig";
@@ -161,17 +161,25 @@ const ForecastScreen: React.FC = () => {
       >
         <View style={styles.preferenceContainer}>
           <View style={styles.preferenceLabel}>
-            <Text style={styles.preferenceText}>Bird Preference</Text>
+            <Text accessibilityRole="header" style={styles.preferenceText}>Bird Preference</Text>
           </View>
-          <DropdownComponent
-            data={birdOptions}
-            value={selectedValue}
-            onChange={(item) => setSelectedValue(String(item.value))}
-            placeholder="Select a species"
-          />
+          <View style={{ width: '100%' }}>
+            <Accordion
+              accessibilityLabel={`Current bird selection: ${selectedValue}`}
+              title={selectedValue} 
+              startIcon='bird'
+            >
+              <PickerComponent
+                data={birdOptions}
+                value={selectedValue}
+                onChange={(itemValue) => setSelectedValue(String(itemValue))}
+                showPlaceholder={false}
+              />
+            </Accordion>
+          </View>
         </View>
 
-        <Text style={styles.greeting}>Good Morning, {firstName}!</Text>
+        <Text style={styles.greeting}>Hello, {firstName}!</Text>
         <Text style={styles.description}>
           You are most likely to see <Text style={styles.highlight}>{selectedValue}</Text> at this location today:
         </Text>
@@ -180,26 +188,27 @@ const ForecastScreen: React.FC = () => {
           <ActivityIndicator size="large" color={colors.primary} />
         ) : hotspot ? (
           <>
-            <Text style={styles.locationName}>{hotspot.location}</Text>
-            <MapView
-              provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-              style={styles.map}
-              initialRegion={{
-                latitude: userCoords?.latitude ?? hotspot.lat ?? 43.0125,
-                longitude: userCoords?.longitude ?? hotspot.lon ?? -83.6875,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              }}
-              onPress={() => {
-                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${hotspot.lat},${hotspot.lon}`;
-                Linking.openURL(mapsUrl);
-              }}
+            <View
+              accessible={true}
+              accessibilityRole="summary"
+              accessibilityLabel={`${hotspot.location}. Double tap to open an external map for this location.`}
             >
-              <Marker
-                coordinate={{ latitude: hotspot.lat, longitude: hotspot.lon }}
-                title={hotspot.location}
+              <Text style={styles.locationName}>{hotspot.location}</Text>
+              <MapView
+                provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+                style={styles.map}
+                initialRegion={{
+                  latitude: userCoords?.latitude ?? hotspot?.lat ?? 43.0125,
+                  longitude: userCoords?.longitude ?? hotspot?.lon ?? -83.6875,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
+                }}
+                onPress={() => {
+                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${hotspot.lat},${hotspot.lon}`;
+                  Linking.openURL(mapsUrl);
+                }}
               />
-            </MapView>
+            </View>
           </>
         ) : (
           <Text style={styles.noDataText}>No data available for this bird at this time.</Text>
