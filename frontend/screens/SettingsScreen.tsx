@@ -15,36 +15,98 @@ const SettingsScreen: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
   const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState<boolean>(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const { userData } = useUserData();
+  const { userData, setUserData } = useUserData();
+  const [profilePicture, setProfilePicture] = useState<string>(''); 
+
+
+  const getImageSource = (path: string) => {
+    if (!path) return require("../assets/img/robin.png");
   
+    const normalizedPath = path.replace(/\.\.\//g, "").trim().toLowerCase();
+  
+    const imageMappings: { [key: string]: any } = {
+      "assets/img/blue_jay.png": require("../assets/img/blue_jay.png"),
+      "assets/img/american_crow.png": require("../assets/img/american_crow.png"),
+      "assets/img/canada_goose.png": require("../assets/img/canada_goose.png"),
+      "assets/img/canvasback.png": require("../assets/img/canvasback.png"),
+      "assets/img/common_grackle.png": require("../assets/img/common_grackle.png"),
+      "assets/img/european_starling.png": require("../assets/img/european_starling.png"),
+      "assets/img/mallard.png": require("../assets/img/mallard.png"),
+      "assets/img/northern_cardinal.png": require("../assets/img/northern_cardinal.png"),
+      "assets/img/red-winged-blackbird.png": require("../assets/img/red-winged-blackbird.png"),
+      "assets/img/ring-billed-gull.png": require("../assets/img/ring-billed-gull.png"),
+      "assets/img/tree-swallow.png": require("../assets/img/tree-swallow.png"),
+      "assets/img/turkey_vulture.png": require("../assets/img/turkey_vulture.png"),
+    };
+  
+    const result = imageMappings[normalizedPath];
+  
+    return result || require("../assets/img/robin.png");
+  };
+  
+  
+  const profilePictures = [
+    "assets/img/blue_jay.png",
+    "assets/img/american_crow.png",
+    "assets/img/canada_goose.png",
+    "assets/img/canvasback.png",
+    "assets/img/common_grackle.png",
+    "assets/img/european_starling.png",
+    "assets/img/mallard.png",
+    "assets/img/northern_cardinal.png",
+    "assets/img/red-winged-blackbird.png",
+    "assets/img/ring-billed-gull.png",
+    "assets/img/tree-swallow.png",
+    "assets/img/turkey_vulture.png",
+  ];
+  
+
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/me`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch user data');
+      const data = await response.json();
+  
+      setUserId(data.id);
+      setLocationEnabled(Boolean(data.locationPreferences));
+      setFirstName(data.firstName || '');
+      setLastName(data.lastName || '');
+      setEmail(data.email || '');
+  
+      if (data.profilePicture) {
+        setProfilePicture(data.profilePicture);
+      } else {
+        const random = profilePictures[Math.floor(Math.random() * profilePictures.length)];
+        setProfilePicture(random);
+  
+        await fetch(`${API_BASE_URL}/users/${data.id}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profilePicture: random }),
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+    }
+  };
+  
+
   useFocusEffect(
     React.useCallback(() => {
-      const fetchUserData = async () => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/users/me`, {
-            credentials: 'include', 
-          });
-          if (!response.ok) {
-            console.error("Failed to fetch user data from server");
-            return;
-          }
-          const userData = await response.json();
-          setUserId(userData.id);
-          setLocationEnabled(Boolean(userData.locationPreferences));
-          setFirstName(userData.firstName || '');
-          setLastName(userData.lastName || '');
-          setEmail(userData.email || '');
-        } catch (err) {
-          console.error("Error fetching user data:", err);
-        }
-      };
-      fetchUserData();
+      fetchUserData(); 
     }, [])
   );
+  
+
+  
   
   const handleLogout = async () => {
     try {
@@ -80,7 +142,7 @@ const SettingsScreen: React.FC = () => {
               <Image
                 accessible={true}
                 accessibilityLabel='Account Profile Picture'
-                source={require("../assets/img/robin.png")}
+                source={getImageSource(profilePicture)}
                 style={styles.image}
               />
             </View>
@@ -100,7 +162,7 @@ const SettingsScreen: React.FC = () => {
         <Accordion title="Change Name" startIcon="account-edit-outline">
           <TextFormField
             label="Change First Name"
-            placeholder={userData?.firstName}
+            placeholder="First"
             value={firstName}
             onChangeText={setFirstName}
             keyboardType="name-phone-pad"
@@ -108,23 +170,48 @@ const SettingsScreen: React.FC = () => {
           />
           <TextFormField
             label="Change Last Name"
-            placeholder={userData?.lastName}
+            placeholder="Last"
             value={lastName}
             onChangeText={setLastName}
             keyboardType="name-phone-pad"
             autoCapitalize="none"
           />
-          <Button
-            title="Submit"
-            onPress={() => Alert.alert('Submit Button Pressed')}
-            variant="primary"
-          />
+        <Button
+          title="Submit"
+          variant="primary"
+          onPress={async () => {
+            try {
+              const resp = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName }),
+              });
+
+              if (!resp.ok) throw new Error('Failed to update name');
+
+              const userResp = await fetch(`${API_BASE_URL}/users/me`, {
+                credentials: 'include',
+              });
+
+              if (!userResp.ok) throw new Error('Failed to refresh user data');
+
+              const updatedUser = await userResp.json();
+              setUserData(updatedUser); 
+
+              Alert.alert('Success', 'Name updated!');
+            } catch (error) {
+              Alert.alert('Error', (error as Error).message);
+            }
+          }}
+        />
+
         </Accordion>
 
         <Accordion title="Change Email Address" startIcon="email-edit-outline">
           <TextFormField
             label="Change Email"
-            placeholder={userData?.email}
+            placeholder="example@gmail.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -132,17 +219,54 @@ const SettingsScreen: React.FC = () => {
           />
           <Button
             title="Submit"
-            onPress={() => Alert.alert('Submit Button Pressed')}
             variant="primary"
+            onPress={async () => {
+              try {
+                const resp = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                  method: 'PATCH',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email }),
+                });
+                if (!resp.ok) throw new Error('Failed to update email');
+                Alert.alert('Success', 'Email updated! Please log in again.');
+                handleLogout();
+              } catch (error) {
+                  Alert.alert('Error', (error as Error).message);
+                }
+                
+            }}
           />
         </Accordion>
 
+
         <Accordion title="Change Password" startIcon="shield-edit-outline">
-          <TextFormField placeholder="Enter new password" isPassword />
+          <TextFormField
+            label="New Password"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={setPassword}
+            isPassword
+          />
           <Button
             title="Submit"
-            onPress={() => Alert.alert('Submit Button Pressed')}
             variant="primary"
+            onPress={async () => {
+              try {
+                const resp = await fetch(`${API_BASE_URL}/users/${userId}/password`, {
+                  method: 'PATCH',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ password }),
+                });
+                if (!resp.ok) throw new Error('Failed to update password');
+                Alert.alert('Success', 'Password changed!');
+                setPassword('');
+              } catch (error) {
+                  Alert.alert('Error', (error as Error).message);
+                }
+                
+            }}
           />
         </Accordion>
 
@@ -187,11 +311,38 @@ const SettingsScreen: React.FC = () => {
           onPress={handleLogout}
           variant="secondary"
         />
-          <Button
-            title="Delete Account"
-            onPress={() => Alert.alert('Delete Account Pressed')}
-            variant="primary"
-          />
+<Button
+  title="Delete Account"
+  variant="primary"
+  onPress={() => {
+    Alert.alert(
+      "Are you sure?",
+      "This action will permanently delete your account and cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const resp = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+              });
+              if (!resp.ok) throw new Error('Failed to delete account');
+
+              Alert.alert("Account Deleted", "Your account has been successfully deleted.");
+              navigation.navigate("Home");
+            } catch (error) {
+              Alert.alert("Error", (error as Error).message);
+              console.error("Account deletion failed:", error);
+            }
+          },
+        },
+      ]
+    );
+  }}
+/>
         </View>
       </ScrollView>
     </SafeAreaView>

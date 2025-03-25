@@ -22,6 +22,7 @@ import requests
 from openai import OpenAI
 from dotenv import load_dotenv
 load_dotenv()
+import random
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 import math
@@ -408,6 +409,23 @@ def register():
 
         user = auth.create_user(email=email, password=password)
 
+        avatar_options = [
+            "assets/img/blue_jay.png",  
+            "assets/img/american_crow.png",  
+            "assets/img/canada_goose.png",
+            "assets/img/canvasback.png",
+            "assets/img/common_grackle.png",
+            "assets/img/european_starling.png",
+            "assets/img/mallard.png",
+            "assets/img/northern_cardinal.png",
+            "assets/img/red-winged-blackbird.png",
+            "assets/img/ring-billed-gull.png",
+            "assets/img/tree-swallow.png",
+            "assets/img/turkey_vulture.png",  
+        ]
+
+        selected_avatar = random.choice(avatar_options)
+    
         user_data = {
             "firstName": first_name,
             "lastName": last_name,
@@ -415,6 +433,7 @@ def register():
             "password": hashed_password,
             "voiceCommandsEnabled": False,
             "locationPreferences": False,
+            "profilePicture": selected_avatar,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
         db.collection("users").document(user.uid).set(user_data)
@@ -448,6 +467,23 @@ def google_register():
                 "userId": existing_user.id
             }), 200
 
+        avatar_options = [
+            "assets/img/blue_jay.png",  
+            "assets/img/american_crow.png",  
+            "assets/img/canada_goose.png",
+            "assets/img/canvasback.png",
+            "assets/img/common_grackle.png",
+            "assets/img/european_starling.png",
+            "assets/img/mallard.png",
+            "assets/img/northern_cardinal.png",
+            "assets/img/red-winged-blackbird.png",
+            "assets/img/ring-billed-gull.png",
+            "assets/img/tree-swallow.png",
+            "assets/img/turkey_vulture.png",  
+        ]
+
+        selected_avatar = random.choice(avatar_options)
+
         user_data = {
             "firstName": first_name,
             "lastName": last_name,
@@ -455,7 +491,8 @@ def google_register():
             "uid": uid,
             "password": "Google Account",
             "voiceCommandsEnabled": False,
-            "locationPreferences": False,
+            "locationPreferences": False,            
+            "profilePicture": selected_avatar,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
         new_user_ref = db.collection("users").add(user_data)
@@ -508,7 +545,7 @@ def login():
 @app.route('/logout', methods=['POST'])
 def logout():
     from flask import session
-    session.pop('user_id', None)  # Remove the user_id from the session
+    session.pop('user_id', None) 
     return jsonify({"message": "Logout successful"}), 200
 
 
@@ -551,22 +588,51 @@ def update_user_preferences(user_id):
     except Exception as e:
         return jsonify({"error": f"Error updating preferences: {str(e)}"}), 500
 
-@app.route('/users/<user_id>', methods=['GET'])
+@app.route('/users/<user_id>', methods=['GET', 'PATCH'])
 @login_required
-def get_user(user_id):
-    from flask import session
-    if user_id != session["user_id"]:
+def handle_user(user_id):
+    from flask import session, request
+
+    if user_id != session.get("user_id"):
         return jsonify({"error": "Forbidden"}), 403
 
-    try:
-        doc_ref = db.collection("users").document(user_id).get()
-        if not doc_ref.exists:
-            return jsonify({"error": "User not found"}), 404
+    if request.method == 'GET':
+        try:
+            doc_ref = db.collection("users").document(user_id).get()
+            if not doc_ref.exists:
+                return jsonify({"error": "User not found"}), 404
 
-        user_data = doc_ref.to_dict()
-        return jsonify(user_data), 200
-    except Exception as e:
-        return jsonify({"error": f"Error fetching user: {str(e)}"}), 500
+            user_data = doc_ref.to_dict()
+            return jsonify(user_data), 200
+        except Exception as e:
+            return jsonify({"error": f"Error fetching user: {str(e)}"}), 500
+
+    elif request.method == 'PATCH':
+        data = request.json
+        updates = {}
+
+        if "firstName" in data:
+            updates["firstName"] = data["firstName"]
+        if "lastName" in data:
+            updates["lastName"] = data["lastName"]
+        if "email" in data:
+            try:
+                auth.update_user(user_id, email=data["email"])
+                updates["email"] = data["email"]
+            except Exception as e:
+                return jsonify({"error": str(e)}), 400
+        if "profilePicture" in data:
+            updates["profilePicture"] = data["profilePicture"]
+
+        if updates:
+            try:
+                db.collection("users").document(user_id).update(updates)
+                return jsonify({"message": "Profile updated"}), 200
+            except Exception as e:
+                return jsonify({"error": f"Failed to update user: {str(e)}"}), 500
+        else:
+            return jsonify({"message": "No changes provided"}), 400
+
 
 
 @app.route("/chats", methods=["POST"])
@@ -846,6 +912,37 @@ def get_hotspot():
     return jsonify(best_hotspot), 200
 
 
+
+
+@app.route('/users/<user_id>/password', methods=['PATCH'])
+@login_required
+def change_password(user_id):
+    if user_id != session["user_id"]:
+        return jsonify({"error": "Forbidden"}), 403
+    new_password = request.json.get("password")
+    if not new_password:
+        return jsonify({"error": "Password required"}), 400
+    try:
+        auth.update_user(user_id, password=new_password)
+        db.collection("users").document(user_id).update({"password": bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()})
+        return jsonify({"message": "Password updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/users/<user_id>', methods=['DELETE'])
+@login_required
+def delete_user(user_id):
+    if user_id != session["user_id"]:
+        return jsonify({"error": "Forbidden"}), 403
+    try:
+        auth.delete_user(user_id)
+        db.collection("users").document(user_id).delete()
+        session.pop("user_id", None)
+        return jsonify({"message": "Account deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @app.route('/users/me', methods=['GET'])
 @login_required
 def get_my_user():
@@ -861,6 +958,8 @@ def get_my_user():
     user_data = doc_ref.to_dict()
     user_data['id'] = doc_ref.id  
     return jsonify(user_data), 200
+
+
 
 
 

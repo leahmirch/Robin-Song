@@ -12,3 +12,4 @@ backend/secrets/
 .expo/packager-info.json
 .expo/settings.json
 google-services/
+flask_session/

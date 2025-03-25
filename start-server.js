@@ -9,12 +9,12 @@ const isWindows = process.platform === "win32";
 const backendPath = path.join(__dirname, "backend");
 const venvPath = path.join(backendPath, "venv");
 const pythonBinary = isWindows
-    ? path.join(venvPath, "Scripts", "python.exe") // Windows
-    : path.join(venvPath, "bin", "python3"); // Mac/Linux
+    ? path.join(venvPath, "Scripts", "python.exe") 
+    : path.join(venvPath, "bin", "python3");
 
 const activateScript = isWindows
-    ? path.join(venvPath, "Scripts", "activate") // Windows
-    : path.join(venvPath, "bin", "activate"); // Mac/Linux
+    ? path.join(venvPath, "Scripts", "activate") 
+    : path.join(venvPath, "bin", "activate");
 
 // Check if virtual environment exists
 const venvExists = fs.existsSync(venvPath);
@@ -42,11 +42,11 @@ function startProcesses() {
 
     // Start Backend Server
     console.log("Starting Backend Server...");
-    const backendProcess = spawn(pythonBinary, ["backend/src/server.py"], { stdio: "inherit", shell: isWindows });
+    const backendProcess = spawn(`"${pythonBinary}"`, ["backend/src/server.py"], { stdio: "inherit", shell: isWindows });
 
     // Start Bird Detection Script
     console.log("Starting Bird Detection Script...");
-    const detectProcess = spawn(pythonBinary, ["backend/src/detect_birds.py"], { stdio: "inherit", shell: isWindows });
+    const detectProcess = spawn(`"${pythonBinary}"`, ["backend/src/detect_birds.py"], { stdio: "inherit", shell: isWindows });
 
     // Start Expo Frontend
     console.log("Starting Expo Frontend...");
