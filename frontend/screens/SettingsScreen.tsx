@@ -8,6 +8,8 @@ import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
 import Toggle from '../components/Toggle';
 import { API_BASE_URL } from "../../database/firebaseConfig";
+import { usePreferences } from "../../backend/src/contexts/PreferencesContext";
+
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -17,7 +19,7 @@ const SettingsScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
-  const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState<boolean>(false);
+  const { voiceCommandsEnabled, setVoiceCommandsEnabled } = usePreferences();
   const userId = "FsDwDpHUD6XQU3egNNCOJLCTiNg1"; // Hardcoded user-id (needs to change with user sessions)
 
   useFocusEffect(

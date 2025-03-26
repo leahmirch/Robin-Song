@@ -22,11 +22,11 @@ module.exports = {
       googleServicesFile:
         process.env.GOOGLE_SERVICES_INFO || "./google-services/GoogleService-Info.plist",
       infoPlist: {
-            ITSAppUsesNonExemptEncryption: false,
-            NSLocationWhenInUseUsageDescription: "We use your location to show bird hotspots near you.",
-            NSMicrophoneUsageDescription: "We use your microphone audio to detect birds near you.",
-          },
-        
+        ITSAppUsesNonExemptEncryption: false,
+        NSLocationWhenInUseUsageDescription: "We use your location to show bird hotspots near you.",
+        NSMicrophoneUsageDescription: "We use your microphone audio to detect birds near you.",
+        NSSpeechRecognitionUsageDescription: "Allow Robin to securely recognize user speech."
+      },
       config: {
         googleMapsApiKey: "temporary"
       }
@@ -60,6 +60,13 @@ module.exports = {
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Robin to use your location."
+        }
+      ],
+      [
+        "@react-native-voice/voice",
+        {
+          microphonePermission: "Allow $(PRODUCT_NAME) to access your microphone",
+          speechRecognitionPermission: "Allow $(PRODUCT_NAME) to securely recognize user speech"
         }
       ]
     ],
