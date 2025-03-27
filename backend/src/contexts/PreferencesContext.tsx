@@ -4,9 +4,10 @@ import React, { createContext, useContext, useState } from 'react';
 type PreferencesContextType = {
   voiceCommandsEnabled: boolean;
   setVoiceCommandsEnabled: (enabled: boolean) => void;
-  // Audio feedback now defaults to false.
   audioFeedbackEnabled: boolean;
   setAudioFeedbackEnabled: (enabled: boolean) => void;
+  locationEnabled: boolean;
+  setLocationEnabled: (enabled: boolean) => void;
 };
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
@@ -16,6 +17,8 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState(true);
   // Default audio feedback to false.
   const [audioFeedbackEnabled, setAudioFeedbackEnabled] = useState(false);
+  // Default location to false.
+  const [locationEnabled, setLocationEnabled] = useState(false);
 
   return (
     <PreferencesContext.Provider
@@ -24,6 +27,8 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setVoiceCommandsEnabled,
         audioFeedbackEnabled,
         setAudioFeedbackEnabled,
+        locationEnabled,
+        setLocationEnabled,
       }}
     >
       {children}

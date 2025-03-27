@@ -1,9 +1,7 @@
-// SettingsScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import colors from '../assets/theme/colors';
-import Card from '../components/Card';
 import Accordion from '../components/Accordion';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
@@ -18,10 +16,10 @@ const SettingsScreen: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
-  const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
-  const { voiceCommandsEnabled, setVoiceCommandsEnabled, audioFeedbackEnabled, setAudioFeedbackEnabled } = usePreferences();
+  const { voiceCommandsEnabled, setVoiceCommandsEnabled, audioFeedbackEnabled, setAudioFeedbackEnabled, locationEnabled, setLocationEnabled } = usePreferences();
   const userId = "FsDwDpHUD6XQU3egNNCOJLCTiNg1"; // Hardcoded user-id
 
+  // Optionally, you can fetch user preferences from the server if needed.
   useFocusEffect(
     React.useCallback(() => {
       const fetchUserPrefs = async () => {
@@ -32,6 +30,7 @@ const SettingsScreen: React.FC = () => {
             return;
           }
           const userData = await response.json();
+          // Update location if available
           setLocationEnabled(Boolean(userData.locationPreferences));
         } catch (err) {
           console.error("Error fetching user prefs:", err);
@@ -120,10 +119,9 @@ const SettingsScreen: React.FC = () => {
             setVoiceCommandsEnabled(newValue);
             console.log("Voice commands toggle is now:", newValue);
           }}
-          description="Enabling voice commands allows you to navigate the app using verbal commands. Microphone access is required in order to enable voice commands."
+          description="Enabling voice commands allows you to navigate the app using verbal commands. Microphone access is required."
         />
 
-        {/* New Toggle for Audio Feedback */}
         <Toggle
           title="Enable Audio Feedback"
           startIcon="volume-high-outline"
@@ -132,7 +130,7 @@ const SettingsScreen: React.FC = () => {
             setAudioFeedbackEnabled(newValue);
             console.log("Audio feedback toggle is now:", newValue);
           }}
-          description="Enable spoken feedback for commands. This helps provide auditory cues and confirmations for visually impaired users."
+          description="Enable spoken feedback for commands."
         />
 
         <Toggle
@@ -142,7 +140,7 @@ const SettingsScreen: React.FC = () => {
           onToggle={async (newValue) => {
             setLocationEnabled(newValue);
             try {
-              const patchResp = await fetch(`${API_BASE_URL}/users/${userId}preferences`, {
+              const patchResp = await fetch(`${API_BASE_URL}/users/${userId}/preferences`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ locationPreferences: newValue }),
@@ -154,7 +152,7 @@ const SettingsScreen: React.FC = () => {
               console.error("Error PATCHing preferences:", err);
             }
           }}
-          description="Enable your location for personalized bird species predictions for your area. Location access is required in order to receive bird forecast prediction local to your area."
+          description="Enable your location for personalized predictions."
         />
 
         <View style={styles.buttonContainer}>
@@ -173,7 +171,6 @@ const SettingsScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
