@@ -8,6 +8,8 @@ import { usePreferences } from '../../backend/src/contexts/PreferencesContext';
 import { useCurrentScreen } from '../context/CurrentScreenContext';
 import { navigate, openChatModal, closeChatModal, navigationRef } from './navigationService';
 
+const WAKE_WORD = "robin"; // Only process commands if this word is spoken
+
 const commandMapping: { command: string; synonyms: string[] }[] = [
   { command: 'Identify', synonyms: ['identify', 'go to identify', 'open identify', 'show identify', 'start identify'] },
   { command: 'Forecast', synonyms: ['forecast', 'go to forecast', 'open forecast', 'show forecast', 'start forecast'] },
@@ -19,8 +21,21 @@ const commandMapping: { command: string; synonyms: string[] }[] = [
   { command: 'stop detection', synonyms: ['stop detection', 'end detection', 'deactivate detection'] }
 ];
 
+/**
+ * Checks for the wake word. If not present, returns null.
+ * If present, removes it and then tries to match the remainder.
+ */
 const parseCommand = (recognizedText: string): string | null => {
-  const cleanedText = recognizedText.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
+  const lowerText = recognizedText.toLowerCase();
+  if (!lowerText.includes(WAKE_WORD)) {
+    console.log(`Wake word "${WAKE_WORD}" not detected. Ignoring input.`);
+    return null;
+  }
+  // Remove wake word from the text.
+  const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'g'), '').trim();
+  const cleanedText = textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
+
+  // Try matching using whole-word boundaries.
   for (const mapping of commandMapping) {
     for (const synonym of mapping.synonyms) {
       const cleanedSynonym = synonym.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -30,6 +45,7 @@ const parseCommand = (recognizedText: string): string | null => {
       }
     }
   }
+  // Fallback: check if any synonym is a substring.
   for (const mapping of commandMapping) {
     for (const synonym of mapping.synonyms) {
       const cleanedSynonym = synonym.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -47,16 +63,10 @@ const VoiceCommandManager: React.FC = () => {
   const { voiceCommandsEnabled, audioFeedbackEnabled } = usePreferences();
   const { currentScreen } = useCurrentScreen();
 
-  // Use a ref to always hold the latest value of audioFeedbackEnabled.
-  const audioFeedbackRef = useRef(audioFeedbackEnabled);
-  useEffect(() => {
-    audioFeedbackRef.current = audioFeedbackEnabled;
-  }, [audioFeedbackEnabled]);
-
-  // This function provides visual feedback via Alert and then speaks the message if audio feedback is enabled.
+  // This function shows an Alert and then speaks the message only if audio feedback is enabled.
   const showAlertOnce = (title: string, message: string) => {
     Alert.alert(title, message, [{ text: 'OK' }]);
-    if (audioFeedbackRef.current) {
+    if (audioFeedbackEnabled) {
       console.log("Audio feedback enabled; speaking: " + message);
       SpeechFeedback.speak(message, {
         language: 'en-US',
@@ -167,7 +177,9 @@ const VoiceCommandManager: React.FC = () => {
       debounceTimeout.current = setTimeout(() => {
         const command = parseCommand(lastRecognizedText.current);
         if (!command) {
-          showAlertOnce('Voice Command', `Command not recognized: ${lastRecognizedText.current}`);
+          // If the wake word wasn't detected, silently ignore input.
+          console.log(`No valid command recognized from input: ${lastRecognizedText.current}. Ignoring.`);
+          return;
         }
         if (command && !cooldownTimeout.current) {
           console.log('Voice Command:', command);
