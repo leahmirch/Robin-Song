@@ -1,25 +1,40 @@
-// backend/src/contexts/PreferencesContext.tsx
-import React, { createContext, useContext, useState, ReactNode } from "react";
+// PreferencesContext.tsx
+import React, { createContext, useContext, useState } from 'react';
 
-interface PreferencesContextProps {
+type PreferencesContextType = {
   voiceCommandsEnabled: boolean;
-  setVoiceCommandsEnabled: (value: boolean) => void;
-  // Add other global prefs if desired, e.g. locationEnabled
-}
+  setVoiceCommandsEnabled: (enabled: boolean) => void;
+  // Audio feedback now defaults to false.
+  audioFeedbackEnabled: boolean;
+  setAudioFeedbackEnabled: (enabled: boolean) => void;
+};
 
-const PreferencesContext = createContext<PreferencesContextProps>({
-  voiceCommandsEnabled: false,
-  setVoiceCommandsEnabled: () => {},
-});
+const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
-export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
-  const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState(false);
+export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Default voice commands to true.
+  const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState(true);
+  // Default audio feedback to false.
+  const [audioFeedbackEnabled, setAudioFeedbackEnabled] = useState(false);
 
   return (
-    <PreferencesContext.Provider value={{ voiceCommandsEnabled, setVoiceCommandsEnabled }}>
+    <PreferencesContext.Provider
+      value={{
+        voiceCommandsEnabled,
+        setVoiceCommandsEnabled,
+        audioFeedbackEnabled,
+        setAudioFeedbackEnabled,
+      }}
+    >
       {children}
     </PreferencesContext.Provider>
   );
 };
 
-export const usePreferences = () => useContext(PreferencesContext);
+export const usePreferences = () => {
+  const context = useContext(PreferencesContext);
+  if (!context) {
+    throw new Error('usePreferences must be used within a PreferencesProvider');
+  }
+  return context;
+};

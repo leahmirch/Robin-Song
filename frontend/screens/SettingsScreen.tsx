@@ -1,3 +1,4 @@
+// SettingsScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -10,7 +11,6 @@ import Toggle from '../components/Toggle';
 import { API_BASE_URL } from "../../database/firebaseConfig";
 import { usePreferences } from "../../backend/src/contexts/PreferencesContext";
 
-
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
 
@@ -19,8 +19,8 @@ const SettingsScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
-  const { voiceCommandsEnabled, setVoiceCommandsEnabled } = usePreferences();
-  const userId = "FsDwDpHUD6XQU3egNNCOJLCTiNg1"; // Hardcoded user-id (needs to change with user sessions)
+  const { voiceCommandsEnabled, setVoiceCommandsEnabled, audioFeedbackEnabled, setAudioFeedbackEnabled } = usePreferences();
+  const userId = "FsDwDpHUD6XQU3egNNCOJLCTiNg1"; // Hardcoded user-id
 
   useFocusEffect(
     React.useCallback(() => {
@@ -121,6 +121,18 @@ const SettingsScreen: React.FC = () => {
             console.log("Voice commands toggle is now:", newValue);
           }}
           description="Enabling voice commands allows you to navigate the app using verbal commands. Microphone access is required in order to enable voice commands."
+        />
+
+        {/* New Toggle for Audio Feedback */}
+        <Toggle
+          title="Enable Audio Feedback"
+          startIcon="volume-high-outline"
+          value={audioFeedbackEnabled}
+          onToggle={(newValue) => {
+            setAudioFeedbackEnabled(newValue);
+            console.log("Audio feedback toggle is now:", newValue);
+          }}
+          description="Enable spoken feedback for commands. This helps provide auditory cues and confirmations for visually impaired users."
         />
 
         <Toggle
