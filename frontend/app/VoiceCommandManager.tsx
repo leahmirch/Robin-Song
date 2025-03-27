@@ -8,9 +8,10 @@ import { usePreferences } from '../../backend/src/contexts/PreferencesContext';
 import { useCurrentScreen } from '../context/CurrentScreenContext';
 import { navigate, openChatModal, closeChatModal, navigationRef } from './navigationService';
 
-const WAKE_WORD = "robin"; // Only process commands if this word is spoken
+const WAKE_WORD = "robin"; // Only process commands when this wake word is present
 
-const commandMapping: { command: string; synonyms: string[] }[] = [
+// General navigation commands
+const generalCommands: { command: string; synonyms: string[] }[] = [
   { command: 'Identify', synonyms: ['identify', 'go to identify', 'open identify', 'show identify', 'start identify'] },
   { command: 'Forecast', synonyms: ['forecast', 'go to forecast', 'open forecast', 'show forecast', 'start forecast'] },
   { command: 'History', synonyms: ['history', 'go to history', 'open history', 'show history'] },
@@ -21,8 +22,34 @@ const commandMapping: { command: string; synonyms: string[] }[] = [
   { command: 'stop detection', synonyms: ['stop detection', 'end detection', 'deactivate detection'] }
 ];
 
+// Settings-specific toggle commands (only processed when on Settings)
+const settingsCommands: { command: string; synonyms: string[] }[] = [
+  {
+    command: 'enable voice commands',
+    synonyms: ['enable voice commands', 'turn on voice commands', 'activate voice commands']
+  },
+  {
+    command: 'disable voice commands',
+    synonyms: ['disable voice commands', 'turn off voice commands', 'deactivate voice commands']
+  },
+  {
+    command: 'enable audio feedback',
+    synonyms: ['enable audio feedback', 'turn on audio feedback', 'activate audio feedback']
+  },
+  {
+    command: 'disable audio feedback',
+    synonyms: ['disable audio feedback', 'turn off audio feedback', 'deactivate audio feedback']
+  }
+  // You can add location toggle commands here if desired.
+];
+
+// Merge the arrays so that settings commands are available along with the general commands.
+const commandMapping = [...generalCommands, ...settingsCommands];
+
 /**
- * Checks for the wake word and, if present, removes it from the text.
+ * Parses the recognized text:
+ * - First, ensures the wake word is present; if not, returns null.
+ * - Removes the wake word from the text and then matches the remaining text against our command mapping.
  */
 const parseCommand = (recognizedText: string): string | null => {
   const lowerText = recognizedText.toLowerCase();
@@ -34,6 +61,7 @@ const parseCommand = (recognizedText: string): string | null => {
   const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'g'), '').trim();
   const cleanedText = textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
 
+  // Try matching each command using whole-word boundaries.
   for (const mapping of commandMapping) {
     for (const synonym of mapping.synonyms) {
       const cleanedSynonym = synonym.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -43,6 +71,7 @@ const parseCommand = (recognizedText: string): string | null => {
       }
     }
   }
+  // Fallback: if any synonym is a substring.
   for (const mapping of commandMapping) {
     for (const synonym of mapping.synonyms) {
       const cleanedSynonym = synonym.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -57,16 +86,16 @@ const parseCommand = (recognizedText: string): string | null => {
 const DEBOUNCE_DELAY = 600;
 
 const VoiceCommandManager: React.FC = () => {
-  const { voiceCommandsEnabled, audioFeedbackEnabled } = usePreferences();
+  const { voiceCommandsEnabled, audioFeedbackEnabled, setVoiceCommandsEnabled, setAudioFeedbackEnabled } = usePreferences();
   const { currentScreen } = useCurrentScreen();
 
-  // Create a ref to hold the latest audioFeedbackEnabled value.
+  // Use a ref for audioFeedback so that our handlers always have the latest value.
   const audioFeedbackRef = useRef(audioFeedbackEnabled);
   useEffect(() => {
     audioFeedbackRef.current = audioFeedbackEnabled;
   }, [audioFeedbackEnabled]);
 
-  // This function uses Alert for visual feedback and calls SpeechFeedback.speak only if audio feedback is enabled.
+  // This function provides visual feedback via Alert and then speaks the message if enabled.
   const showAlertOnce = (title: string, message: string) => {
     Alert.alert(title, message, [{ text: 'OK' }]);
     if (audioFeedbackRef.current) {
@@ -128,10 +157,42 @@ const VoiceCommandManager: React.FC = () => {
     }
   };
 
+  /**
+   * Processes the recognized command.
+   * - If on Settings screen and the command matches a settings toggle command,
+   *   update the corresponding preference.
+   * - Otherwise, process as a normal navigation command.
+   */
   const processCommand = (commandName: string) => {
     const currentRoute = navigationRef.getCurrentRoute()?.name || '';
     console.log(`Current route: "${currentRoute}", Command: "${commandName}"`);
 
+    // If we're on the Settings screen, check for settings toggle commands.
+    if (currentRoute.toLowerCase() === 'settings') {
+      if (commandName === 'enable voice commands') {
+        setVoiceCommandsEnabled(true);
+        showAlertOnce('Settings', 'Voice commands enabled');
+        return;
+      }
+      if (commandName === 'disable voice commands') {
+        setVoiceCommandsEnabled(false);
+        showAlertOnce('Settings', 'Voice commands disabled');
+        return;
+      }
+      if (commandName === 'enable audio feedback') {
+        setAudioFeedbackEnabled(true);
+        showAlertOnce('Settings', 'Audio feedback enabled');
+        return;
+      }
+      if (commandName === 'disable audio feedback') {
+        setAudioFeedbackEnabled(false);
+        showAlertOnce('Settings', 'Audio feedback disabled');
+        return;
+      }
+      // You can add similar blocks for location predictions if desired.
+    }
+
+    // Process general navigation commands.
     if (commandName === 'start detection') {
       showAlertOnce('Voice Command', 'Starting detection (not yet implemented)');
       return;
@@ -180,8 +241,8 @@ const VoiceCommandManager: React.FC = () => {
       debounceTimeout.current = setTimeout(() => {
         const command = parseCommand(lastRecognizedText.current);
         if (!command) {
-          // If no valid command is detected (e.g., wake word missing), ignore silently.
-          console.log(`No valid command recognized from: ${lastRecognizedText.current}. Ignoring.`);
+          // If no valid command is recognized (e.g. wake word missing), do nothing.
+          console.log(`No valid command recognized from input: ${lastRecognizedText.current}. Ignoring.`);
           return;
         }
         if (command && !cooldownTimeout.current) {
