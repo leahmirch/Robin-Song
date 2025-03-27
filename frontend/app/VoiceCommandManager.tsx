@@ -20,7 +20,9 @@ const generalCommands: { command: string; synonyms: string[] }[] = [
   { command: 'chat', synonyms: ['chat', 'go to chat', 'open chat', 'show chat'] },
   { command: 'start detection', synonyms: ['start detection', 'begin detection', 'activate detection'] },
   { command: 'stop detection', synonyms: ['stop detection', 'end detection', 'deactivate detection'] },
-  { command: 'logout', synonyms: ['logout', 'log out', 'sign out', 'exit account'] } // New logout command
+  // New logout and login commands
+  { command: 'logout', synonyms: ['logout', 'log out', 'sign out', 'exit account'] },
+  { command: 'login', synonyms: ['login', 'log in', 'sign in'] }
 ];
 
 // Settings-specific toggle commands
@@ -51,12 +53,13 @@ const settingsCommands: { command: string; synonyms: string[] }[] = [
   }
 ];
 
+// Merge general and settings commands.
 const commandMapping = [...generalCommands, ...settingsCommands];
 
 /**
  * Parses the recognized text.
- * - Checks for the wake word; if missing, returns null.
- * - Removes the wake word and then attempts to match the remainder against the command mapping.
+ * - First, checks for the wake word; if missing, returns null.
+ * - Removes the wake word from the text, then attempts to match the remainder against our command mapping.
  */
 const parseCommand = (recognizedText: string): string | null => {
   const lowerText = recognizedText.toLowerCase();
@@ -64,11 +67,11 @@ const parseCommand = (recognizedText: string): string | null => {
     console.log(`Wake word "${WAKE_WORD}" not detected. Ignoring input.`);
     return null;
   }
-  // Remove wake word from text
+  // Remove wake word
   const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'g'), '').trim();
   const cleanedText = textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
 
-  // First try matching using whole-word boundaries.
+  // Try matching using whole-word boundaries.
   for (const mapping of commandMapping) {
     for (const synonym of mapping.synonyms) {
       const cleanedSynonym = synonym.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -78,7 +81,7 @@ const parseCommand = (recognizedText: string): string | null => {
       }
     }
   }
-  // Fallback: check if any synonym is a substring.
+  // Fallback: substring matching.
   for (const mapping of commandMapping) {
     for (const synonym of mapping.synonyms) {
       const cleanedSynonym = synonym.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -96,13 +99,13 @@ const VoiceCommandManager: React.FC = () => {
   const { voiceCommandsEnabled, audioFeedbackEnabled, setVoiceCommandsEnabled, setAudioFeedbackEnabled, locationEnabled, setLocationEnabled } = usePreferences();
   const { currentScreen } = useCurrentScreen();
 
-  // Use a ref for audioFeedback to always get the latest value.
+  // Use a ref to always access the latest audioFeedback value.
   const audioFeedbackRef = useRef(audioFeedbackEnabled);
   useEffect(() => {
     audioFeedbackRef.current = audioFeedbackEnabled;
   }, [audioFeedbackEnabled]);
 
-  // This function provides visual feedback via Alert and then speaks the message if audio feedback is enabled.
+  // This function shows an Alert and then speaks feedback if enabled.
   const showAlertOnce = (title: string, message: string) => {
     Alert.alert(title, message, [{ text: 'OK' }]);
     if (audioFeedbackRef.current) {
@@ -166,16 +169,16 @@ const VoiceCommandManager: React.FC = () => {
 
   /**
    * Processes the recognized command.
-   * - When on the Settings screen, if the command is one of the settings toggles,
-   *   it updates the corresponding preference.
-   * - For logout, it navigates to Home (and you can insert any auth sign-out logic if needed).
-   * - Otherwise, it handles navigation as before.
+   * - When on the Settings screen, it checks for settings toggle commands and updates the corresponding preference.
+   * - The "logout" command navigates to LoginScreen (or Home, based on your navigation).
+   * - The "login" command navigates to the LoginScreen.
+   * - All other commands are processed as before.
    */
   const processCommand = (commandName: string) => {
     const currentRoute = navigationRef.getCurrentRoute()?.name || '';
     console.log(`Current route: "${currentRoute}", Command: "${commandName}"`);
 
-    // If on the Settings screen, process settings-specific commands.
+    // Settings-specific toggle commands (when on Settings screen)
     if (currentRoute.toLowerCase() === 'settings') {
       if (commandName === 'enable voice commands') {
         setVoiceCommandsEnabled(true);
@@ -209,12 +212,16 @@ const VoiceCommandManager: React.FC = () => {
       }
     }
 
-    // Logout command (available on any screen)
+    // Logout and Login commands (available on any screen)
     if (commandName === 'logout') {
-      // You might want to call your auth signOut function here.
       showAlertOnce('Voice Command', 'Logging out');
-      // For now, we navigate to Home.
+      // Insert your auth sign-out logic if needed.
       navigate("Home");
+      return;
+    }
+    if (commandName === 'login') {
+      showAlertOnce('Voice Command', 'Navigating to Login');
+      navigate("Login");
       return;
     }
 
@@ -267,7 +274,7 @@ const VoiceCommandManager: React.FC = () => {
       debounceTimeout.current = setTimeout(() => {
         const command = parseCommand(lastRecognizedText.current);
         if (!command) {
-          console.log(`No valid command recognized from: ${lastRecognizedText.current}. Ignoring.`);
+          console.log(`No valid command recognized from input: ${lastRecognizedText.current}. Ignoring.`);
           return;
         }
         if (command && !cooldownTimeout.current) {
