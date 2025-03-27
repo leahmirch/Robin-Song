@@ -22,8 +22,7 @@ const commandMapping: { command: string; synonyms: string[] }[] = [
 ];
 
 /**
- * Checks for the wake word. If not present, returns null.
- * If present, removes it and then tries to match the remainder.
+ * Checks for the wake word and, if present, removes it from the text.
  */
 const parseCommand = (recognizedText: string): string | null => {
   const lowerText = recognizedText.toLowerCase();
@@ -35,7 +34,6 @@ const parseCommand = (recognizedText: string): string | null => {
   const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'g'), '').trim();
   const cleanedText = textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
 
-  // Try matching using whole-word boundaries.
   for (const mapping of commandMapping) {
     for (const synonym of mapping.synonyms) {
       const cleanedSynonym = synonym.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -45,7 +43,6 @@ const parseCommand = (recognizedText: string): string | null => {
       }
     }
   }
-  // Fallback: check if any synonym is a substring.
   for (const mapping of commandMapping) {
     for (const synonym of mapping.synonyms) {
       const cleanedSynonym = synonym.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -63,10 +60,16 @@ const VoiceCommandManager: React.FC = () => {
   const { voiceCommandsEnabled, audioFeedbackEnabled } = usePreferences();
   const { currentScreen } = useCurrentScreen();
 
-  // This function shows an Alert and then speaks the message only if audio feedback is enabled.
+  // Create a ref to hold the latest audioFeedbackEnabled value.
+  const audioFeedbackRef = useRef(audioFeedbackEnabled);
+  useEffect(() => {
+    audioFeedbackRef.current = audioFeedbackEnabled;
+  }, [audioFeedbackEnabled]);
+
+  // This function uses Alert for visual feedback and calls SpeechFeedback.speak only if audio feedback is enabled.
   const showAlertOnce = (title: string, message: string) => {
     Alert.alert(title, message, [{ text: 'OK' }]);
-    if (audioFeedbackEnabled) {
+    if (audioFeedbackRef.current) {
       console.log("Audio feedback enabled; speaking: " + message);
       SpeechFeedback.speak(message, {
         language: 'en-US',
@@ -177,8 +180,8 @@ const VoiceCommandManager: React.FC = () => {
       debounceTimeout.current = setTimeout(() => {
         const command = parseCommand(lastRecognizedText.current);
         if (!command) {
-          // If the wake word wasn't detected, silently ignore input.
-          console.log(`No valid command recognized from input: ${lastRecognizedText.current}. Ignoring.`);
+          // If no valid command is detected (e.g., wake word missing), ignore silently.
+          console.log(`No valid command recognized from: ${lastRecognizedText.current}. Ignoring.`);
           return;
         }
         if (command && !cooldownTimeout.current) {
