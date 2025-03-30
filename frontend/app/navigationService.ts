@@ -19,6 +19,16 @@ let setVoiceQuestionCallback: ((question: string) => void) | null = null;
 // New state tracker for chat modal visibility
 let _isChatModalOpen = false;
 
+let readBirdSectionCallback: ((section: string) => void) | null = null;
+
+export function setReadBirdSectionCallback(fn: (section: string) => void) {
+  readBirdSectionCallback = fn;
+}
+
+export function getReadBirdSectionCallback() {
+  return readBirdSectionCallback;
+}
+
 
 export const setIsChatModalOpen = (isOpen: boolean) => {
  _isChatModalOpen = isOpen;

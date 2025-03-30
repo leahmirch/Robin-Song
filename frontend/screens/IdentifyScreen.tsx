@@ -10,6 +10,8 @@ import * as Location from "expo-location";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db, API_BASE_URL } from "../../database/firebaseConfig";
 import { usePreferences } from "../context/PreferencesContext";
+import { setReadBirdSectionCallback } from '../app/navigationService'; // Adjust the path as needed
+import * as Speech from 'expo-speech';
 
 interface BirdData {
   bird: string;
@@ -119,6 +121,42 @@ const IdentifyScreen: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setReadBirdSectionCallback((section: string) => {
+      if (birdInfo) {
+        let textToSpeak = "";
+        switch (section.toLowerCase()) {
+          case "description":
+            textToSpeak = birdInfo.description;
+            break;
+          case "diet":
+            textToSpeak = birdInfo.diet;
+            break;
+          case "habitat":
+            textToSpeak = birdInfo.habitat;
+            break;
+          case "at a glance":
+            textToSpeak = birdInfo.at_a_glance;
+            break;
+          case "feeding behavior":
+            textToSpeak = birdInfo.feeding_behavior;
+            break;
+          case "Migration & Range":
+            textToSpeak = birdInfo.feeding_behavior;
+            break;
+          default:
+            textToSpeak = "Section not found.";
+        }
+        // Use Expo Speech API to speak the text
+        Speech.speak(textToSpeak, {
+          language: 'en-US',
+          pitch: 1.0,
+          rate: 1.0,
+        });
+      }
+    });
+  }, [birdInfo]);
 
   const startRecording = async () => {
     try {

@@ -11,61 +11,71 @@ import {
   closeChatModal,
   navigationRef,
   setVoiceQuestion,
-  isChatModalOpen,  // <-- Import the helper to check if chat modal is open
+  isChatModalOpen,
+  getReadBirdSectionCallback, // callback for reading a section on Identify screen
 } from './navigationService';
 import { speakAppText } from '../services/voice/ttsHelper';
 
 const WAKE_WORD = 'robin';
 
 const generalCommands = [
-  { command: 'Identify', synonyms: ['identify','go to identify','open identify','show identify','start identify'] },
-  { command: 'Forecast', synonyms: ['forecast','go to forecast','open forecast','show forecast','start forecast'] },
-  { command: 'History', synonyms: ['history','go to history','open history','show history'] },
-  { command: 'Settings', synonyms: ['settings','go to settings','open settings','show settings'] },
-  { command: 'close chat', synonyms: ['close chat','exit chat','hide chat'] },
-  { command: 'chat', synonyms: ['chat','go to chat','open chat','show chat'] },
-  { command: 'start detection', synonyms: ['start detection','start identification','begin detection','activate detection'] },
-  { command: 'stop detection', synonyms: ['stop detection','stop identification','end detection','deactivate detection'] },
-  { command: 'logout', synonyms: ['logout','log out','sign out','exit account'] },
-  { command: 'login', synonyms: ['login','log in','sign in'] },
-  { command: 'delete chat', synonyms: ['delete chat','remove chat','erase chat'] }
+  { command: 'Identify', synonyms: ['identify', 'go to identify', 'open identify', 'show identify', 'start identify'] },
+  { command: 'Forecast', synonyms: ['forecast', 'go to forecast', 'open forecast', 'show forecast', 'start forecast'] },
+  { command: 'History', synonyms: ['history', 'go to history', 'open history', 'show history'] },
+  { command: 'Settings', synonyms: ['settings', 'go to settings', 'open settings', 'show settings'] },
+  { command: 'close chat', synonyms: ['close chat', 'exit chat', 'hide chat'] },
+  { command: 'chat', synonyms: ['chat', 'go to chat', 'open chat', 'show chat'] },
+  { command: 'start detection', synonyms: ['start detection', 'start identification', 'begin detection', 'activate detection'] },
+  { command: 'stop detection', synonyms: ['stop detection', 'stop identification', 'end detection', 'deactivate detection'] },
+  { command: 'logout', synonyms: ['logout', 'log out', 'sign out', 'exit account'] },
+  { command: 'login', synonyms: ['login', 'log in', 'sign in'] },
+  { command: 'delete chat', synonyms: ['delete chat', 'remove chat', 'erase chat'] },
+  // New read commands:
+  { command: 'read description', synonyms: ['read description'] },
+  { command: 'read diet', synonyms: ['read diet'] },
+  { command: 'read habitat', synonyms: ['read habitat'] },
+  { command: 'read at a glance', synonyms: ['read at a glance'] },
+  { command: 'read feeding behavior', synonyms: ['read feeding behavior'] },
 ];
 
 const settingsCommands = [
   {
     command: 'enable voice commands',
-    synonyms: ['enable voice commands','turn on voice commands','activate voice commands']
+    synonyms: ['enable voice commands', 'turn on voice commands', 'activate voice commands']
   },
   {
     command: 'disable voice commands',
-    synonyms: ['disable voice commands','turn off voice commands','deactivate voice commands']
+    synonyms: ['disable voice commands', 'turn off voice commands', 'deactivate voice commands']
   },
   {
     command: 'enable audio feedback',
-    synonyms: ['enable audio feedback','turn on audio feedback','activate audio feedback']
+    synonyms: ['enable audio feedback', 'turn on audio feedback', 'activate audio feedback']
   },
   {
     command: 'disable audio feedback',
-    synonyms: ['disable audio feedback','turn off audio feedback','deactivate audio feedback']
+    synonyms: ['disable audio feedback', 'turn off audio feedback', 'deactivate audio feedback']
   },
   {
     command: 'enable location',
     synonyms: [
-      'enable location','turn on location','activate location',
-      'enable location for predictions','turn on location for predictions'
+      'enable location', 'turn on location', 'activate location',
+      'enable location for predictions', 'turn on location for predictions'
     ]
   },
   {
     command: 'disable location',
     synonyms: [
-      'disable location','turn off location','deactivate location',
-      'disable location for predictions','turn off location for predictions'
+      'disable location', 'turn off location', 'deactivate location',
+      'disable location for predictions', 'turn off location for predictions'
     ]
   }
 ];
 
 const commandMapping = [...generalCommands, ...settingsCommands];
 
+/**
+ * A simple parser that uses basic regex matching.
+ */
 function parseCommand(recognizedText: string): string | null {
   const lowerText = recognizedText.toLowerCase();
   if (!lowerText.includes(WAKE_WORD)) {
@@ -74,8 +84,8 @@ function parseCommand(recognizedText: string): string | null {
   }
   const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
   const cleanedText = textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
-  
-  // First try exact matches
+
+  // Try exact matching first
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
       const cleanedSyn = syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -85,7 +95,7 @@ function parseCommand(recognizedText: string): string | null {
       }
     }
   }
-  // Then try substring matching
+  // Fallback: substring matching
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
       const cleanedSyn = syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -195,6 +205,21 @@ function handleChatCommand(commandName: string, showAlert: (title: string, msg: 
   }
 }
 
+function handleReadSectionCommand(
+  commandName: string,
+  showAlert: (title: string, msg: string) => void
+) {
+  // Remove the "read " prefix to obtain the section name.
+  const section = commandName.replace(/^read\s+/i, '').trim();
+  const readSectionCallback = getReadBirdSectionCallback();
+  if (readSectionCallback) {
+    readSectionCallback(section);
+    showAlert('Voice Command', `Reading ${section}`);
+  } else {
+    showAlert('Voice Command', `No section available for ${section}`);
+  }
+}
+
 function handleNavigationCommand(
   commandName: string,
   currentRoute: string,
@@ -287,20 +312,23 @@ const VoiceCommandManager: React.FC = () => {
     let currentRoute = navigationRef.getCurrentRoute()?.name || '';
     console.log(`Current route: "${currentRoute}", Command: "${commandName}"`);
 
-    // If the chat modal is open (even if currentRoute isn’t "Chat"), close it first.
+    // If the chat modal is open, close it first.
     if (isChatModalOpen()) {
       console.log("Chat modal is open; closing it before navigating.");
       closeChatModal();
-      // Allow a brief delay for the modal to close before navigation.
       setTimeout(() => {
-        // Update currentRoute after closing modal.
         currentRoute = navigationRef.getCurrentRoute()?.name || '';
         handleNavigationCommand(commandName, currentRoute, showAlertOnce);
       }, 500);
       return;
     }
 
-    // Handle non-navigation commands first.
+    // Check for "read" commands.
+    if (commandName.toLowerCase().startsWith("read ")) {
+      return handleReadSectionCommand(commandName, showAlertOnce);
+    }
+
+    // Handle non-navigation commands.
     if (
       commandName === 'enable voice commands' ||
       commandName === 'disable voice commands' ||
@@ -320,7 +348,7 @@ const VoiceCommandManager: React.FC = () => {
     if (commandName === 'chat' || commandName === 'close chat' || commandName === 'delete chat') {
       return handleChatCommand(commandName, showAlertOnce);
     }
-    // For general navigation commands, navigate to the target tab.
+    // For general navigation commands, navigate to the requested tab.
     return handleNavigationCommand(commandName, currentRoute, showAlertOnce);
   }
 
