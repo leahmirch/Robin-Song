@@ -3,16 +3,16 @@ import { Alert } from 'react-native';
 import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-voice/voice';
 import * as SpeechFeedback from 'expo-speech';
 
-import { usePreferences } from '../context/PreferencesContext';
-import { useCurrentScreen } from '../context/CurrentScreenContext';
+import { usePreferences } from '../../context/PreferencesContext';
+import { useCurrentScreen } from '../../context/CurrentScreenContext';
 import {
   navigate,
   openChatModal,
   closeChatModal,
   navigationRef,
   setVoiceQuestion,
-} from './navigationService';
-import { speakAppText } from '../services/voice/ttsHelper';
+} from '../../app/navigationService';
+import { speakAppText } from './ttsHelper';
 
 const WAKE_WORD = 'robin';
 
@@ -23,8 +23,8 @@ const generalCommands = [
   { command: 'Settings', synonyms: ['settings','go to settings','open settings','show settings'] },
   { command: 'close chat', synonyms: ['close chat','exit chat','hide chat'] },
   { command: 'chat', synonyms: ['chat','go to chat','open chat','show chat'] },
-  { command: 'start detection', synonyms: ['start detection','start identification','begin detection','activate detection'] },
-  { command: 'stop detection', synonyms: ['stop detection', 'stop identification','end detection','deactivate detection'] },
+  { command: 'start detection', synonyms: ['start detection','begin detection','activate detection'] },
+  { command: 'stop detection', synonyms: ['stop detection','end detection','deactivate detection'] },
   { command: 'logout', synonyms: ['logout','log out','sign out','exit account'] },
   { command: 'login', synonyms: ['login','log in','sign in'] },
   { command: 'delete chat', synonyms: ['delete chat','remove chat','erase chat'] }

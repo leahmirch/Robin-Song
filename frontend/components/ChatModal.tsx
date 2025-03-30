@@ -25,9 +25,9 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 const auth = getAuth();
 import { db, API_BASE_URL } from '../../database/firebaseConfig';
 import { collection, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
-import * as Speech from 'expo-speech';        // NEW - TTS import
-import { usePreferences } from '../../backend/src/contexts/PreferencesContext';
-import { speakAppText } from '../app/ttsHelper';
+import * as Speech from 'expo-speech';     
+import { usePreferences } from '../context/PreferencesContext';
+import { speakAppText } from '../services/voice/ttsHelper';
 
 
 interface ChatModalProps {

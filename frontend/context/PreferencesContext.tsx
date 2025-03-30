@@ -8,6 +8,8 @@ type PreferencesContextType = {
   setAudioFeedbackEnabled: (enabled: boolean) => void;
   locationEnabled: boolean;
   setLocationEnabled: (enabled: boolean) => void;
+  detectionActive: boolean;            
+  setDetectionActive: (active: boolean) => void; 
 };
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
@@ -19,6 +21,7 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [audioFeedbackEnabled, setAudioFeedbackEnabled] = useState(false);
   // Default location to false.
   const [locationEnabled, setLocationEnabled] = useState(false);
+  const [detectionActive, setDetectionActive] = useState(false); // NEW
 
   return (
     <PreferencesContext.Provider
@@ -29,6 +32,8 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setAudioFeedbackEnabled,
         locationEnabled,
         setLocationEnabled,
+        detectionActive,       // NEW
+        setDetectionActive,    // NEW
       }}
     >
       {children}

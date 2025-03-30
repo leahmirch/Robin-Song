@@ -7,7 +7,7 @@ import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
 import Toggle from '../components/Toggle';
 import { API_BASE_URL } from "../../database/firebaseConfig";
-import { usePreferences } from "../../backend/src/contexts/PreferencesContext";
+import { usePreferences } from "../context/PreferencesContext";
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();

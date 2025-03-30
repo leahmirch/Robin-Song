@@ -3,7 +3,7 @@ import { useFonts } from "expo-font";
 import { StyleSheet, ActivityIndicator } from "react-native";
 import { app } from "./database/firebaseConfig";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
-import { PreferencesProvider } from "./backend/src/contexts/PreferencesContext";
+import { PreferencesProvider } from "./frontend/context/PreferencesContext";
 
 // import RootLayout or VoiceTestScreen or whatever:
 import RootLayout from "./frontend/app/RootLayout"; 

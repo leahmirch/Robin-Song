@@ -8,12 +8,12 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import TabNavigator from './TabNavigator';
 import { CurrentScreenProvider } from '../context/CurrentScreenContext';
-import { PreferencesProvider } from '../../backend/src/contexts/PreferencesContext';
+import { PreferencesProvider } from '../context/PreferencesContext';
 import { navigationRef } from './navigationService';
 import VoiceCommandManager from './VoiceCommandManager';
 
 
-import VoiceTester from '../app/VoiceTester'; 
+import VoiceTester from '../services/voice/VoiceTester'; 
 
 const Stack = createNativeStackNavigator();
 
