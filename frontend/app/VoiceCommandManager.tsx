@@ -11,6 +11,7 @@ import {
   closeChatModal,
   navigationRef,
   setVoiceQuestion,
+  isChatModalOpen,  // <-- Import the helper to check if chat modal is open
 } from './navigationService';
 import { speakAppText } from '../services/voice/ttsHelper';
 
@@ -19,12 +20,12 @@ const WAKE_WORD = 'robin';
 const generalCommands = [
   { command: 'Identify', synonyms: ['identify','go to identify','open identify','show identify','start identify'] },
   { command: 'Forecast', synonyms: ['forecast','go to forecast','open forecast','show forecast','start forecast'] },
-  { command: 'History',  synonyms: ['history','go to history','open history','show history'] },
+  { command: 'History', synonyms: ['history','go to history','open history','show history'] },
   { command: 'Settings', synonyms: ['settings','go to settings','open settings','show settings'] },
   { command: 'close chat', synonyms: ['close chat','exit chat','hide chat'] },
   { command: 'chat', synonyms: ['chat','go to chat','open chat','show chat'] },
   { command: 'start detection', synonyms: ['start detection','start identification','begin detection','activate detection'] },
-  { command: 'stop detection', synonyms: ['stop detection', 'stop identification','end detection','deactivate detection'] },
+  { command: 'stop detection', synonyms: ['stop detection','stop identification','end detection','deactivate detection'] },
   { command: 'logout', synonyms: ['logout','log out','sign out','exit account'] },
   { command: 'login', synonyms: ['login','log in','sign in'] },
   { command: 'delete chat', synonyms: ['delete chat','remove chat','erase chat'] }
@@ -63,7 +64,6 @@ const settingsCommands = [
   }
 ];
 
-// merge them
 const commandMapping = [...generalCommands, ...settingsCommands];
 
 function parseCommand(recognizedText: string): string | null {
@@ -75,7 +75,7 @@ function parseCommand(recognizedText: string): string | null {
   const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
   const cleanedText = textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
   
-  // exact match
+  // First try exact matches
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
       const cleanedSyn = syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -85,7 +85,7 @@ function parseCommand(recognizedText: string): string | null {
       }
     }
   }
-    // substring
+  // Then try substring matching
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
       const cleanedSyn = syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
@@ -111,6 +111,104 @@ function parseAskQuestion(recognizedText: string): string | null {
 
 const DEBOUNCE_DELAY = 600;
 
+// --- Helper functions for command groups ---
+
+function handleSettingsCommand(
+  commandName: string,
+  setVoiceCommandsEnabled: (b: boolean) => void,
+  setAudioFeedbackEnabled: (b: boolean) => void,
+  setLocationEnabled: (b: boolean) => void,
+  showAlert: (title: string, msg: string) => void
+) {
+  if (commandName === 'enable voice commands') {
+    setVoiceCommandsEnabled(true);
+    showAlert('Settings', 'Voice commands enabled');
+    return;
+  }
+  if (commandName === 'disable voice commands') {
+    setVoiceCommandsEnabled(false);
+    showAlert('Settings', 'Voice commands disabled');
+    return;
+  }
+  if (commandName === 'enable audio feedback') {
+    setAudioFeedbackEnabled(true);
+    showAlert('Settings', 'Audio feedback enabled');
+    return;
+  }
+  if (commandName === 'disable audio feedback') {
+    setAudioFeedbackEnabled(false);
+    showAlert('Settings', 'Audio feedback disabled');
+    return;
+  }
+  if (commandName === 'enable location') {
+    setLocationEnabled(true);
+    showAlert('Settings', 'Location enabled for predictions');
+    return;
+  }
+  if (commandName === 'disable location') {
+    setLocationEnabled(false);
+    showAlert('Settings', 'Location disabled for predictions');
+    return;
+  }
+}
+
+function handleAuthCommand(commandName: string, showAlert: (title: string, msg: string) => void) {
+  if (commandName === 'logout') {
+    showAlert('Voice Command', 'Logging out');
+    navigate("Home");
+    return;
+  }
+  if (commandName === 'login') {
+    showAlert('Voice Command', 'Navigating to Login');
+    navigate("Login");
+    return;
+  }
+}
+
+function handleDetectionCommand(
+  commandName: string,
+  setDetectionActive: (b: boolean) => void,
+  showAlert: (title: string, msg: string) => void
+) {
+  if (commandName === 'start detection') {
+    setDetectionActive(true);
+    showAlert('Voice Command', 'Starting detection');
+    return;
+  }
+  if (commandName === 'stop detection') {
+    setDetectionActive(false);
+    showAlert('Voice Command', 'Stopping detection');
+    return;
+  }
+}
+
+function handleChatCommand(commandName: string, showAlert: (title: string, msg: string) => void) {
+  if (commandName === 'chat') {
+    openChatModal();
+    showAlert('Voice Command', 'Opening Chat');
+    return;
+  }
+  if (commandName === 'close chat') {
+    closeChatModal();
+    showAlert('Voice Command', 'Closing Chat');
+    return;
+  }
+}
+
+function handleNavigationCommand(
+  commandName: string,
+  currentRoute: string,
+  showAlert: (title: string, msg: string) => void
+) {
+  // For navigation commands, navigate regardless of current route.
+  if (currentRoute.trim().toLowerCase() === commandName.trim().toLowerCase()) {
+    showAlert('Voice Command', `Already on ${commandName} tab`);
+  } else {
+    navigate(commandName);
+    showAlert('Voice Command', `Navigating to ${commandName}`);
+  }
+}
+
 const VoiceCommandManager: React.FC = () => {
   const {
     voiceCommandsEnabled,
@@ -129,8 +227,7 @@ const VoiceCommandManager: React.FC = () => {
     audioFeedbackRef.current = audioFeedbackEnabled;
   }, [audioFeedbackEnabled]);
 
-// define showAlertOnce inside
-function showAlertOnce(title: string, message: string) {
+  function showAlertOnce(title: string, message: string) {
     Alert.alert(title, message, [{ text: 'OK' }]);
     if (audioFeedbackRef.current) {
       console.log("Audio feedback enabled; speaking: " + message);
@@ -140,7 +237,6 @@ function showAlertOnce(title: string, message: string) {
     }
   }
 
-  // recognition states
   const recognitionInProgress = useRef(false);
   const cooldownTimeout = useRef<NodeJS.Timeout | null>(null);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -188,87 +284,44 @@ function showAlertOnce(title: string, message: string) {
   }
 
   function processCommand(commandName: string) {
-    const currentRoute = navigationRef.getCurrentRoute()?.name || '';
+    let currentRoute = navigationRef.getCurrentRoute()?.name || '';
     console.log(`Current route: "${currentRoute}", Command: "${commandName}"`);
 
-   // settings toggles
-  if (currentRoute.toLowerCase() === 'settings') {
-      if (commandName === 'enable voice commands') {
-        setVoiceCommandsEnabled(true);
-        showAlertOnce('Settings', 'Voice commands enabled');
-        return;
-      }
-      if (commandName === 'disable voice commands') {
-        setVoiceCommandsEnabled(false);
-        showAlertOnce('Settings', 'Voice commands disabled');
-        return;
-      }
-      if (commandName === 'enable audio feedback') {
-        setAudioFeedbackEnabled(true);
-        showAlertOnce('Settings', 'Audio feedback enabled');
-        return;
-      }
-      if (commandName === 'disable audio feedback') {
-        setAudioFeedbackEnabled(false);
-        showAlertOnce('Settings', 'Audio feedback disabled');
-        return;
-      }
-      if (commandName === 'enable location') {
-        setLocationEnabled(true);
-        showAlertOnce('Settings', 'Location enabled for predictions');
-        return;
-      }
-      if (commandName === 'disable location') {
-        setLocationEnabled(false);
-        showAlertOnce('Settings', 'Location disabled for predictions');
-        return;
-      }
-    }
-    if (commandName === 'logout') {
-      showAlertOnce('Voice Command', 'Logging out');
-      navigate("Home");
-      return;
-    }
-    if (commandName === 'login') {
-      showAlertOnce('Voice Command', 'Navigating to Login');
-      navigate("Login");
-      return;
-    }
-    // Update detection toggle based on voice command.
-    if (commandName === 'start detection') {
-      setDetectionActive(true);
-      showAlertOnce('Voice Command', 'Starting detection');
-      return;
-    }
-    if (commandName === 'stop detection') {
-      setDetectionActive(false);
-      showAlertOnce('Voice Command', 'Stopping detection');
+    // If the chat modal is open (even if currentRoute isn’t "Chat"), close it first.
+    if (isChatModalOpen()) {
+      console.log("Chat modal is open; closing it before navigating.");
+      closeChatModal();
+      // Allow a brief delay for the modal to close before navigation.
+      setTimeout(() => {
+        // Update currentRoute after closing modal.
+        currentRoute = navigationRef.getCurrentRoute()?.name || '';
+        handleNavigationCommand(commandName, currentRoute, showAlertOnce);
+      }, 500);
       return;
     }
 
-    // chat
-  if (commandName === 'chat') {
-      openChatModal();
-      showAlertOnce('Voice Command', 'Opening Chat');
-      return;
+    // Handle non-navigation commands first.
+    if (
+      commandName === 'enable voice commands' ||
+      commandName === 'disable voice commands' ||
+      commandName === 'enable audio feedback' ||
+      commandName === 'disable audio feedback' ||
+      commandName === 'enable location' ||
+      commandName === 'disable location'
+    ) {
+      return handleSettingsCommand(commandName, setVoiceCommandsEnabled, setAudioFeedbackEnabled, setLocationEnabled, showAlertOnce);
     }
-    if (commandName === 'close chat') {
-      closeChatModal();
-      showAlertOnce('Voice Command', 'Closing Chat');
-      return;
+    if (commandName === 'logout' || commandName === 'login') {
+      return handleAuthCommand(commandName, showAlertOnce);
     }
-  
-    if (currentRoute.toLowerCase() === 'chat') {
-      closeChatModal();
+    if (commandName === 'start detection' || commandName === 'stop detection') {
+      return handleDetectionCommand(commandName, setDetectionActive, showAlertOnce);
     }
-   
-     // normal nav
-    if (currentRoute.trim().toLowerCase() === commandName.trim().toLowerCase()) {
-      showAlertOnce('Voice Command', `Already on ${commandName} tab`);
-    } else {
-      navigate(commandName);
-      showAlertOnce('Voice Command', `Navigating to ${commandName}`);
+    if (commandName === 'chat' || commandName === 'close chat' || commandName === 'delete chat') {
+      return handleChatCommand(commandName, showAlertOnce);
     }
+    // For general navigation commands, navigate to the target tab.
+    return handleNavigationCommand(commandName, currentRoute, showAlertOnce);
   }
 
   function onSpeechResults(event: SpeechResultsEvent) {
@@ -315,7 +368,9 @@ function showAlertOnce(title: string, message: string) {
 
   function onSpeechError(event: SpeechErrorEvent) {
     console.error('Speech recognition error:', event.error);
-    if (event.error?.message?.includes('already started')) {
+    if (event.error?.message?.includes('No speech detected')) {
+      console.log('No speech detected, restarting listening.');
+    } else if (event.error?.message?.includes('already started')) {
       console.log('Already started error encountered. Ignoring.');
     } else {
       showAlertOnce('Voice Error', JSON.stringify(event.error));

@@ -4,10 +4,8 @@ import { StyleSheet, ActivityIndicator } from "react-native";
 import { app } from "./database/firebaseConfig";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { PreferencesProvider } from "./frontend/context/PreferencesContext";
-
-// import RootLayout or VoiceTestScreen or whatever:
 import RootLayout from "./frontend/app/RootLayout"; 
-// or if you haven't set up RootLayout yet, keep VoiceTestScreen for partial testing.
+
 
 const auth = getAuth(app);
 
@@ -36,7 +34,6 @@ export default function App() {
   return (
     <PreferencesProvider>
       <RootLayout />
-      {/* OR <VoiceTestScreen /> if you’re still testing. */}
     </PreferencesProvider>
   );
 }
