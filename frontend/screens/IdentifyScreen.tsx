@@ -142,9 +142,6 @@ const IdentifyScreen: React.FC = () => {
           case "feeding behavior":
             textToSpeak = birdInfo.feeding_behavior;
             break;
-          case "Migration & Range":
-            textToSpeak = birdInfo.feeding_behavior;
-            break;
           default:
             textToSpeak = "Section not found.";
         }
@@ -157,6 +154,7 @@ const IdentifyScreen: React.FC = () => {
       }
     });
   }, [birdInfo]);
+  
 
   const startRecording = async () => {
     try {

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-voice/voice';
 import * as SpeechFeedback from 'expo-speech';
+import * as Speech from 'expo-speech';
 
 import { usePreferences } from '../context/PreferencesContext';
 import { useCurrentScreen } from '../context/CurrentScreenContext';
@@ -12,12 +13,36 @@ import {
   navigationRef,
   setVoiceQuestion,
   isChatModalOpen,
-  getReadBirdSectionCallback, // callback for reading a section on Identify screen
+  getReadBirdSectionCallback,
 } from './navigationService';
 import { speakAppText } from '../services/voice/ttsHelper';
 
 const WAKE_WORD = 'robin';
 
+// Add a normalization  that corrects common mispronunciations:
+function normalizeText(text: string): string {
+  return text
+    .replace(/\breid\b/g, 'read')
+    .replace(/\bbreed\b/g, 'read')
+    .replace(/\breed\b/g, 'read')
+    .replace(/\bred\b/g, 'read')
+    .replace(/\bdescripton\b/g, 'description')
+    .replace(/\bdescritpion\b/g, 'description')
+    .replace(/\bdescripshun\b/g, 'description')
+    .replace(/\bhabit\b/g, 'habitat')
+    .replace(/\bhabat\b/g, 'habitat')
+    .replace(/\bhabite\b/g, 'habitat')
+    .replace(/\bhabiit\b/g, 'habitat')
+    .replace(/\bdie it\b/g, 'diet')
+    .replace(/\bdite\b/g, 'diet')
+    .replace(/\bdiett\b/g, 'diet')
+    .replace(/\bat a glanse\b/g, 'at a glance')
+    .replace(/\bat glance\b/g, 'at a glance')
+    .replace(/\bat a gance\b/g, 'at a glance')
+    .replace(/\bfeedin behavior\b/g, 'feeding behavior')
+    .replace(/\bfeedn behavior\b/g, 'feeding behavior')
+   
+}
 const generalCommands = [
   { command: 'Identify', synonyms: ['identify', 'go to identify', 'open identify', 'show identify', 'start identify'] },
   { command: 'Forecast', synonyms: ['forecast', 'go to forecast', 'open forecast', 'show forecast', 'start forecast'] },
@@ -30,12 +55,12 @@ const generalCommands = [
   { command: 'logout', synonyms: ['logout', 'log out', 'sign out', 'exit account'] },
   { command: 'login', synonyms: ['login', 'log in', 'sign in'] },
   { command: 'delete chat', synonyms: ['delete chat', 'remove chat', 'erase chat'] },
-  // New read commands:
   { command: 'read description', synonyms: ['read description'] },
   { command: 'read diet', synonyms: ['read diet'] },
   { command: 'read habitat', synonyms: ['read habitat'] },
   { command: 'read at a glance', synonyms: ['read at a glance'] },
   { command: 'read feeding behavior', synonyms: ['read feeding behavior'] },
+  { command: 'stop reading', synonyms: ['stop reading', 'cancel reading', 'silence', 'stop'] },
 ];
 
 const settingsCommands = [
@@ -73,22 +98,20 @@ const settingsCommands = [
 
 const commandMapping = [...generalCommands, ...settingsCommands];
 
-/**
- * A simple parser that uses basic regex matching.
- */
 function parseCommand(recognizedText: string): string | null {
   const lowerText = recognizedText.toLowerCase();
   if (!lowerText.includes(WAKE_WORD)) {
     console.log(`Wake word "${WAKE_WORD}" not detected. Ignoring input.`);
     return null;
   }
+  // Remove the wake word and normalize the text:
   const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
-  const cleanedText = textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
-
+  const cleanedText = normalizeText(textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
+  
   // Try exact matching first
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
-      const cleanedSyn = syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
+      const cleanedSyn = normalizeText(syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
       const regex = new RegExp(`\\b${cleanedSyn}\\b`);
       if (regex.test(cleanedText)) {
         return mapping.command;
@@ -98,7 +121,7 @@ function parseCommand(recognizedText: string): string | null {
   // Fallback: substring matching
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
-      const cleanedSyn = syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase();
+      const cleanedSyn = normalizeText(syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
       if (cleanedText.includes(cleanedSyn)) {
         return mapping.command;
       }
@@ -111,9 +134,10 @@ function parseAskQuestion(recognizedText: string): string | null {
   const lower = recognizedText.toLowerCase();
   if (!lower.includes(WAKE_WORD)) return null;
   let text = lower.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
-  text = text.replace(/\basked\b/g, 'ask');
-  text = text.replace(/\basking\b/g, 'ask');
-  text = text.replace(/\basks\b/g, 'ask');
+  text = normalizeText(text);
+  text = text.replace(/\basked\b/g, 'ask')
+             .replace(/\basking\b/g, 'ask')
+             .replace(/\basks\b/g, 'ask');
   const match = text.match(/\b(?:ask|question)\s+(.*)/);
   if (!match) return null;
   return match[1].trim();
@@ -218,6 +242,12 @@ function handleReadSectionCommand(
   } else {
     showAlert('Voice Command', `No section available for ${section}`);
   }
+}
+
+function handleStopReadingCommand(showAlert: (title: string, msg: string) => void) {
+  // Stop any ongoing speech using Expo Speech
+  Speech.stop();
+  showAlert('Voice Command', 'Stopping speech');
 }
 
 function handleNavigationCommand(
@@ -326,6 +356,11 @@ const VoiceCommandManager: React.FC = () => {
     // Check for "read" commands.
     if (commandName.toLowerCase().startsWith("read ")) {
       return handleReadSectionCommand(commandName, showAlertOnce);
+    }
+
+    // Check for stop reading command.
+    if (commandName === 'stop reading') {
+      return handleStopReadingCommand(showAlertOnce);
     }
 
     // Handle non-navigation commands.
