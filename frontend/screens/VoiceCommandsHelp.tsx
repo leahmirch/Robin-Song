@@ -1,17 +1,15 @@
 // VoiceCommandHelp.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList } from 'react-native';
-import Accordion from '../components/Accordion'; // Adjusted path to the correct location
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { speakAppText } from '../services/voice/ttsHelper';
 import colors from '../assets/theme/colors';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 
 interface CommandItem {
  command: string;
  synonyms: string[];
  example: string;
- icon?: string; // optional icon name from MaterialCommunityIcons
 }
 
 
@@ -29,69 +27,60 @@ const commandData: CommandCategory[] = [
    commands: [
      {
        command: 'Identify',
-       synonyms: ['identify', 'go to identify', 'open identify', 'show identify', 'start identify'],
-       example: 'robin identify',
-       icon: 'microphone-outline',
+       synonyms: ['identify', 'open identify'],
+       example: 'Say "robin identify" to switch to the Identify screen.',
      },
      {
        command: 'Forecast',
-       synonyms: ['forecast', 'go to forecast', 'open forecast', 'show forecast', 'start forecast'],
-       example: 'robin forecast',
-       icon: 'weather-partly-cloudy',
+       synonyms: ['forecast', 'open forecast'],
+       example: 'Say "robin forecast" to view the weather forecast.',
      },
      {
        command: 'History',
-       synonyms: ['history', 'go to history', 'open history', 'show history'],
-       example: 'robin history',
-       icon: 'history',
+       synonyms: ['history', 'open history'],
+       example: 'Say "robin history" to view your bird detection history.',
      },
      {
        command: 'Settings',
-       synonyms: ['settings', 'go to settings', 'open settings', 'show settings'],
-       example: 'robin settings',
-       icon: 'cog-outline',
+       synonyms: ['settings', 'open settings'],
+       example: 'Say "robin settings" to open the Settings screen.',
      },
    ],
  },
  {
    category: 'Detection',
-   icon: 'radar',
+   icon: 'microphone',
    commands: [
      {
        command: 'start detection',
-       synonyms: ['start detection', 'start identification', 'begin detection', 'activate detection'],
-       example: 'robin start detection',
-       icon: 'play-circle-outline',
+       synonyms: ['start detection', 'begin detection'],
+       example: 'Say "robin start detection" to begin bird detection.',
      },
      {
        command: 'stop detection',
-       synonyms: ['stop detection', 'stop identification', 'end detection', 'deactivate detection'],
-       example: 'robin stop detection',
-       icon: 'stop-circle-outline',
+       synonyms: ['stop detection', 'end detection'],
+       example: 'Say "robin stop detection" to end bird detection.',
      },
    ],
  },
  {
    category: 'Chat',
-   icon: 'message-text-outline',
+   icon: 'chat-outline',
    commands: [
      {
        command: 'chat',
-       synonyms: ['chat', 'go to chat', 'open chat', 'show chat'],
-       example: 'robin chat',
-       icon: 'chat-outline',
+       synonyms: ['open chat'],
+       example: 'Say "robin chat" to open the chat window.',
      },
      {
        command: 'close chat',
-       synonyms: ['close chat', 'exit chat', 'hide chat'],
-       example: 'robin close chat',
-       icon: 'close-circle-outline',
+       synonyms: ['close chat', 'exit chat'],
+       example: 'Say "robin close chat" to close the chat window.',
      },
      {
        command: 'delete chat',
-       synonyms: ['delete chat', 'remove chat', 'erase chat'],
-       example: 'robin delete chat',
-       icon: 'delete-outline',
+       synonyms: ['delete chat', 'remove chat'],
+       example: 'Say "robin delete chat" to remove the current chat.',
      },
    ],
  },
@@ -102,44 +91,32 @@ const commandData: CommandCategory[] = [
      {
        command: 'read description',
        synonyms: ['read description'],
-       example: 'robin read description',
-       icon: 'file-document-outline',
+       example: 'Say "robin read description" to hear the bird description.',
      },
      {
        command: 'read diet',
        synonyms: ['read diet'],
-       example: 'robin read diet',
-       icon: 'food-apple-outline',
+       example: 'Say "robin read diet" to hear what the bird eats.',
      },
      {
        command: 'read habitat',
        synonyms: ['read habitat'],
-       example: 'robin read habitat',
-       icon: 'home-outline',
+       example: 'Say "robin read habitat" to hear about the bird habitat.',
      },
      {
        command: 'read at a glance',
        synonyms: ['read at a glance'],
-       example: 'robin read at a glance',
-       icon: 'eye-outline',
+       example: 'Say "robin read at a glance" for quick bird facts.',
      },
      {
        command: 'read feeding behavior',
        synonyms: ['read feeding behavior'],
-       example: 'robin read feeding behavior',
-       icon: 'food-fork-drink-outline',
+       example: 'Say "robin read feeding behavior" to learn how the bird feeds.',
      },
      {
        command: 'read migration and range',
        synonyms: ['read migration and range'],
-       example: 'robin read migration and range',
-       icon: 'map-marker-distance',
-     },
-     {
-       command: 'stop reading',
-       synonyms: ['stop reading', 'cancel reading', 'silence', 'stop'],
-       example: 'robin stop reading',
-       icon: 'volume-mute-outline',
+       example: 'Say "robin read migration and range" to hear migration details.',
      },
    ],
  },
@@ -149,39 +126,33 @@ const commandData: CommandCategory[] = [
    commands: [
      {
        command: 'enable voice commands',
-       synonyms: ['enable voice commands', 'turn on voice commands', 'activate voice commands'],
-       example: 'robin enable voice commands',
-       icon: 'microphone-plus-outline',
+       synonyms: ['enable voice commands'],
+       example: 'Say "robin enable voice commands" to activate voice control.',
      },
      {
        command: 'disable voice commands',
-       synonyms: ['disable voice commands', 'turn off voice commands', 'deactivate voice commands'],
-       example: 'robin disable voice commands',
-       icon: 'microphone-minus-outline',
+       synonyms: ['disable voice commands'],
+       example: 'Say "robin disable voice commands" to turn off voice control.',
      },
      {
        command: 'enable audio feedback',
-       synonyms: ['enable audio feedback', 'turn on audio feedback', 'activate audio feedback'],
-       example: 'robin enable audio feedback',
-       icon: 'volume-high-outline',
+       synonyms: ['enable audio feedback'],
+       example: 'Say "robin enable audio feedback" to hear spoken feedback.',
      },
      {
        command: 'disable audio feedback',
-       synonyms: ['disable audio feedback', 'turn off audio feedback', 'deactivate audio feedback'],
-       example: 'robin disable audio feedback',
-       icon: 'volume-off-outline',
+       synonyms: ['disable audio feedback'],
+       example: 'Say "robin disable audio feedback" to stop spoken feedback.',
      },
      {
        command: 'enable location',
-       synonyms: ['enable location', 'turn on location', 'activate location', 'enable location for predictions', 'turn on location for predictions'],
-       example: 'robin enable location',
-       icon: 'map-marker-outline',
+       synonyms: ['enable location'],
+       example: 'Say "robin enable location" to allow location-based predictions.',
      },
      {
        command: 'disable location',
-       synonyms: ['disable location', 'turn off location', 'deactivate location', 'disable location for predictions', 'turn off location for predictions'],
-       example: 'robin disable location',
-       icon: 'map-marker-off-outline',
+       synonyms: ['disable location'],
+       example: 'Say "robin disable location" to disable location-based predictions.',
      },
    ],
  },
@@ -189,147 +160,168 @@ const commandData: CommandCategory[] = [
 
 
 const VoiceCommandHelp: React.FC = () => {
- const [searchText, setSearchText] = useState('');
+ const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
 
- // Filter commands based on search input (if any)
- const filteredData = commandData.map((section) => ({
-   ...section,
-   commands: section.commands.filter((cmd) =>
-     cmd.command.toLowerCase().includes(searchText.toLowerCase())
-   ),
- })).filter((section) => section.commands.length > 0);
+ const toggleCategory = (category: string) => {
+   setExpandedCategory(expandedCategory === category ? null : category);
+ };
 
 
- const handleTryIt = (example: string) => {
-   // Speak the example aloud
-   speakAppText(example);
+ const renderCommandItem = ({ item }: { item: CommandItem }) => {
+   return (
+     <View style={styles.commandItem}>
+       <Text style={styles.commandTitle}>{item.command}</Text>
+       <Text style={styles.synonymsTitle}>Synonyms:</Text>
+       <View style={styles.synonymsContainer}>
+         {item.synonyms.map((syn, index) => (
+           <Text key={index} style={styles.synonymText}>
+             • {syn}
+           </Text>
+         ))}
+       </View>
+       <Text style={styles.exampleTitle}>Example:</Text>
+       <Text style={styles.exampleText}>{item.example}</Text>
+       <TouchableOpacity
+         style={styles.tryButton}
+         onPress={() => speakAppText(item.example)}
+       >
+         <Text style={styles.tryButtonText}>Try It</Text>
+       </TouchableOpacity>
+     </View>
+   );
+ };
+
+
+ const renderCategory = ({ item }: { item: CommandCategory }) => {
+   const isExpanded = expandedCategory === item.category;
+   return (
+     <View style={styles.categoryContainer}>
+       <TouchableOpacity
+         style={styles.categoryHeader}
+         onPress={() => toggleCategory(item.category)}
+       >
+         <MaterialCommunityIcons name={item.icon} size={24} color={colors.primary} />
+         <Text style={styles.categoryTitle}>{item.category}</Text>
+         <MaterialCommunityIcons
+           name={isExpanded ? 'chevron-up' : 'chevron-down'}
+           size={24}
+           color={colors.primary}
+         />
+       </TouchableOpacity>
+       {isExpanded && (
+         <FlatList
+           data={item.commands}
+           keyExtractor={(item) => item.command}
+           renderItem={renderCommandItem}
+           style={styles.commandsList}
+         />
+       )}
+     </View>
+   );
  };
 
 
  return (
-   <Accordion title="Voice Command Help" startIcon="microphone-outline">
-     <View style={styles.helpContainer}>
-       <TextInput
-         style={styles.searchInput}
-         placeholder="Search commands..."
-         value={searchText}
-         onChangeText={setSearchText}
-       />
-       <FlatList
-         data={filteredData}
-         keyExtractor={(item, index) => `${item.category}-${index}`}
-         renderItem={({ item: section }) => (
-           <View style={styles.section}>
-             <View style={styles.sectionHeader}>
-               <MaterialCommunityIcons name={section.icon} size={20} color={colors.secondary} />
-               <Text style={styles.categoryTitle}>{section.category}</Text>
-             </View>
-             {section.commands.map((cmd, idx) => (
-               <View key={idx} style={styles.commandContainer}>
-                 <View style={styles.headerRow}>
-                   <View style={styles.commandHeader}>
-                     <MaterialCommunityIcons name={cmd.icon || "chevron-right"} size={16} color={colors.primary} style={styles.commandIcon} />
-                     <Text style={styles.commandTitle}>{cmd.command}</Text>
-                   </View>
-                   <TouchableOpacity style={styles.tryItButton} onPress={() => handleTryIt(cmd.example)}>
-                     <Text style={styles.tryItText}>Try It</Text>
-                   </TouchableOpacity>
-                 </View>
-                 <View style={styles.exampleRow}>
-                   <Text style={styles.exampleText}>Example: {cmd.example}</Text>
-                 </View>
-                 <Text style={styles.commandSynonyms}>Synonyms: {cmd.synonyms.join(', ')}</Text>
-               </View>
-             ))}
-           </View>
-         )}
-       />
-     </View>
-   </Accordion>
+   <View style={styles.container}>
+     <Text style={styles.header}>Voice Command Help</Text>
+     <FlatList
+       data={commandData}
+       keyExtractor={(item) => item.category}
+       renderItem={renderCategory}
+     />
+   </View>
  );
 };
 
 
 const styles = StyleSheet.create({
- helpContainer: {
-   marginTop: 10,
+ container: {
+   padding: 16,
+   backgroundColor: colors.background,
+   flex: 1,
  },
- searchInput: {
-   height: 40,
-   borderColor: colors.accent,
-   borderWidth: 1,
-   borderRadius: 8,
-   paddingHorizontal: 10,
-   marginBottom: 10,
-   fontFamily: 'Radio Canada',
-   fontSize: 14,
-   color: colors.text,
- },
- section: {
-   marginBottom: 15,
-   borderBottomWidth: 1,
-   borderBottomColor: colors.accent,
-   paddingBottom: 10,
- },
- sectionHeader: {
-   flexDirection: 'row',
-   alignItems: 'center',
-   marginBottom: 8,
- },
- categoryTitle: {
-   fontSize: 18,
+ header: {
+   fontSize: 28,
    fontFamily: 'Caprasimo',
    color: colors.secondary,
-   marginLeft: 5,
+   textAlign: 'center',
+   marginBottom: 16,
  },
- commandContainer: {
-   marginBottom: 10,
-   paddingLeft: 10,
+ categoryContainer: {
+   marginBottom: 12,
+   borderWidth: 1,
+   borderColor: colors.accent,
+   borderRadius: 8,
+   backgroundColor: colors.card,
  },
- headerRow: {
+ categoryHeader: {
    flexDirection: 'row',
-   justifyContent: 'space-between',
    alignItems: 'center',
+   padding: 12,
  },
- commandHeader: {
-   flexDirection: 'row',
-   alignItems: 'center',
+ categoryTitle: {
+   flex: 1,
+   fontSize: 20,
+   fontFamily: 'Caprasimo',
+   color: colors.primary,
+   marginLeft: 8,
  },
- commandIcon: {
-   marginRight: 5,
+ commandsList: {
+   paddingHorizontal: 12,
+   paddingBottom: 12,
+ },
+ commandItem: {
+   marginBottom: 16,
+   padding: 8,
+   backgroundColor: colors.background,
+   borderRadius: 8,
  },
  commandTitle: {
+   fontSize: 18,
+   fontFamily: 'Caprasimo',
+   fontWeight: 'bold',
+   color: colors.secondary,
+   marginBottom: 4,
+ },
+ synonymsTitle: {
    fontSize: 16,
    fontFamily: 'Radio Canada',
    color: colors.primary,
-   fontWeight: 'bold',
+   marginBottom: 2,
  },
- tryItButton: {
-   backgroundColor: colors.accent,
-   paddingHorizontal: 10,
-   paddingVertical: 5,
-   borderRadius: 5,
+ synonymsContainer: {
+   marginLeft: 8,
+   marginBottom: 4,
  },
- tryItText: {
+ synonymText: {
    fontSize: 14,
    fontFamily: 'Radio Canada',
-   color: '#fff',
+   color: colors.text,
  },
- exampleRow: {
-   marginTop: 4,
+ exampleTitle: {
+   fontSize: 16,
+   fontFamily: 'Radio Canada',
+   color: colors.primary,
    marginBottom: 2,
  },
  exampleText: {
    fontSize: 14,
    fontFamily: 'Radio Canada',
    color: colors.text,
+   marginBottom: 4,
  },
- commandSynonyms: {
+ tryButton: {
+   alignSelf: 'flex-start',
+   backgroundColor: colors.accent,
+   paddingHorizontal: 12,
+   paddingVertical: 6,
+   borderRadius: 4,
+ },
+ tryButtonText: {
    fontSize: 14,
    fontFamily: 'Radio Canada',
-   color: colors.text,
-   marginTop: 3,
+   color: colors.white,
  },
 });
 
