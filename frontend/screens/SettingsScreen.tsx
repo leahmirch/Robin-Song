@@ -122,7 +122,7 @@ const SettingsScreen: React.FC = () => {
 
         <Toggle
           title="Enable Audio Feedback"
-          startIcon="volume-high-outline"
+          startIcon="volume-plus"  // Updated icon name
           value={audioFeedbackEnabled}
           onToggle={(newValue) => {
             setAudioFeedbackEnabled(newValue);

@@ -1,7 +1,7 @@
+// VoiceCommandManager.tsx
 import React, { useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-voice/voice';
-import * as SpeechFeedback from 'expo-speech';
 import * as Speech from 'expo-speech';
 
 import { usePreferences } from '../context/PreferencesContext';
@@ -19,12 +19,10 @@ import { speakAppText } from '../services/voice/ttsHelper';
 
 const WAKE_WORD = 'robin';
 
-// Add a normalization  that corrects common mispronunciations:
 function normalizeText(text: string): string {
   return text
     .replace(/\breid\b/g, 'read')
     .replace(/\bbreed\b/g, 'read')
-    .replace(/\breed\b/g, 'read')
     .replace(/\bred\b/g, 'read')
     .replace(/\bdescripton\b/g, 'description')
     .replace(/\bdescritpion\b/g, 'description')
@@ -40,9 +38,9 @@ function normalizeText(text: string): string {
     .replace(/\bat glance\b/g, 'at a glance')
     .replace(/\bat a gance\b/g, 'at a glance')
     .replace(/\bfeedin behavior\b/g, 'feeding behavior')
-    .replace(/\bfeedn behavior\b/g, 'feeding behavior')
-   
+    .replace(/\bfeedn behavior\b/g, 'feeding behavior');
 }
+
 const generalCommands = [
   { command: 'Identify', synonyms: ['identify', 'go to identify', 'open identify', 'show identify', 'start identify'] },
   { command: 'Forecast', synonyms: ['forecast', 'go to forecast', 'open forecast', 'show forecast', 'start forecast'] },
@@ -59,6 +57,7 @@ const generalCommands = [
   { command: 'read habitat', synonyms: ['read habitat'] },
   { command: 'read at a glance', synonyms: ['read at a glance'] },
   { command: 'read feeding behavior', synonyms: ['read feeding behavior'] },
+  { command: 'read migration and range', synonyms: ['read migration and range'] },
   { command: 'stop reading', synonyms: ['stop reading', 'cancel reading', 'silence', 'stop'] },
 ];
 
@@ -103,11 +102,9 @@ function parseCommand(recognizedText: string): string | null {
     console.log(`Wake word "${WAKE_WORD}" not detected. Ignoring input.`);
     return null;
   }
-  // Remove the wake word and normalize the text:
   const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
   const cleanedText = normalizeText(textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
   
-  // Try exact matching first
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
       const cleanedSyn = normalizeText(syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
@@ -117,7 +114,6 @@ function parseCommand(recognizedText: string): string | null {
       }
     }
   }
-  // Fallback: substring matching
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
       const cleanedSyn = normalizeText(syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
@@ -133,8 +129,6 @@ function parseAskQuestion(recognizedText: string): string | null {
   const lower = recognizedText.toLowerCase();
   if (!lower.includes(WAKE_WORD)) return null;
   let text = lower.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
-  
-  // Normalize text to correct common mispronunciations
   text = normalizeText(text);
   text = text.replace(/\basked\b/g, 'ask')
              .replace(/\basking\b/g, 'ask')
@@ -144,10 +138,7 @@ function parseAskQuestion(recognizedText: string): string | null {
   return match[1].trim();
 }
 
-
 const DEBOUNCE_DELAY = 600;
-
-// --- Helper functions for command groups ---
 
 function handleSettingsCommand(
   commandName: string,
@@ -235,7 +226,6 @@ function handleReadSectionCommand(
   commandName: string,
   showAlert: (title: string, msg: string) => void
 ) {
-  // Remove the "read " prefix to obtain the section name.
   const section = commandName.replace(/^read\s+/i, '').trim();
   const readSectionCallback = getReadBirdSectionCallback();
   if (readSectionCallback) {
@@ -247,7 +237,6 @@ function handleReadSectionCommand(
 }
 
 function handleStopReadingCommand(showAlert: (title: string, msg: string) => void) {
-  // Stop any ongoing speech using Expo Speech
   Speech.stop();
   showAlert('Voice Command', 'Stopping speech');
 }
@@ -257,7 +246,6 @@ function handleNavigationCommand(
   currentRoute: string,
   showAlert: (title: string, msg: string) => void
 ) {
-  // For navigation commands, navigate regardless of current route.
   if (currentRoute.trim().toLowerCase() === commandName.trim().toLowerCase()) {
     showAlert('Voice Command', `Already on ${commandName} tab`);
   } else {
@@ -344,7 +332,6 @@ const VoiceCommandManager: React.FC = () => {
     let currentRoute = navigationRef.getCurrentRoute()?.name || '';
     console.log(`Current route: "${currentRoute}", Command: "${commandName}"`);
 
-    // If the chat modal is open, close it first.
     if (isChatModalOpen()) {
       console.log("Chat modal is open; closing it before navigating.");
       closeChatModal();
@@ -355,17 +342,12 @@ const VoiceCommandManager: React.FC = () => {
       return;
     }
 
-    // Check for "read" commands.
     if (commandName.toLowerCase().startsWith("read ")) {
       return handleReadSectionCommand(commandName, showAlertOnce);
     }
-
-    // Check for stop reading command.
     if (commandName === 'stop reading') {
       return handleStopReadingCommand(showAlertOnce);
     }
-
-    // Handle non-navigation commands.
     if (
       commandName === 'enable voice commands' ||
       commandName === 'disable voice commands' ||
@@ -382,10 +364,9 @@ const VoiceCommandManager: React.FC = () => {
     if (commandName === 'start detection' || commandName === 'stop detection') {
       return handleDetectionCommand(commandName, setDetectionActive, showAlertOnce);
     }
-    if (commandName === 'chat' || commandName === 'close chat' || commandName === 'delete chat') {
+    if (commandName === 'chat' || commandName === 'close chat') {
       return handleChatCommand(commandName, showAlertOnce);
     }
-    // For general navigation commands, navigate to the requested tab.
     return handleNavigationCommand(commandName, currentRoute, showAlertOnce);
   }
 

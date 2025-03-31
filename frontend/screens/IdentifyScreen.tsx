@@ -39,7 +39,6 @@ interface BirdInfo {
   wing_shape?: string;
   tail_shape?: string;
   migration_text?: string;
-  migration_map_url?: string;
 }
 
 const IdentifyScreen: React.FC = () => {
@@ -142,6 +141,9 @@ const IdentifyScreen: React.FC = () => {
           case "feeding behavior":
             textToSpeak = birdInfo.feeding_behavior;
             break;
+          case "migration and range":
+            textToSpeak = birdInfo.migration_text || "No migration info available.";
+          break;
           default:
             textToSpeak = "Section not found.";
         }
@@ -353,21 +355,6 @@ const IdentifyScreen: React.FC = () => {
  <Text style={styles.sectionText}>
    {birdInfo?.migration_text || "No migration info available."}
  </Text>
-
-
- {/* Migration map image */}
- <View style={styles.robinContainer}>
- {loading ? (
-   <ActivityIndicator size="large" color={colors.primary} />
- ) : birdInfo?.migration_map_url ? (
-   <Image
-     source={{ uri: birdInfo.migration_map_url }}
-     style={styles.migrationImage}
-   />
- ) : (
-   <Text style={styles.sectionText}>No migration map available.</Text>
- )}
-</View>
 
 
 <View style={styles.separator} />

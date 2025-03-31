@@ -5,30 +5,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { speakAppText } from '../services/voice/ttsHelper';
 import colors from '../assets/theme/colors';
 
-// Define wake word and helper functions
-const WAKE_WORD = "robin";
-
-function normalizeText(text: string): string {
-  return text
-    .replace(/\breid\b/g, 'read')
-    .replace(/\bhabit\b/g, 'habitat');
-}
-
-function parseAskQuestion(recognizedText: string): string | null {
-  const lower = recognizedText.toLowerCase();
-  if (!lower.includes(WAKE_WORD)) return null;
-  let text = lower.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
-  
-  // Normalize text to correct common mispronunciations
-  text = normalizeText(text);
-  text = text.replace(/\basked\b/g, 'ask')
-             .replace(/\basking\b/g, 'ask')
-             .replace(/\basks\b/g, 'ask');
-  const match = text.match(/\b(?:ask|question|query|inquire)\s+(.*)/);
-  if (!match) return null;
-  return match[1].trim();
-}
-
 interface CommandItem {
   command: string;
   synonyms: string[];
@@ -288,6 +264,7 @@ const VoiceCommandHelp: React.FC = () => {
             keyExtractor={(cmd) => cmd.command}
             renderItem={renderCommandItem}
             style={styles.commandsList}
+            nestedScrollEnabled={true} 
           />
         )}
       </View>
@@ -301,6 +278,7 @@ const VoiceCommandHelp: React.FC = () => {
         data={commandData}
         keyExtractor={(item) => item.category}
         renderItem={renderCategory}
+        nestedScrollEnabled={true}
       />
     </View>
   );
