@@ -1,3 +1,4 @@
+// SettingsScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -6,20 +7,18 @@ import Accordion from '../components/Accordion';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
 import Toggle from '../components/Toggle';
+import VoiceCommandHelp from './VoiceCommandsHelp';
 import { API_BASE_URL } from "../../database/firebaseConfig";
 import { usePreferences } from "../context/PreferencesContext";
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
-
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
   const { voiceCommandsEnabled, setVoiceCommandsEnabled, audioFeedbackEnabled, setAudioFeedbackEnabled, locationEnabled, setLocationEnabled } = usePreferences();
   const userId = "FsDwDpHUD6XQU3egNNCOJLCTiNg1"; // Hardcoded user-id
 
-  // Optionally, you can fetch user preferences from the server if needed.
   useFocusEffect(
     React.useCallback(() => {
       const fetchUserPrefs = async () => {
@@ -30,7 +29,6 @@ const SettingsScreen: React.FC = () => {
             return;
           }
           const userData = await response.json();
-          // Update location if available
           setLocationEnabled(Boolean(userData.locationPreferences));
         } catch (err) {
           console.error("Error fetching user prefs:", err);
@@ -155,6 +153,9 @@ const SettingsScreen: React.FC = () => {
           description="Enable your location for personalized predictions."
         />
 
+        {/* Voice Command Help Section */}
+        <VoiceCommandHelp />
+
         <View style={styles.buttonContainer}>
           <Button
             title="Logout"
@@ -171,6 +172,7 @@ const SettingsScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

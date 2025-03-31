@@ -54,7 +54,6 @@ const generalCommands = [
   { command: 'stop detection', synonyms: ['stop detection', 'stop identification', 'end detection', 'deactivate detection'] },
   { command: 'logout', synonyms: ['logout', 'log out', 'sign out', 'exit account'] },
   { command: 'login', synonyms: ['login', 'log in', 'sign in'] },
-  { command: 'delete chat', synonyms: ['delete chat', 'remove chat', 'erase chat'] },
   { command: 'read description', synonyms: ['read description'] },
   { command: 'read diet', synonyms: ['read diet'] },
   { command: 'read habitat', synonyms: ['read habitat'] },
@@ -134,14 +133,17 @@ function parseAskQuestion(recognizedText: string): string | null {
   const lower = recognizedText.toLowerCase();
   if (!lower.includes(WAKE_WORD)) return null;
   let text = lower.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
+  
+  // Normalize text to correct common mispronunciations
   text = normalizeText(text);
   text = text.replace(/\basked\b/g, 'ask')
              .replace(/\basking\b/g, 'ask')
              .replace(/\basks\b/g, 'ask');
-  const match = text.match(/\b(?:ask|question)\s+(.*)/);
+  const match = text.match(/\b(?:ask|question|query|inquire)\s+(.*)/);
   if (!match) return null;
   return match[1].trim();
 }
+
 
 const DEBOUNCE_DELAY = 600;
 
