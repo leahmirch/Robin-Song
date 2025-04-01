@@ -2,7 +2,7 @@ import os
 import logging
 import wave
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -36,8 +36,10 @@ app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = True
+app.permanent_session_lifetime = timedelta(days=30)
+
 
 Session(app)
 
@@ -421,7 +423,8 @@ def register():
             "assets/img/red-winged-blackbird.png",
             "assets/img/ring-billed-gull.png",
             "assets/img/tree-swallow.png",
-            "assets/img/turkey_vulture.png",  
+            "assets/img/turkey_vulture.png",
+            "assets/img/american_woodcock.png",
         ]
 
         selected_avatar = random.choice(avatar_options)
@@ -481,6 +484,7 @@ def google_register():
             "assets/img/ring-billed-gull.png",
             "assets/img/tree-swallow.png",
             "assets/img/turkey_vulture.png",  
+            "assets/img/american_woodcock.png",
         ]
 
         selected_avatar = random.choice(avatar_options)
@@ -532,6 +536,7 @@ def login():
         if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
             print(f"Login successful for user: {user_doc.id}")
 
+            session.permanent = True 
             session["user_id"] = user_doc.id
             return jsonify({"message": "Login successful", "userId": user_doc.id})
 

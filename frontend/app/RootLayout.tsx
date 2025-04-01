@@ -11,31 +11,46 @@ import { CurrentScreenProvider } from '../context/CurrentScreenContext';
 import { PreferencesProvider } from '../context/PreferencesContext';
 import { navigationRef } from './navigationService';
 import VoiceCommandManager from './VoiceCommandManager';
-
-
 import VoiceTester from '../services/voice/VoiceTester'; 
+import { useUserData } from '../UserContext';
 
 const Stack = createNativeStackNavigator();
 
 export default function RootLayout() {
+  const { userData } = useUserData();
+
   return (
     <NavigationContainer ref={navigationRef}>
       <PreferencesProvider>
         <CurrentScreenProvider>
-          <Stack.Navigator
-            initialRouteName="Home" 
-            screenOptions={{ headerShown: false }}
-          >
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="Tabs" component={TabNavigator} />
-
-            {/* ADD THIS: a route for VoiceTester */}
-            <Stack.Screen name="VoiceTester" component={VoiceTester} />
-
+          <Stack.Navigator initialRouteName={userData ? "Tabs" : "Home"}>
+            {userData ? (
+              <Stack.Screen 
+                name="Tabs" 
+                component={TabNavigator}
+                options={{ headerShown: false }}
+              />
+            ) : (
+              <>
+                <Stack.Screen 
+                  name="Login" 
+                  component={LoginScreen} 
+                  options={{ headerShown: false }} 
+                />
+                <Stack.Screen 
+                  name="Register" 
+                  component={RegisterScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen 
+                  name="Home" 
+                  component={HomeScreen} 
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen name="VoiceTester" component={VoiceTester} />
+              </>
+            )}
           </Stack.Navigator>
-
           <VoiceCommandManager />
         </CurrentScreenProvider>
       </PreferencesProvider>

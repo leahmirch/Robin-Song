@@ -43,6 +43,8 @@ const SettingsScreen: React.FC = () => {
       "assets/img/ring-billed-gull.png": require("../assets/img/ring-billed-gull.png"),
       "assets/img/tree-swallow.png": require("../assets/img/tree-swallow.png"),
       "assets/img/turkey_vulture.png": require("../assets/img/turkey_vulture.png"),
+      "assets/img/american_woodcock.png": require("../assets/img/american_woodcock.png"),
+
     };
   
     const result = imageMappings[normalizedPath];
@@ -64,6 +66,7 @@ const SettingsScreen: React.FC = () => {
     "assets/img/ring-billed-gull.png",
     "assets/img/tree-swallow.png",
     "assets/img/turkey_vulture.png",
+    "assets/img/american_woodcock.png",
   ];
   
 
@@ -116,7 +119,11 @@ const SettingsScreen: React.FC = () => {
         credentials: 'include',
       });
       if (response.ok) {
-        navigation.navigate("Home");
+        setUserData(null);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Home" }],
+        });
       } else {
         console.error("Failed to log out");
         Alert.alert("Logout failed", "Please try again.");
@@ -126,6 +133,7 @@ const SettingsScreen: React.FC = () => {
       Alert.alert("Logout error", "An error occurred. Please try again.");
     }
   };
+  
   
 
   return (
@@ -344,14 +352,18 @@ const SettingsScreen: React.FC = () => {
                 credentials: 'include',
               });
               if (!resp.ok) throw new Error('Failed to delete account');
-
+          
               Alert.alert("Account Deleted", "Your account has been successfully deleted.");
-              navigation.navigate("Home");
+              setUserData(null);
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Home" }],
+              });
             } catch (error) {
               Alert.alert("Error", (error as Error).message);
               console.error("Account deletion failed:", error);
             }
-          },
+          }
         },
       ]
     );
