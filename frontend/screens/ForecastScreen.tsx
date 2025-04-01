@@ -12,11 +12,12 @@ import {
 import axios from 'axios';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
-import DropdownComponent from '../components/Dropdown';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Accordion from '../components/Accordion';
+import PickerComponent from '../components/Picker';
 import colors from '../assets/theme/colors';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from "../../database/firebaseConfig";
+import { useUserData } from '../UserContext';
 
 interface HotspotResponse {
   location: string;
@@ -26,10 +27,6 @@ interface HotspotResponse {
 }
 
 const ForecastScreen: React.FC = () => {
-  // Hardcoded user-id (needs to change with user sessions)
-  const userId = "FsDwDpHUD6XQU3egNNCOJLCTiNg1";
-  const API_URL = `${API_BASE_URL}/get-hotspot`;
-
   const [selectedValue, setSelectedValue] = useState<string>('American Robin');
   const [hotspot, setHotspot] = useState<HotspotResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -38,6 +35,8 @@ const ForecastScreen: React.FC = () => {
   const [userWantsLocation, setUserWantsLocation] = useState<boolean>(false);
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const { userData } = useUserData(); 
+  const firstName = userData?.firstName || "Guest";
 
   const birdMapping: Record<string, string> = {
     "American Robin": "robin",
@@ -73,11 +72,15 @@ const ForecastScreen: React.FC = () => {
 
   const fetchUserPrefs = async () => {
     try {
-      const resp = await fetch(`${API_BASE_URL}/users/${userId}`);
+      const resp = await fetch(`${API_BASE_URL}/users/me`, {
+        credentials: 'include',
+      });
+
       if (!resp.ok) {
         console.error("Failed to fetch user doc in ForecastScreen");
         return;
       }
+
       const userData = await resp.json();
       const pref = Boolean(userData.locationPreferences);
       setUserWantsLocation(pref);
@@ -117,7 +120,10 @@ const ForecastScreen: React.FC = () => {
         params.lon = userCoords.longitude;
       }
 
-      const response = await axios.get<HotspotResponse>(API_URL, { params });
+      const response = await axios.get<HotspotResponse>(`${API_BASE_URL}/get-hotspot`, {
+        params,
+        withCredentials: true, 
+      });
       setHotspot(response.data);
     } catch (error) {
       console.error("API Error:", error);
@@ -155,17 +161,25 @@ const ForecastScreen: React.FC = () => {
       >
         <View style={styles.preferenceContainer}>
           <View style={styles.preferenceLabel}>
-            <Text style={styles.preferenceText}>Bird Preference</Text>
+            <Text accessibilityRole="header" style={styles.preferenceText}>Bird Preference</Text>
           </View>
-          <DropdownComponent
-            data={birdOptions}
-            value={selectedValue}
-            onChange={(item) => setSelectedValue(String(item.value))}
-            placeholder="Select a species"
-          />
+          <View style={{ width: '100%' }}>
+            <Accordion
+              accessibilityLabel={`Current bird selection: ${selectedValue}`}
+              title={selectedValue} 
+              startIcon='bird'
+            >
+              <PickerComponent
+                data={birdOptions}
+                value={selectedValue}
+                onChange={(itemValue) => setSelectedValue(String(itemValue))}
+                showPlaceholder={false}
+              />
+            </Accordion>
+          </View>
         </View>
 
-        <Text style={styles.greeting}>Good Morning, Jodi!</Text>
+        <Text style={styles.greeting}>Hello, {firstName}!</Text>
         <Text style={styles.description}>
           You are most likely to see <Text style={styles.highlight}>{selectedValue}</Text> at this location today:
         </Text>
@@ -174,26 +188,27 @@ const ForecastScreen: React.FC = () => {
           <ActivityIndicator size="large" color={colors.primary} />
         ) : hotspot ? (
           <>
-            <Text style={styles.locationName}>{hotspot.location}</Text>
-            <MapView
-              provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-              style={styles.map}
-              initialRegion={{
-                latitude: userCoords?.latitude ?? hotspot?.lat ?? 43.0125,
-                longitude: userCoords?.longitude ?? hotspot?.lon ?? -83.6875,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              }}
-              onPress={() => {
-                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${hotspot.lat},${hotspot.lon}`;
-                Linking.openURL(mapsUrl);
-              }}
+            <View
+              accessible={true}
+              accessibilityRole="summary"
+              accessibilityLabel={`${hotspot.location}. Double tap to open an external map for this location.`}
             >
-              <Marker
-                coordinate={{ latitude: hotspot.lat, longitude: hotspot.lon }}
-                title={hotspot.location}
+              <Text style={styles.locationName}>{hotspot.location}</Text>
+              <MapView
+                provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+                style={styles.map}
+                initialRegion={{
+                  latitude: userCoords?.latitude ?? hotspot?.lat ?? 43.0125,
+                  longitude: userCoords?.longitude ?? hotspot?.lon ?? -83.6875,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
+                }}
+                onPress={() => {
+                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${hotspot.lat},${hotspot.lon}`;
+                  Linking.openURL(mapsUrl);
+                }}
               />
-            </MapView>
+            </View>
           </>
         ) : (
           <Text style={styles.noDataText}>No data available for this bird at this time.</Text>
@@ -202,6 +217,8 @@ const ForecastScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
+export default ForecastScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -268,5 +285,3 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
-
-export default ForecastScreen;

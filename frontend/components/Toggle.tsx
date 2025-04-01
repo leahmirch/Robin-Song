@@ -35,15 +35,27 @@ const Toggle: React.FC<ToggleProps> = ({ title, startIcon, value, description, o
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <MaterialCommunityIcons
-          name={startIcon}
-          size={24}
-          color={colors.secondary}
-          style={styles.iconStart}
-        />
-        <Text style={styles.title}>{title}</Text>
+        <View accessible={true} style={{ flexDirection: 'row', flex: 1 }}>
+          <MaterialCommunityIcons
+            name={startIcon}
+            size={24}
+            color={colors.secondary}
+            style={styles.iconStart}
+          />
+          <Text
+            accessibilityLabel={`${title} Setting`}
+            style={styles.title}
+          >
+              {title}
+          </Text>
+        </View>
+        
         <View style={styles.toggleContainer}>
           <Switch
+            accessible={true}
+            accessibilityRole='switch'
+            accessibilityState={{ checked: value }}
+            accessibilityHint={`Double tap to ${value ? 'disable' : 'enable'} ${title.replace(/^(Enable|Disable)\s+/i, '').toLowerCase()}`}
             value={value}
             onValueChange={onToggle}
             thumbColor={colors.bottomnav}
@@ -52,7 +64,15 @@ const Toggle: React.FC<ToggleProps> = ({ title, startIcon, value, description, o
         </View>
       </View>
       {description ? (
-        <TouchableOpacity style={styles.infoBox} onPress={toggleDescription}>
+        <TouchableOpacity
+          accessible={true}
+          accessibilityRole='button'
+          accessibilityLabel="Purpose of toggle"
+          accessibilityState={{ expanded: showDescription }}
+          accessibilityHint={`Double tap to ${showDescription ? 'collapse' : 'expand'} the description for this toggle button`}
+          style={styles.infoBox} 
+          onPress={toggleDescription}
+        >
           <MaterialCommunityIcons
             name="information-outline"
             size={24}

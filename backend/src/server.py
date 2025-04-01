@@ -19,22 +19,47 @@ from birdnetlib.analyzer import Analyzer
 import json
 from bs4 import BeautifulSoup
 import requests
-import openai
+from openai import OpenAI
+from dotenv import load_dotenv
+load_dotenv()
+import random
 
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+import math
+from functools import wraps
+from flask import session, jsonify
+from flask_session import Session
+from flask import Flask, request
 
 app = Flask(__name__)
-CORS(app)
 
-cred = credentials.Certificate(
-    os.path.join(os.path.dirname(os.path.dirname(__file__)),
-    "secrets/firebase-admin-key.json")
-)
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
+
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_USE_SIGNER"] = True
+
+Session(app)
+
+CORS(app, supports_credentials=True)
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            return jsonify({"error": "Not authorized"}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+cred_path = os.getenv("FIREBASE_ADMIN_CREDENTIALS")
+if not cred_path or not os.path.isfile(cred_path):
+    raise FileNotFoundError(f"Firebase credentials file not found at: {cred_path}")
+
+cred = credentials.Certificate(cred_path)
+
 initialize_app(cred)
 db = firestore.client()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-DEFAULT_USER_ID = "FsDwDpHUD6XQU3egNNCOJLCTiNg1"
 
 # BirdNET init
 analyzer = Analyzer()
@@ -46,11 +71,11 @@ ALPHA = 0.9
 is_running = False
 process = None  
 
-with open(os.path.join(os.getcwd(), "backend/src/bird_data.json"), "r", encoding="utf-8") as file:
+with open(os.path.join(os.path.dirname(__file__), "bird_data.json"), "r", encoding="utf-8") as file:
     bird_data = json.load(file)
 
+
 def terminate_process_and_children(proc_pid):
-    """Gracefully terminate a process and any child processes."""
     try:
         parent = psutil.Process(proc_pid)
         for child in parent.children(recursive=True):
@@ -233,12 +258,14 @@ def scrape_bird_info():
         })
     except Exception as e:
         return jsonify({"error": f"Error scraping bird info: {str(e)}"}), 500
-    
+
 def adjust_floor(current_thresh, observed_power, alpha=0.9):
     return alpha * current_thresh + (1 - alpha) * observed_power
 
 @app.route('/upload', methods=['POST'])
+@login_required
 def upload():
+    user_id = session["user_id"]
     global NOISE_FLOOR_THRESHOLD, ALPHA
 
     if 'file' not in request.files:
@@ -279,7 +306,7 @@ def upload():
             "birds": []
         })
     else:
-    
+
         recording = Recording(analyzer, wav_filename, lat=lat, lon=lon, date=datetime.now(), min_conf=0.25)
         recording.analyze()
         birds = list({item['common_name'] for item in recording.detections})
@@ -292,7 +319,8 @@ def upload():
                 "bird": bird,
                 "latitude": lat,
                 "longitude": lon,
-                "timestamp": current_time
+                "timestamp": current_time,
+                "userId": user_id
             })
 
         os.remove(wav_filename)
@@ -301,7 +329,26 @@ def upload():
             "birds": birds
         })
 
+
+@app.route("/my-birds", methods=["GET"])
+@login_required
+def get_my_bird_history():
+    from flask import session
+    user_id = session["user_id"]
+
+    user_birds_query = db.collection("birds").where("userId", "==", user_id).stream()
+
+    user_birds = []
+    for doc in user_birds_query:
+        data = doc.to_dict()
+        data["id"] = doc.id
+        user_birds.append(data)
+
+    return jsonify(user_birds), 200
+
+
 @app.route('/start-detection', methods=['POST'])
+@login_required
 def start_detection():
     global is_running, process
     if not is_running:
@@ -317,6 +364,7 @@ def start_detection():
         return jsonify({"message": "Bird detection is already running"}), 400
 
 @app.route('/stop-detection', methods=['POST'])
+@login_required
 def stop_detection():
     global is_running, process
     if is_running and process:
@@ -361,6 +409,23 @@ def register():
 
         user = auth.create_user(email=email, password=password)
 
+        avatar_options = [
+            "assets/img/blue_jay.png",  
+            "assets/img/american_crow.png",  
+            "assets/img/canada_goose.png",
+            "assets/img/canvasback.png",
+            "assets/img/common_grackle.png",
+            "assets/img/european_starling.png",
+            "assets/img/mallard.png",
+            "assets/img/northern_cardinal.png",
+            "assets/img/red-winged-blackbird.png",
+            "assets/img/ring-billed-gull.png",
+            "assets/img/tree-swallow.png",
+            "assets/img/turkey_vulture.png",  
+        ]
+
+        selected_avatar = random.choice(avatar_options)
+    
         user_data = {
             "firstName": first_name,
             "lastName": last_name,
@@ -369,6 +434,7 @@ def register():
             "voiceCommandsEnabled": False,
             "locationPreferences": False,
             "audioFeedbackEnabled": False,
+            "profilePicture": selected_avatar,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
         db.collection("users").document(user.uid).set(user_data)
@@ -402,6 +468,23 @@ def google_register():
                 "userId": existing_user.id
             }), 200
 
+        avatar_options = [
+            "assets/img/blue_jay.png",  
+            "assets/img/american_crow.png",  
+            "assets/img/canada_goose.png",
+            "assets/img/canvasback.png",
+            "assets/img/common_grackle.png",
+            "assets/img/european_starling.png",
+            "assets/img/mallard.png",
+            "assets/img/northern_cardinal.png",
+            "assets/img/red-winged-blackbird.png",
+            "assets/img/ring-billed-gull.png",
+            "assets/img/tree-swallow.png",
+            "assets/img/turkey_vulture.png",  
+        ]
+
+        selected_avatar = random.choice(avatar_options)
+
         user_data = {
             "firstName": first_name,
             "lastName": last_name,
@@ -409,8 +492,9 @@ def google_register():
             "uid": uid,
             "password": "Google Account",
             "voiceCommandsEnabled": False,
-            "locationPreferences": False,
+            "locationPreferences": False,            
             "audioFeedbackEnabled": False,
+            "profilePicture": selected_avatar,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
         new_user_ref = db.collection("users").add(user_data)
@@ -447,7 +531,10 @@ def login():
 
         if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
             print(f"Login successful for user: {user_doc.id}")
+
+            session["user_id"] = user_doc.id
             return jsonify({"message": "Login successful", "userId": user_doc.id})
+
         else:
             print(f"Login failed: Incorrect password for user {email}")
             return jsonify({"error": "Invalid credentials."}), 401
@@ -455,6 +542,14 @@ def login():
     except Exception as e:
         print(f"Error logging in: {str(e)}")
         return jsonify({"error": f"Error logging in: {str(e)}"}), 500
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    from flask import session
+    session.pop('user_id', None) 
+    return jsonify({"message": "Logout successful"}), 200
+
 
 
 @app.route('/users', methods=['POST'])
@@ -475,6 +570,7 @@ def add_user():
 
 
 @app.route('/users/<user_id>/preferences', methods=['PATCH'])
+@login_required
 def update_user_preferences(user_id):
     """Update user preferences (voice commands & location)."""
     try:
@@ -497,49 +593,99 @@ def update_user_preferences(user_id):
     except Exception as e:
         return jsonify({"error": f"Error updating preferences: {str(e)}"}), 500
 
-@app.route('/users/<user_id>', methods=['GET'])
-def get_user(user_id):
-    """
-    Fetch the user document for the given user_id.
-    Returns the user's data as JSON, or 404 if not found.
-    """
-    try:
-        doc_ref = db.collection("users").document(user_id).get()
-        if not doc_ref.exists:
-            return jsonify({"error": "User not found"}), 404
+@app.route('/users/<user_id>', methods=['GET', 'PATCH'])
+@login_required
+def handle_user(user_id):
+    from flask import session, request
 
-        user_data = doc_ref.to_dict()
-        return jsonify(user_data), 200
-    except Exception as e:
-        return jsonify({"error": f"Error fetching user: {str(e)}"}), 500
+    if user_id != session.get("user_id"):
+        return jsonify({"error": "Forbidden"}), 403
+
+    if request.method == 'GET':
+        try:
+            doc_ref = db.collection("users").document(user_id).get()
+            if not doc_ref.exists:
+                return jsonify({"error": "User not found"}), 404
+
+            user_data = doc_ref.to_dict()
+            return jsonify(user_data), 200
+        except Exception as e:
+            return jsonify({"error": f"Error fetching user: {str(e)}"}), 500
+
+    elif request.method == 'PATCH':
+        data = request.json
+        updates = {}
+
+        if "firstName" in data:
+            updates["firstName"] = data["firstName"]
+        if "lastName" in data:
+            updates["lastName"] = data["lastName"]
+        if "email" in data:
+            try:
+                auth.update_user(user_id, email=data["email"])
+                updates["email"] = data["email"]
+            except Exception as e:
+                return jsonify({"error": str(e)}), 400
+        if "profilePicture" in data:
+            updates["profilePicture"] = data["profilePicture"]
+
+        if updates:
+            try:
+                db.collection("users").document(user_id).update(updates)
+                return jsonify({"message": "Profile updated"}), 200
+            except Exception as e:
+                return jsonify({"error": f"Failed to update user: {str(e)}"}), 500
+        else:
+            return jsonify({"message": "No changes provided"}), 400
+
 
 
 @app.route("/chats", methods=["POST"])
+@login_required
 def create_chat():
-    """Create a new chat thread for the default user."""
     try:
         data = request.json
         title = data.get("title", "New Chat")
 
-        existing_chats = db.collection("chats").where("title", "==", title).where("userId", "==", DEFAULT_USER_ID).stream()
-        for chat in existing_chats:
-            return jsonify({"message": "Chat already exists", "chatId": chat.id})
+        user_id = session["user_id"]
+
+        existing_chats = (
+            db.collection("chats")
+              .where("title", "==", title)
+              .where("userId", "==", user_id)
+              .stream()
+        )
+        for c in existing_chats:
+            return jsonify({"message": "Chat already exists", "chatId": c.id})
 
         chat_data = {
-            "userId": DEFAULT_USER_ID,
+            "userId": user_id,
             "title": title,
             "createdAt": firestore.SERVER_TIMESTAMP,
         }
         chat_ref = db.collection("chats").add(chat_data)
+
         return jsonify({"message": "Chat created", "chatId": chat_ref[1].id})
+
     except Exception as e:
         return jsonify({"error": f"Error creating chat: {str(e)}"}), 500
 
 
 @app.route("/chats/<chat_id>/message", methods=["POST"])
+@login_required
 def send_message_to_chat(chat_id):
-    """Send a user message to ChatGPT and store the conversation."""
+    """
+    Send a user message to ChatGPT and store the conversation.
+    """
     try:
+        chat_doc = db.collection("chats").document(chat_id).get()
+        if not chat_doc.exists:
+            return jsonify({"error": "Chat not found"}), 404
+
+        chat_data = chat_doc.to_dict()
+        if chat_data.get("userId") != session["user_id"]:
+            return jsonify({"error": "Forbidden"}), 403
+
         data = request.json
         user_message = data["message"]
 
@@ -547,7 +693,7 @@ def send_message_to_chat(chat_id):
         messages_ref.add({
             "content": user_message,
             "role": "user",
-            "sender": DEFAULT_USER_ID,
+            "sender": session["user_id"],   
             "timestamp": firestore.SERVER_TIMESTAMP
         })
 
@@ -567,13 +713,12 @@ def send_message_to_chat(chat_id):
             {"role": "assistant", "content": "My diet is diverse and includes tasty seeds, nuts, insects, and berries—anything nutritious I can find!"}
         ]
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=example_messages + [{"role": "user", "content": user_message}],
-            max_tokens=75  # Limiting token count to encourage shorter responses
+            max_tokens=75  
         )
-
-        bot_message = response["choices"][0]["message"]["content"]
+        bot_message = response.choices[0].message.content
 
         messages_ref.add({
             "content": bot_message,
@@ -582,57 +727,93 @@ def send_message_to_chat(chat_id):
             "timestamp": firestore.SERVER_TIMESTAMP
         })
 
-        return jsonify({"botMessage": bot_message})
+        return jsonify({"botMessage": bot_message}), 200
+
     except Exception as e:
         return jsonify({"error": f"Error sending message: {str(e)}"}), 500
 
 
 @app.route("/chats/<chat_id>/messages", methods=["GET"])
+@login_required
 def get_chat_messages(chat_id):
-    """Fetch all messages in a chat thread."""
     try:
+        from flask import session
+
+        chat_doc = db.collection("chats").document(chat_id).get()
+        if not chat_doc.exists():
+            return jsonify({"error": "Chat not found"}), 404
+
+        if chat_doc.to_dict().get("userId") != session["user_id"]:
+            return jsonify({"error": "Forbidden"}), 403
+
         messages_ref = db.collection("chats").document(chat_id).collection("messages")
         messages_snapshot = messages_ref.order_by("timestamp").stream()
         messages = [{"messageId": msg.id, **msg.to_dict()} for msg in messages_snapshot]
-        return jsonify(messages)
+
+        return jsonify(messages), 200
     except Exception as e:
         return jsonify({"error": f"Error fetching messages: {str(e)}"}), 500
 
+
 @app.route("/chats", methods=["GET"])
+@login_required
 def get_all_chats():
-    """Fetch all chat threads for the default user."""
     try:
-        chats_ref = db.collection("chats").where("userId", "==", DEFAULT_USER_ID).stream()
-        chat_list = [{"chatId": chat.id, **chat.to_dict()} for chat in chats_ref]
+        from flask import session
+        user_id = session["user_id"]
+
+        chats_ref = db.collection("chats").where("userId", "==", user_id).stream()
+        chat_list = [{"chatId": c.id, **c.to_dict()} for c in chats_ref]
+
         return jsonify(chat_list)
     except Exception as e:
         return jsonify({"error": f"Error fetching chats: {str(e)}"}), 500
-    
+
 
 @app.route("/chats/<chat_id>", methods=["DELETE"])
+@login_required
 def delete_chat(chat_id):
     """Delete a chat thread and its messages."""
     try:
+        from flask import session
+        chat_doc = db.collection("chats").document(chat_id).get()
+        if not chat_doc.exists:
+            return jsonify({"error": "Chat not found"}), 404
+
+        if chat_doc.to_dict().get("userId") != session["user_id"]:
+            return jsonify({"error": "Forbidden"}), 403
+
         messages_ref = db.collection("chats").document(chat_id).collection("messages")
         for msg in messages_ref.stream():
             msg.reference.delete()
 
         db.collection("chats").document(chat_id).delete()
-        return jsonify({"message": "Chat deleted successfully"})
+        return jsonify({"message": "Chat deleted successfully"}), 200
+
     except Exception as e:
         return jsonify({"error": f"Error deleting chat: {str(e)}"}), 500
-    
+
 
 @app.route("/chats/<chat_id>/messages/<message_id>", methods=["DELETE"])
+@login_required
 def delete_message(chat_id, message_id):
-    """Delete a specific message within a chat."""
     try:
+        from flask import session
+        chat_doc = db.collection("chats").document(chat_id).get()
+        if not chat_doc.exists:
+            return jsonify({"error": "Chat not found"}), 404
+
+        if chat_doc.to_dict().get("userId") != session["user_id"]:
+            return jsonify({"error": "Forbidden"}), 403
+
         db.collection("chats").document(chat_id).collection("messages").document(message_id).delete()
-        return jsonify({"message": "Message deleted successfully"})
+        return jsonify({"message": "Message deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": f"Error deleting message: {str(e)}"}), 500
-    
+
+
 @app.route("/bird-questions", methods=["GET"])
+@login_required
 def get_bird_questions():
     """Return a set of random bird-related questions for chat suggestions."""
     try:
@@ -667,10 +848,10 @@ def get_bird_questions():
             "Why do birds flock together?",
             "How do birds stay cool in summer?"
         ]
-        
+
         import random
         selected_questions = random.sample(bird_questions, 4)
-        
+
         return jsonify({"questions": selected_questions})
     except Exception as e:
         return jsonify({"error": f"Error fetching bird questions: {str(e)}"}), 500
@@ -695,15 +876,14 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 
 @app.route("/get-hotspot", methods=["GET"])
+@login_required
 def get_hotspot():
     bird = request.args.get("bird", "robins")
     month = int(request.args.get("month", 1))
 
-    # optional lat/lon
     user_lat = request.args.get("lat", type=float)
     user_lon = request.args.get("lon", type=float)
 
-    # 1) fetch the single doc
     doc_ref = (
         db.collection("forecasts")
           .document(bird)
@@ -735,6 +915,57 @@ def get_hotspot():
         best_hotspot = hotspots[0]
 
     return jsonify(best_hotspot), 200
+
+
+
+
+@app.route('/users/<user_id>/password', methods=['PATCH'])
+@login_required
+def change_password(user_id):
+    if user_id != session["user_id"]:
+        return jsonify({"error": "Forbidden"}), 403
+    new_password = request.json.get("password")
+    if not new_password:
+        return jsonify({"error": "Password required"}), 400
+    try:
+        auth.update_user(user_id, password=new_password)
+        db.collection("users").document(user_id).update({"password": bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()})
+        return jsonify({"message": "Password updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/users/<user_id>', methods=['DELETE'])
+@login_required
+def delete_user(user_id):
+    if user_id != session["user_id"]:
+        return jsonify({"error": "Forbidden"}), 403
+    try:
+        auth.delete_user(user_id)
+        db.collection("users").document(user_id).delete()
+        session.pop("user_id", None)
+        return jsonify({"message": "Account deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route('/users/me', methods=['GET'])
+@login_required
+def get_my_user():
+    from flask import session
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "No user_id in session"}), 401
+
+    doc_ref = db.collection("users").document(user_id).get()
+    if not doc_ref.exists:
+        return jsonify({"error": "User not found"}), 404
+
+    user_data = doc_ref.to_dict()
+    user_data['id'] = doc_ref.id  
+    return jsonify(user_data), 200
+
+
+
 
 
 if __name__ == "__main__":

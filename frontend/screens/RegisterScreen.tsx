@@ -17,6 +17,7 @@ import { ResponseType } from "expo-auth-session";
 import { useAuthRequest } from "expo-auth-session";
 import { makeRedirectUri } from "expo-auth-session";
 import { GoogleAuthProvider } from "firebase/auth";
+import { db, API_BASE_URL } from '../../database/firebaseConfig';
 
 export default function RegisterScreen() {
   const navigation = useNavigation();
@@ -98,9 +99,10 @@ export default function RegisterScreen() {
   
       console.log("User signed in with Google:", user);
   
-      const response = await fetch("http://localhost:5000/google-register", {
+      const response = await fetch(`${API_BASE_URL}/google-register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: user.email,
           firstName: user.displayName?.split(" ")[0] || "Google",

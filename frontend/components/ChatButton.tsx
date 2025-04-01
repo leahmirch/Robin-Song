@@ -29,6 +29,9 @@ const ChatButton: React.FC<ChatButtonProps> = ({ onPress, position, hiddenScreen
   
   return (
     <TouchableOpacity
+      accessibilityLabel='Talk with Robin chatbot'
+      accessibilityHint='Double tap to open the screen to talk to the Robin chatbot.'
+      accessibilityRole='button'
       style={[
         styles.button, 
         position && { ...position },

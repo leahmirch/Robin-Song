@@ -14,7 +14,9 @@ import {
   FlatList,
   ScrollView,
   Image,
-  Animated
+  Animated,
+  findNodeHandle,
+  AccessibilityInfo
 } from 'react-native';
 import colors from 'frontend/assets/theme/colors';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -24,10 +26,13 @@ import SearchBar from './SearchBar';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 const auth = getAuth();
 import { db, API_BASE_URL } from '../../database/firebaseConfig';
-import { collection, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import * as Speech from 'expo-speech';     
 import { usePreferences } from '../context/PreferencesContext';
 import { speakAppText } from '../services/voice/ttsHelper';
+import { useNavigation } from '@react-navigation/native';
+import { useUserData } from '../UserContext';
+
 
 
 interface ChatModalProps {
@@ -63,9 +68,8 @@ const ChatModal: React.FC<ChatModalProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const typingDots = useRef(new Animated.Value(0)).current;
   const [inputHeight, setInputHeight] = useState(40);
-
-
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const userMessageRef = useRef(null);
 
   // NEW - we assumeudioFeedbackEnabled in Preferences
   const { audioFeedbackEnabled } = usePreferences();
@@ -123,48 +127,53 @@ useEffect(() => {
   }
 }, [isTyping]); 
 
-
-// fetch chat threads
-useEffect(() => {
-  const fetchChats = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/chats`);
-      if (response.ok) {
-        const data = await response.json();
-        const formattedChats = data.map((chat: any) => ({
-          id: chat.chatId,
-          title: chat.title,
-          date: new Date(chat.createdAt?._seconds * 1000 || Date.now())
-        }));
-        setChats(formattedChats);
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/chats`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const formattedChats = data.map((chat: any) => ({
+            id: chat.chatId,
+            title: chat.title,
+            date: new Date(chat.createdAt?._seconds * 1000 || Date.now())
+          }));
+          setChats(formattedChats);
+        }
+      } catch (error) {
+        console.error("Error fetching chats:", error);
       }
-    } catch (error) {
-      console.error("Error fetching chats:", error);
-    }
-  };
- 
-  fetchChats();
+    };
+    
+    fetchChats();
 
 
-  const q = query(collection(db, 'chats'), orderBy('createdAt', 'desc'));
-  const unsubscribe = onSnapshot(q, snapshot => {
-    const fetchedChats = snapshot.docs.map(doc => ({
-      id: doc.id,
-      title: doc.data().title,
-      date: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date(),
-    }));
-    setChats(fetchedChats);
-  });
- 
-  return () => unsubscribe();
-}, [userId]);
+    if (!userId) return; 
+    const q = query(
+      collection(db, 'chats'),
+      where("userId", "==", userId),
+      orderBy('createdAt', 'desc')
+    );
+    const unsubscribe = onSnapshot(q, snapshot => {
+      const fetchedChats = snapshot.docs.map(doc => ({
+        id: doc.id,
+        title: doc.data().title,
+        date: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date(),
+      }));
+      setChats(fetchedChats);
+    });
+    
+    return () => unsubscribe();
+  }, [userId]);
 
-
-// fetch chat messages for the selected chat
-useEffect(() => {
-  if (selectedChat) {
-    const q = query(collection(db, 'chats', selectedChat, 'messages'), orderBy('timestamp', 'asc'));
-
+  
+  
+  
+  useEffect(() => {
+    if (selectedChat) {
+        const q = query(collection(db, 'chats', selectedChat, 'messages'), orderBy('timestamp', 'asc'));
 
     const unsubscribe = onSnapshot(q, snapshot => {
       const fetchedMessages = snapshot.docs.map(doc => ({
@@ -181,11 +190,27 @@ useEffect(() => {
     });
 
 
-    return () => {
-      unsubscribe();
-    };
-  }
-}, [selectedChat]);
+        return () => {
+            unsubscribe();
+        };
+    }
+  }, [selectedChat]);
+
+  useEffect(() => {
+    if (selectedChat) {
+      const latestMessages = chatMessages[selectedChat];
+      if (!latestMessages || latestMessages.length === 0) return;
+  
+      const lastMessage = latestMessages[latestMessages.length - 1];
+  
+      if (lastMessage.sender === 'user') {
+        const userNode = findNodeHandle(userMessageRef.current);
+        if (userNode) {
+          AccessibilityInfo.setAccessibilityFocus(userNode);
+        }
+      }
+    }
+  }, [chatMessages, selectedChat]);
 
 
 useEffect(() => {
@@ -252,12 +277,13 @@ useEffect(() => {
      }));
 
 
-     const response = await fetch(`${API_BASE_URL}/chats/${threadID}/message`, {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ message }),
-     });
-
+        const response = await fetch(`${API_BASE_URL}/chats/${threadID}/message`, {
+          method: 'POST',
+          credentials: "include",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message }),
+        });
+        
 
      if (!response.ok) {
        const errorText = await response.text();
@@ -315,12 +341,12 @@ useEffect(() => {
      }
 
 
-     const response = await fetch(`${API_BASE_URL}/chats`, {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ title: chatTitle }),
-     });
-
+        const response = await fetch(`${API_BASE_URL}/chats`, {
+          method: 'POST',
+          credentials: "include",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: chatTitle }),
+        });        
 
      if (!response.ok) {
        throw new Error(`Failed to create chat: ${response.status}`);
@@ -382,140 +408,175 @@ useEffect(() => {
  }, [voiceQuestion, visible]);
 
 
- const TypingIndicator = () => {
-   return (
-     <View style={[styles.chatBubble, styles.aiBubble, { alignSelf: 'flex-start', flexDirection: 'row' }]}>
-       <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
-       <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
-       <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
-     </View>
-   );
- };
+  const TypingIndicator = () => {
+      return (
+          <View style={[styles.chatBubble, styles.aiBubble, { alignSelf: 'flex-start', flexDirection: 'row' }]}>
+              <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
+              <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
+              <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
+          </View>
+      );
+  };
+
+  const { userData } = useUserData();
+  const firstName = userData?.firstName || "Guest";
+  
   return (
-   <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-     <View style={styles.background}>
-       <KeyboardAvoidingView
-         style={styles.container}
-         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-       >
-         <View style={{ flex: 1 }}>
-           {chatListVisible ? (
-             <ChatListScreen
-               chats={chats}
-               onSelectChat={setSelectedChat}
-               onClose={() => setChatListVisible(false)}
-               onSetChats={setChats}
-               selectedChat={selectedChat}
-               setSelectedChat={setSelectedChat}
-             />
-           ) : (
-             <>
-               <View style={styles.topBarContainer}>
-                 <TouchableOpacity
-                   style={styles.newChatContainer}
-                   onPress={() => {
-                     setSelectedChat(null);
-                     setChatListVisible(true);
-                   }}
-                 >
-                   <Text style={styles.newChatText}>
-                     {selectedChat ? chats.find((c) => c.id === selectedChat)?.title : 'New Chat'}
-                   </Text>
-                   <MaterialCommunityIcons name="chevron-down" size={20} color={colors.secondary} />
-                 </TouchableOpacity>
-                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                   <Ionicons name="close" size={30} color={colors.primary} />
-                 </TouchableOpacity>
-               </View>
-               <ScrollView
-                 ref={scrollViewRef}
-                 contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: inputHeight + 70 }}
-                 keyboardShouldPersistTaps="handled"
-                 keyboardDismissMode="on-drag"
-                 onContentSizeChange={() => {
-                   if (scrollViewRef.current) {
-                     scrollViewRef.current.scrollToEnd({ animated: true });
-                   }
-                 }}
-                 onLayout={() => {
-                   if (scrollViewRef.current) {
-                     scrollViewRef.current.scrollToEnd({ animated: true });
-                   }
-                 }}
-                 showsVerticalScrollIndicator={true}
-                 scrollEnabled={true}
-                 style={{ flex: 1 }}
-               >
-                 {selectedChat ? (
-                   chatMessages[selectedChat]?.map((msg) => (
-                     <View
-                       key={msg.id}
-                       style={[styles.chatBubble, msg.sender === 'user' ? styles.userBubble : styles.aiBubble]}
-                     >
-                       <View style={{ flexDirection: 'column' }}>
-                         <Text style={styles.chatText}>{msg.content}</Text>
-                         <Text style={styles.chatTimestamp}>
-                           {msg.timestamp instanceof Date
-                             ? msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                             : 'N/A'}
-                         </Text>
-                       </View>
-                     </View>
-                   ))
-                 ) : (
-                   <View style={styles.homeScreen}>
-                     <View style={styles.leftContainer}>
-                       <Image
-                         source={require('frontend/assets/img/chatbotlogo.png')}
-                         style={styles.chatbotImage}
-                       />
-                       <Text style={styles.heading}>Hi Jodi, I'm Robin!</Text>
-                       <Text style={styles.subHeading}>How can I help you?</Text>
-                       <Text style={styles.suggestionsHeading}>Suggestions</Text>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={styles.background}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={{ flex: 1 }}>
+            {chatListVisible ? (
+              <ChatListScreen
+                chats={chats}
+                onSelectChat={setSelectedChat}
+                onClose={() => setChatListVisible(false)}
+                onSetChats={setChats}
+                selectedChat={selectedChat}
+                setSelectedChat={setSelectedChat}
+              />
+            ) : (
+              <>
+                <View style={styles.topBarContainer}>
+                  <TouchableOpacity
+                    accessibilityLabel='All chat list'
+                    accessibilityRole='button'
+                    accessibilityHint='Double tap to open a list of your chat history. Continue forward to continue the conversation.'
+                    style={styles.newChatContainer}
+                    onPress={() => {
+                      setSelectedChat(null);
+                      setChatListVisible(true);
+                    }}
+                  >
+                    <Text style={styles.newChatText}>
+                      {selectedChat ? chats.find((c) => c.id === selectedChat)?.title : 'New Chat'}
+                    </Text>
+                    <MaterialCommunityIcons name="chevron-down" size={20} color={colors.secondary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    accessibilityLabel="Close"
+                    accessibilityRole="button"
+                    accessibilityHint="Double tap to close the Robin chatbot screen. Continue forward to continue the conversation."
+                    style={styles.closeButton} 
+                    onPress={onClose}
+                  >
+                    <Ionicons name="close" size={30} color={colors.primary} />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView
+                  ref={scrollViewRef}
+                  contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: inputHeight + 70 }}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="on-drag"
+                  onContentSizeChange={() => {
+                    if (scrollViewRef.current) {
+                      scrollViewRef.current.scrollToEnd({ animated: true });
+                    }
+                  }}
+                  onLayout={() => {
+                    if (scrollViewRef.current) {
+                      scrollViewRef.current.scrollToEnd({ animated: true });
+                    }
+                  }}
+                  showsVerticalScrollIndicator={true}
+                  scrollEnabled={true}
+                  style={{ flex: 1 }}
+                >
+                  {selectedChat ? (
+                    chatMessages[selectedChat]?.map((msg, index) => {
+                      const isUserMessage = msg.sender === 'user';
+
+                      return (
+                        <View
+                          ref={msg.sender === 'user' ? userMessageRef : null}
+                          accessible={true}
+                          accessibilityLabel={`${isUserMessage ? 'Your message says:' : `Robin's message says:`} ${msg.content}`}
+                          accessibilityHint='Continue forward to continue the conversation.'
+                          key={msg.id}
+                          style={[styles.chatBubble, isUserMessage ? styles.userBubble : styles.aiBubble]}
+                        >
+                          <View style={{ flexDirection: 'column' }}>
+                            <Text style={styles.chatText}>{msg.content}</Text>
+                            <Text style={styles.chatTimestamp}>{msg.timestamp instanceof Date ? msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</Text>
+                          </View>
+                        </View>
+                      );
+                    })
+                  ) : (
+                    <View style={styles.homeScreen}>
+                      <View style={styles.leftContainer}>
+                        <View accessible={true}>
+                          <Image
+                            source={require('frontend/assets/img/chatbotlogo.png')}
+                            style={styles.chatbotImage}
+                          />
+                          <Text style={styles.heading}>Hi {firstName}, I'm Robin!</Text>
+                          <Text style={styles.subHeading}>How can I help you?</Text>
+                        </View>
+                        
+                        <Text
+                          accessibilityRole='header'
+                          accessibilityHint='Continue forward to view a list of question suggestions.'
+                          style={styles.suggestionsHeading}
+                        >
+                          Suggestions
+                        </Text>
+  
                         {suggestedQuestions.length > 0 ? (
-                         suggestedQuestions.map((question, index) => (
-                           <ChatQuestion key={index} title={question} onPress={() => startNewChat(question)} />
-                         ))
-                       ) : (
-                         <Text style={styles.loadingText}>Loading suggestions...</Text>
-                       )}
-                     </View>
-                   </View>
-                 )}
-                 {isTyping && (
-                   <View
-                     style={[styles.chatBubble, styles.aiBubble, { alignSelf: 'flex-start', flexDirection: 'row' }]}
-                   >
-                     <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
-                     <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
-                     <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
-                   </View>
-                 )}
-               </ScrollView>
-               <View style={styles.inputWrapper}>
-                 <View style={styles.inputContainer}>
-                   <TextInput
-                     style={[styles.inputField, { minHeight: 25, maxHeight: 120 }]}
-                     placeholder="Ask me about birds..."
-                     placeholderTextColor={colors.accent}
-                     value={message}
-                     onChangeText={setMessage}
-                     onContentSizeChange={(e) => setInputHeight(e.nativeEvent.contentSize.height)}
-                     multiline
-                     blurOnSubmit={false}
-                   />
-                   <TouchableOpacity style={styles.arrowButton} onPress={handleSendMessage}>
-                     <Ionicons name="arrow-up" size={25} color={colors.primary} />
-                   </TouchableOpacity>
-                 </View>
-               </View>
-             </>
-           )}
-         </View>
-       </KeyboardAvoidingView>
-     </View>
-   </Modal>
- ); 
+                          suggestedQuestions.map((question, index) => (
+                            <ChatQuestion key={index} title={question} onPress={() => startNewChat(question)} />
+                          ))
+                        ) : (
+                          <Text style={styles.loadingText}>Loading suggestions...</Text>
+                        )}
+                      </View>
+                    </View>
+                  )}
+                  {isTyping && (
+                    <View
+                      accessible={true}
+                      accessibilityLabel='Robin is thinking.'
+                      style={[styles.chatBubble, styles.aiBubble, { alignSelf: 'flex-start', flexDirection: 'row' }]}
+                    >
+                      <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
+                      <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
+                      <Animated.Text style={[styles.chatText, { opacity: typingDots }]}>.</Animated.Text>
+                    </View>
+                  )}
+                </ScrollView>
+                <View style={styles.inputWrapper}>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      accessibilityLabel="Text input field"
+                      accessibilityHint="Enter a message to send to the Robin chatbot."
+                      style={[styles.inputField, { minHeight: 25, maxHeight: 120 }]}
+                      placeholder="Ask me about birds..."
+                      placeholderTextColor={colors.accent}
+                      value={message}
+                      onChangeText={setMessage}
+                      onContentSizeChange={(e) => setInputHeight(e.nativeEvent.contentSize.height)}
+                      multiline
+                      blurOnSubmit={false}
+                    />
+                    <TouchableOpacity
+                      accessibilityLabel='Send message button. Double tap to send your message.'
+                      style={styles.arrowButton} 
+                      onPress={handleSendMessage}
+                    >
+                      <Ionicons name="arrow-up" size={25} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
+  );  
 };
 
 
@@ -535,21 +596,24 @@ const ChatListScreen: React.FC<{
  };
 
 
- const handleDeleteChat = async (chatId: string) => {
-   try {
-     const response = await fetch(`${API_BASE_URL}/chats/${chatId}`, { method: "DELETE" });
-     if (response.ok) {
-       onSetChats((prevChats: { id: string; title: string; date: Date }[]) => prevChats.filter((chat: { id: string; title: string; date: Date }) => chat.id !== chatId));
-       if (selectedChat === chatId) {
-         setSelectedChat(null);
-       }
-       Alert.alert("Chat Deleted", "The chat has been successfully deleted.");       
-     }
-   } catch (error) {
-     console.error("Error deleting chat:", error);
-   }
- };
-
+  const handleDeleteChat = async (chatId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chats/${chatId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (response.ok) {
+        onSetChats((prevChats: { id: string; title: string; date: Date }[]) => prevChats.filter((chat: { id: string; title: string; date: Date }) => chat.id !== chatId));
+        if (selectedChat === chatId) {
+          setSelectedChat(null);
+        }
+        Alert.alert("Chat Deleted", "The chat has been successfully deleted.");
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+    }
+  };
+  
 
  const groupChatsByDate = (chats: { id: string; title: string; date: Date }[]) => {
    const today = new Date();
@@ -593,58 +657,84 @@ const ChatListScreen: React.FC<{
  const groupedChats = groupChatsByDate(filteredChats);
 
 
- return (
-   <View style={{ padding: 20 }}>
-     <View style={styles.chatListTopBar}>
-       <TouchableOpacity onPress={onClose}>
-         <MaterialCommunityIcons name="chevron-left" size={30} color={colors.primary} />
-       </TouchableOpacity>
+  return (
+    <View style={{ padding: 20 }}>
+      <View style={styles.chatListTopBar}>
+        <TouchableOpacity
+          accessibilityLabel='Back arrow button'
+          accessibilityHint='Double tap to go back to the Robin chatbot home screen. Continue forward to view your chat history.'
+          onPress={onClose}
+        >
+          <MaterialCommunityIcons name="chevron-left" size={30} color={colors.primary} />
+        </TouchableOpacity>
 
+        <Text accessible={false} style={{ fontSize: 18, fontWeight: 'bold', fontFamily: 'Radio Canada' }}>All Chats</Text>
+        
+        <TouchableOpacity
+          accessibilityLabel='New chat button'
+          accessibilityHint='Double tap to start a new chat. Continue forward to view your chat history.'
+          onPress={() => {
+            setSelectedChat(null); 
+            onClose(); 
+          }}
+        >
+          <MaterialCommunityIcons name="square-edit-outline" size={25} color={colors.primary}/>
+        </TouchableOpacity>
+      </View>
 
-       <Text style={{ fontSize: 18, fontWeight: 'bold', fontFamily: 'Radio Canada' }}>All Chats</Text>
+      <SearchBar label='Search for a chat' search={search} setSearch={setSearch} onSearch={handleSearch} />
       
-       <TouchableOpacity onPress={() => {
-         setSelectedChat(null);
-         onClose();
-       }}>
-         <MaterialCommunityIcons name="square-edit-outline" size={25} color={colors.primary}/>
-       </TouchableOpacity>
-     </View>
+      <ScrollView style={{height: '100%'}}>
+        {Object.keys(groupedChats).map((section) =>
+          groupedChats[section].length > 0 && (
+            <View key={section}>
+              <Text
+                accessibilityRole='header'
+                accessibilityHint={
+                  section === 'Today' || section === 'Older than 30 Days'
+                    ? `Continue forward to view chats you've had with Robin ${section}.`
+                    : `Continue forward to view chats you've had with Robin this ${section}.`
+                }
+                style={styles.chatSectionLabel}
+              >
+                {section}
+              </Text>
+              <FlatList
+                data={groupedChats[section].sort((a, b) => b.date.getTime() - a.date.getTime())}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <View style={styles.chatItem}>
+                    <View
+                      accessible={true}
+                      accessibilityLabel={`Chat name: ${item.title}. Chat date: ${item.date.toLocaleDateString()}. `}
+                      accessibilityHint='Double tap to open this chat.'
+                    >
+                      <TouchableOpacity style={styles.chatDescription} onPress={() => {
+                        setSelectedChat(item.id); 
+                        onClose(); 
+                      }}>
+                      <MaterialCommunityIcons name="chat-processing-outline" size={25} color={colors.secondary} style={{marginRight: 6}}/>
+                      <Text style={styles.chatItemText} numberOfLines={1} ellipsizeMode="tail">
+                        {item.title}
+                      </Text>
+                      <Text style={styles.chatItemDate}>{item.date.toLocaleDateString()}</Text>
+                      </TouchableOpacity>
+                    </View>
 
-
-     <SearchBar label='Search for a chat' search={search} setSearch={setSearch} onSearch={handleSearch} />
-    
-     <ScrollView style={{height: '100%'}}>
-       {Object.keys(groupedChats).map((section) =>
-         groupedChats[section].length > 0 && (
-           <View key={section}>
-             <Text style={styles.chatSectionLabel}>{section}</Text>
-             <FlatList
-               data={groupedChats[section].sort((a, b) => b.date.getTime() - a.date.getTime())}
-               keyExtractor={(item) => item.id}
-               renderItem={({ item }) => (
-                 <View style={styles.chatItem}>
-                 <TouchableOpacity style={styles.chatDescription} onPress={() => {
-                   setSelectedChat(item.id);
-                   onClose();
-                 }}>
-                 <MaterialCommunityIcons name="chat-processing-outline" size={25} color={colors.secondary} style={{marginRight: 6}}/>
-                 <Text style={styles.chatItemText} numberOfLines={1} ellipsizeMode="tail">
-                   {item.title}
-                 </Text>
-                   <Text style={styles.chatItemDate}>{item.date.toLocaleDateString()}</Text>
-                   </TouchableOpacity>
-                   <TouchableOpacity onPress={() => handleDeleteChat(item.id)}>
-                     <MaterialCommunityIcons name="trash-can-outline" size={25} color={colors.secondary}/>
-                   </TouchableOpacity>
-                 </View>
-               )}
-               scrollEnabled={false}
-             />
-           </View>
-         )
-       )}
-
+                    <TouchableOpacity
+                      accessibilityLabel='Delete chat button'
+                      accessibilityHint={`Double tap to delete the ${item.title} chat.`}
+                      onPress={() => handleDeleteChat(item.id)}
+                    >
+                      <MaterialCommunityIcons name="trash-can-outline" size={25} color={colors.secondary}/>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                scrollEnabled={false}
+              />
+            </View>
+          )
+        )}
 
        <TouchableOpacity style={styles.newChatButton} onPress={() => {
          setSelectedChat(null);

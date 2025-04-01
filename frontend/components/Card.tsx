@@ -11,7 +11,11 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({ children, style, contentStyle }) => {
   return (
-    <View style={[styles.card, style]}>
+    <View
+      accessible={true}
+      accessibilityHint='Information Card'
+      style={[styles.card, style]}
+    >
       <View style={[styles.cardContent, contentStyle]}>
         {children}
       </View>

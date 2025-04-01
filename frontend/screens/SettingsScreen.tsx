@@ -9,6 +9,7 @@ import Button from '../components/Button';
 import Toggle from '../components/Toggle';
 import VoiceCommandHelp from './VoiceCommandsHelp';
 import { API_BASE_URL } from "../../database/firebaseConfig";
+import { useUserData } from '../UserContext'; 
 import { usePreferences } from "../context/PreferencesContext";
 
 const SettingsScreen: React.FC = () => {
@@ -16,54 +17,153 @@ const SettingsScreen: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { voiceCommandsEnabled, setVoiceCommandsEnabled, audioFeedbackEnabled, setAudioFeedbackEnabled, locationEnabled, setLocationEnabled } = usePreferences();
-  const userId = "FsDwDpHUD6XQU3egNNCOJLCTiNg1"; // Hardcoded user-id
+  const [userId, setUserId] = useState<string | null>(null);
+  const { userData, setUserData } = useUserData();
+  const [profilePicture, setProfilePicture] = useState<string>(''); 
+
+
+  const getImageSource = (path: string) => {
+    if (!path) return require("../assets/img/robin.png");
+  
+    const normalizedPath = path.replace(/\.\.\//g, "").trim().toLowerCase();
+  
+    const imageMappings: { [key: string]: any } = {
+      "assets/img/blue_jay.png": require("../assets/img/blue_jay.png"),
+      "assets/img/american_crow.png": require("../assets/img/american_crow.png"),
+      "assets/img/canada_goose.png": require("../assets/img/canada_goose.png"),
+      "assets/img/canvasback.png": require("../assets/img/canvasback.png"),
+      "assets/img/common_grackle.png": require("../assets/img/common_grackle.png"),
+      "assets/img/european_starling.png": require("../assets/img/european_starling.png"),
+      "assets/img/mallard.png": require("../assets/img/mallard.png"),
+      "assets/img/northern_cardinal.png": require("../assets/img/northern_cardinal.png"),
+      "assets/img/red-winged-blackbird.png": require("../assets/img/red-winged-blackbird.png"),
+      "assets/img/ring-billed-gull.png": require("../assets/img/ring-billed-gull.png"),
+      "assets/img/tree-swallow.png": require("../assets/img/tree-swallow.png"),
+      "assets/img/turkey_vulture.png": require("../assets/img/turkey_vulture.png"),
+    };
+  
+    const result = imageMappings[normalizedPath];
+  
+    return result || require("../assets/img/robin.png");
+  };
+  
+  
+  const profilePictures = [
+    "assets/img/blue_jay.png",
+    "assets/img/american_crow.png",
+    "assets/img/canada_goose.png",
+    "assets/img/canvasback.png",
+    "assets/img/common_grackle.png",
+    "assets/img/european_starling.png",
+    "assets/img/mallard.png",
+    "assets/img/northern_cardinal.png",
+    "assets/img/red-winged-blackbird.png",
+    "assets/img/ring-billed-gull.png",
+    "assets/img/tree-swallow.png",
+    "assets/img/turkey_vulture.png",
+  ];
+  
+
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/me`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch user data');
+      const data = await response.json();
+  
+      setUserId(data.id);
+      setLocationEnabled(Boolean(data.locationPreferences));
+      setFirstName(data.firstName || '');
+      setLastName(data.lastName || '');
+      setEmail(data.email || '');
+  
+      if (data.profilePicture) {
+        setProfilePicture(data.profilePicture);
+      } else {
+        const random = profilePictures[Math.floor(Math.random() * profilePictures.length)];
+        setProfilePicture(random);
+  
+        await fetch(`${API_BASE_URL}/users/${data.id}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profilePicture: random }),
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+    }
+  };
+  
 
   useFocusEffect(
     React.useCallback(() => {
-      const fetchUserPrefs = async () => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/users/${userId}`);
-          if (!response.ok) {
-            console.error("Failed to fetch user doc from server");
-            return;
-          }
-          const userData = await response.json();
-          setLocationEnabled(Boolean(userData.locationPreferences));
-        } catch (err) {
-          console.error("Error fetching user prefs:", err);
-        }
-      };
-      fetchUserPrefs();
+      fetchUserData(); 
     }, [])
   );
+  
+
+  
+  
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        navigation.navigate("Home");
+      } else {
+        console.error("Failed to log out");
+        Alert.alert("Logout failed", "Please try again.");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      Alert.alert("Logout error", "An error occurred. Please try again.");
+    }
+  };
+  
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Account</Text>
-        <View style={styles.accountCard}>
+        <Text accessibilityRole="header" style={styles.title}>Account</Text>
+
+        <View
+          accessible={true}
+          accessibilityLabel={`Your account information. Name: ${userData?.firstName} ${userData?.lastName}. Email address: ${userData?.email}`}
+          style={styles.accountCard}
+        >
           <View style={styles.leftSide}>
             <View style={styles.topRow}>
-              <Image source={require("../assets/img/robin.png")} style={styles.image} />
+              <Image
+                accessible={true}
+                accessibilityLabel='Account Profile Picture'
+                source={getImageSource(profilePicture)}
+                style={styles.image}
+              />
             </View>
-            <Text style={styles.label}>Email</Text>
-            <Text style={styles.label}>Location</Text>
           </View>
           <View>
             <View style={styles.topRow}>
-              <Text style={styles.name}>Jodi Joven</Text>
+              <Text style={styles.name}>
+                {userData?.firstName ?? ''} {userData?.lastName ?? ''}
+              </Text>
+              <Text style={styles.infoText}>{userData?.email ?? ''}</Text>
             </View>
-            <Text style={styles.infoText}>jodijov@umich.edu</Text>
-            <Text style={styles.infoText}>Dearborn, Michigan</Text>
           </View>
         </View>
 
-        <Text style={styles.title}>Settings</Text>
+        <Text accessibilityRole="header" style={styles.title}>Settings</Text>
+        
         <Accordion title="Change Name" startIcon="account-edit-outline">
           <TextFormField
             label="Change First Name"
-            placeholder="Jodi"
+            placeholder="First"
             value={firstName}
             onChangeText={setFirstName}
             keyboardType="name-phone-pad"
@@ -71,23 +171,48 @@ const SettingsScreen: React.FC = () => {
           />
           <TextFormField
             label="Change Last Name"
-            placeholder="Joven"
+            placeholder="Last"
             value={lastName}
             onChangeText={setLastName}
             keyboardType="name-phone-pad"
             autoCapitalize="none"
           />
-          <Button
-            title="Submit"
-            onPress={() => Alert.alert('Submit Button Pressed')}
-            variant="primary"
-          />
+        <Button
+          title="Submit"
+          variant="primary"
+          onPress={async () => {
+            try {
+              const resp = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName }),
+              });
+
+              if (!resp.ok) throw new Error('Failed to update name');
+
+              const userResp = await fetch(`${API_BASE_URL}/users/me`, {
+                credentials: 'include',
+              });
+
+              if (!userResp.ok) throw new Error('Failed to refresh user data');
+
+              const updatedUser = await userResp.json();
+              setUserData(updatedUser); 
+
+              Alert.alert('Success', 'Name updated!');
+            } catch (error) {
+              Alert.alert('Error', (error as Error).message);
+            }
+          }}
+        />
+
         </Accordion>
 
         <Accordion title="Change Email Address" startIcon="email-edit-outline">
           <TextFormField
             label="Change Email"
-            placeholder="jodijov@umich.edu"
+            placeholder="example@gmail.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -95,17 +220,54 @@ const SettingsScreen: React.FC = () => {
           />
           <Button
             title="Submit"
-            onPress={() => Alert.alert('Submit Button Pressed')}
             variant="primary"
+            onPress={async () => {
+              try {
+                const resp = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                  method: 'PATCH',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email }),
+                });
+                if (!resp.ok) throw new Error('Failed to update email');
+                Alert.alert('Success', 'Email updated! Please log in again.');
+                handleLogout();
+              } catch (error) {
+                  Alert.alert('Error', (error as Error).message);
+                }
+                
+            }}
           />
         </Accordion>
 
+
         <Accordion title="Change Password" startIcon="shield-edit-outline">
-          <TextFormField placeholder="Enter new password" isPassword />
+          <TextFormField
+            label="New Password"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={setPassword}
+            isPassword
+          />
           <Button
             title="Submit"
-            onPress={() => Alert.alert('Submit Button Pressed')}
             variant="primary"
+            onPress={async () => {
+              try {
+                const resp = await fetch(`${API_BASE_URL}/users/${userId}/password`, {
+                  method: 'PATCH',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ password }),
+                });
+                if (!resp.ok) throw new Error('Failed to update password');
+                Alert.alert('Success', 'Password changed!');
+                setPassword('');
+              } catch (error) {
+                  Alert.alert('Error', (error as Error).message);
+                }
+                
+            }}
           />
         </Accordion>
 
@@ -132,7 +294,7 @@ const SettingsScreen: React.FC = () => {
         />
 
         <Toggle
-          title="Enable Location for Predictions"
+          title="Enable Location for Forecast"
           startIcon="map-marker-outline"
           value={locationEnabled}
           onToggle={async (newValue) => {
@@ -140,6 +302,7 @@ const SettingsScreen: React.FC = () => {
             try {
               const patchResp = await fetch(`${API_BASE_URL}/users/${userId}/preferences`, {
                 method: 'PATCH',
+                credentials: "include", 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ locationPreferences: newValue }),
               });
@@ -157,16 +320,43 @@ const SettingsScreen: React.FC = () => {
         <VoiceCommandHelp />
 
         <View style={styles.buttonContainer}>
-          <Button
-            title="Logout"
-            onPress={() => navigation.navigate("Home")}
-            variant="secondary"
-          />
-          <Button
-            title="Delete Account"
-            onPress={() => Alert.alert('Delete Account Pressed')}
-            variant="primary"
-          />
+        <Button
+          title="Logout"
+          onPress={handleLogout}
+          variant="secondary"
+        />
+<Button
+  title="Delete Account"
+  variant="primary"
+  onPress={() => {
+    Alert.alert(
+      "Are you sure?",
+      "This action will permanently delete your account and cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const resp = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+              });
+              if (!resp.ok) throw new Error('Failed to delete account');
+
+              Alert.alert("Account Deleted", "Your account has been successfully deleted.");
+              navigation.navigate("Home");
+            } catch (error) {
+              Alert.alert("Error", (error as Error).message);
+              console.error("Account deletion failed:", error);
+            }
+          },
+        },
+      ]
+    );
+  }}
+/>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -224,12 +414,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Radio Canada',
     color: colors.text,
-    marginBottom: 5,
   },
   image: {
     width: 65,
     height: 65,
-    marginBottom: 10,
     borderRadius: 50,
   },
   buttonContainer: {

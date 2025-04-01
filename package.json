@@ -16,6 +16,7 @@
     "@react-native-firebase/auth": "^21.8.0",
     "@react-native-picker/picker": "^2.11.0",
     "@react-native-voice/voice": "^3.2.4",
+    "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/core": "^7.7.0",
     "@react-navigation/native": "^7.0.19",
