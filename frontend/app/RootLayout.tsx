@@ -1,13 +1,18 @@
+// RootLayout.tsx
+
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { CurrentScreenProvider } from '../context/CurrentScreenContext';
 import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-import TabNavigator from './TabNavigator'
+import TabNavigator from './TabNavigator';
+import { CurrentScreenProvider } from '../context/CurrentScreenContext';
+import { PreferencesProvider } from '../context/PreferencesContext';
+import { navigationRef } from './navigationService';
+import VoiceCommandManager from './VoiceCommandManager';
+import VoiceTester from '../services/voice/VoiceTester'; 
 import { useUserData } from '../UserContext';
-
 
 const Stack = createNativeStackNavigator();
 
@@ -15,36 +20,40 @@ export default function RootLayout() {
   const { userData } = useUserData();
 
   return (
-    <NavigationContainer>
-      <CurrentScreenProvider>
-        <Stack.Navigator initialRouteName={userData ? "Tabs" : "Home"}>
-          {userData ? (
-            <Stack.Screen 
-              name="Tabs" 
-              component={TabNavigator}
-              options={{ headerShown: false }}
-            />
-          ) : (
-            <>
+    <NavigationContainer ref={navigationRef}>
+      <PreferencesProvider>
+        <CurrentScreenProvider>
+          <Stack.Navigator initialRouteName={userData ? "Tabs" : "Home"}>
+            {userData ? (
               <Stack.Screen 
-                name="Login" 
-                component={LoginScreen} 
-                options={{ headerShown: false }} 
-              />
-              <Stack.Screen 
-                name="Register" 
-                component={RegisterScreen}
+                name="Tabs" 
+                component={TabNavigator}
                 options={{ headerShown: false }}
               />
-              <Stack.Screen 
-                name="Home" 
-                component={HomeScreen} 
-                options={{ headerShown: false }}
-              />
-            </>
-          )}
-        </Stack.Navigator>
-      </CurrentScreenProvider>
+            ) : (
+              <>
+                <Stack.Screen 
+                  name="Login" 
+                  component={LoginScreen} 
+                  options={{ headerShown: false }} 
+                />
+                <Stack.Screen 
+                  name="Register" 
+                  component={RegisterScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen 
+                  name="Home" 
+                  component={HomeScreen} 
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen name="VoiceTester" component={VoiceTester} />
+              </>
+            )}
+          </Stack.Navigator>
+          <VoiceCommandManager />
+        </CurrentScreenProvider>
+      </PreferencesProvider>
     </NavigationContainer>
   );
 }

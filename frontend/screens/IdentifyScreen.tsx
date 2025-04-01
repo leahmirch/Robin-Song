@@ -6,36 +6,37 @@ import colors from "frontend/assets/theme/colors";
 import Card from "../components/Card";
 import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from "expo-av";
 import * as Location from "expo-location";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "../../database/firebaseConfig";
 import { API_BASE_URL } from "../../database/firebaseConfig";
+import { usePreferences } from "../context/PreferencesContext";
+import { setReadBirdSectionCallback } from '../app/navigationService'; // Adjust the path as needed
+import * as Speech from 'expo-speech';
 
 interface BirdData {
- bird: string;
- latitude: number;
- longitude: number;
- timestamp: Date;
+  bird: string;
+  latitude: number;
+  longitude: number;
+  timestamp: Date;
 }
 
 interface UploadResponse {
- birds: string[];
- message: string;
+  birds: string[];
+  message: string;
 }
 
 interface BirdInfo {
- description: string;
- at_a_glance: string;
- habitat: string;
- image_url: string;
- feeding_behavior: string;
- diet: string;
- scientific_name: string;
- size?: string;      
- color?: string;     
- wing_shape?: string;
- tail_shape?: string;
- migration_text?: string;
- migration_map_url?: string;
+  description: string;
+  at_a_glance: string;
+  habitat: string;
+  image_url: string;
+  feeding_behavior: string;
+  diet: string;
+  scientific_name: string;
+  size?: string;
+  color?: string;
+  wing_shape?: string;
+  tail_shape?: string;
+  migration_text?: string;
+  migration_map_url?: string;
 }
 
 const IdentifyScreen: React.FC = () => {
@@ -49,6 +50,8 @@ const IdentifyScreen: React.FC = () => {
  const [longitude, setLongitude] = useState<number | null>(null);
  const recordingRef = useRef<Audio.Recording | null>(null);
  const birdNameRef = useRef(null);
+  // Use detectionActive from PreferencesContext
+  const { detectionActive, setDetectionActive } = usePreferences();
 
  useEffect(() => {
      const fetchLastBirdFromServer = async () => {
@@ -109,57 +112,93 @@ const IdentifyScreen: React.FC = () => {
   }
 }, [latestBird]);
 
- const fetchBirdInfo = async (birdName: string) => {
-   setLoading(true);
-   try {
-     const urlResponse = await axios.get<{ name: string; url: string }>(
-       `${API_BASE_URL}/bird-info`,
-       { params: { bird: birdName } }
-     );
-     const birdUrl = urlResponse.data.url;
+  const fetchBirdInfo = async (birdName: string) => {
+    setLoading(true);
+    try {
+      const urlResponse = await axios.get<{ name: string; url: string }>(
+        `${API_BASE_URL}/bird-info`,
+        { params: { bird: birdName } }
+      );
+      const birdUrl = urlResponse.data.url;
+ 
+      const scrapeResponse = await axios.get<BirdInfo>(
+        `${API_BASE_URL}/scrape-bird-info`,
+        { params: { url: birdUrl } }
+      );
+      setBirdInfo(scrapeResponse.data);
+      setBirdImage(scrapeResponse.data.image_url);
+    } catch (error) {
+      console.error("Error fetching bird info:", error);
+      setBirdInfo(null);
+      setBirdImage(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-     const scrapeResponse = await axios.get<BirdInfo>(
-       `${API_BASE_URL}/scrape-bird-info`,
-       { params: { url: birdUrl } }
-     );
-     setBirdInfo(scrapeResponse.data);
-     setBirdImage(scrapeResponse.data.image_url);
-   } catch (error) {
-     console.error("Error fetching bird info:", error);
-     setBirdInfo(null);
-     setBirdImage(null);
-   } finally {
-     setLoading(false);
-   }
- };
+  useEffect(() => {
+    setReadBirdSectionCallback((section: string) => {
+      if (birdInfo) {
+        let textToSpeak = "";
+        switch (section.toLowerCase()) {
+          case "description":
+            textToSpeak = birdInfo.description;
+            break;
+          case "diet":
+            textToSpeak = birdInfo.diet;
+            break;
+          case "habitat":
+            textToSpeak = birdInfo.habitat;
+            break;
+          case "at a glance":
+            textToSpeak = birdInfo.at_a_glance;
+            break;
+          case "feeding behavior":
+            textToSpeak = birdInfo.feeding_behavior;
+            break;
+          case "migration and range":
+            textToSpeak = birdInfo.migration_text || "No migration info available.";
+          break;
+          default:
+            textToSpeak = "Section not found.";
+        }
+        // Use Expo Speech API to speak the text
+        Speech.speak(textToSpeak, {
+          language: 'en-US',
+          pitch: 1.0,
+          rate: 1.0,
+        });
+      }
+    });
+  }, [birdInfo]);
+  
 
- const startRecording = async () => {
-   try {
-     const { status } = await Audio.requestPermissionsAsync();
-     if (status !== "granted") {
-       Alert.alert("Permission required", "Enable microphone access in settings.");
-       return;
-     }
-     await Audio.setAudioModeAsync({
-       allowsRecordingIOS: true,
-       playsInSilentModeIOS: true,
-       interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-       shouldDuckAndroid: true,
-       interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
-     });
-     const { recording } = await Audio.Recording.createAsync(
-       Audio.RecordingOptionsPresets.HIGH_QUALITY
-     );
-     recordingRef.current = recording;
-   } catch (error) {
-     console.error("Error starting recording:", error);
-   }
- };
+  const startRecording = async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission required", "Enable microphone access in settings.");
+        return;
+      }
+      // Set audio mode to allow mixing with other sessions
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+        shouldDuckAndroid: false,
+        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+      });
+      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      recordingRef.current = recording;
+    } catch (error) {
+      console.error("Error starting recording:", error);
+    }
+  };
 
- const stopRecordingAndUpload = async () => {
-   if (!recordingRef.current) return;
-   try {
-     await recordingRef.current.stopAndUnloadAsync();
+  const stopRecordingAndUpload = async () => {
+    if (!recordingRef.current) return;
+    try {
+      await recordingRef.current.stopAndUnloadAsync();
      const uri = recordingRef.current.getURI();
      if (uri) {
        const formData = new FormData();
@@ -177,59 +216,56 @@ const IdentifyScreen: React.FC = () => {
            withCredentials: true
         }
        );
-       if (isDetecting && response.data.birds?.length) {
-         for (const bird of response.data.birds) {
-           console.log(`Detected: ${bird}`);
-           setLatestBird({
-             bird,
-             latitude: latitude ?? 0,
-             longitude: longitude ?? 0,
-             timestamp: new Date(),
-           });
-           await fetchBirdInfo(bird);
-         }
-       }
-     }
-   } catch (error) {
-     console.error("Error uploading audio:", error);
-   } finally {
-     recordingRef.current = null;
-     await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-   }
- };
+        if (detectionActive && response.data.birds?.length) {
+          for (const bird of response.data.birds) {
+            console.log(`Detected: ${bird}`);
+            setLatestBird({
+              bird,
+              latitude: latitude ?? 0,
+              longitude: longitude ?? 0,
+              timestamp: new Date(),
+            });
+            await fetchBirdInfo(bird);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error uploading audio:", error);
+    } finally {
+      recordingRef.current = null;
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+    }
+  };
 
- useEffect(() => {
-   let intervalId: NodeJS.Timeout | null = null;
-   const startDetectionCycle = async () => {
-     console.log("Detection started.");
-     setDetectionStatus("Identifying Birds");
-     await startRecording();
-     intervalId = setInterval(async () => {
-       if (!isDetecting) return;
-       await stopRecordingAndUpload();
-       if (isDetecting) {
-         await startRecording();
-       }
-     }, 3000);
-   };
+  // Toggle detection using the shared context state.
+  const toggleDetection = () => {
+    setDetectionActive(!detectionActive);
+  };
 
-   if (isDetecting) {
-     startDetectionCycle();
-   } else {
-     console.log("Detection stopped.");
-     setDetectionStatus("Not Identifying Birds");
-     if (intervalId) clearInterval(intervalId);
-     stopRecordingAndUpload();
-   }
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    const startDetectionCycle = async () => {
+      console.log("Detection started.");
+      await startRecording();
+      intervalId = setInterval(async () => {
+        if (!detectionActive) return;
+        await stopRecordingAndUpload();
+        if (detectionActive) {
+          await startRecording();
+        }
+      }, 3000);
+    };
 
-   return () => {
-     if (intervalId) clearInterval(intervalId);
-   };
- }, [isDetecting]);
-
- const toggleDetection = () => {
-   setIsDetecting((prev) => !prev);
- };
+    if (detectionActive) {
+      startDetectionCycle();
+    } else {
+      console.log("Detection stopped.");
+      stopRecordingAndUpload();
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [detectionActive]);
 
  return (
    <SafeAreaView style={styles.container}>
@@ -247,7 +283,7 @@ const IdentifyScreen: React.FC = () => {
          </Card>
          <TouchableOpacity style={styles.listeningButton} onPress={toggleDetection}>
            <MaterialCommunityIcons
-             name={isDetecting ? "microphone" : "microphone-off"}
+             name={detectionActive ? "microphone" : "microphone-off"}
              size={36}
              color={colors.card}
            />

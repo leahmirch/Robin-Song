@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useFonts } from 'expo-font';
-import { StyleSheet, ActivityIndicator } from 'react-native';
-import { app } from './database/firebaseConfig';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import RootLayout from './frontend/app/RootLayout';
+import React, { useState, useEffect } from "react";
+import { useFonts } from "expo-font";
+import { StyleSheet, ActivityIndicator } from "react-native";
+import { app } from "./database/firebaseConfig";
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { PreferencesProvider } from "./frontend/context/PreferencesContext";
+import RootLayout from "./frontend/app/RootLayout"; 
 import { UserDataProvider } from './frontend/UserContext';
 
 const auth = getAuth(app);
@@ -32,7 +33,9 @@ export default function App() {
 
   return (
     <UserDataProvider>
-      <RootLayout />
+      <PreferencesProvider>
+        <RootLayout />
+      </PreferencesProvider>
     </UserDataProvider>
   );
 }

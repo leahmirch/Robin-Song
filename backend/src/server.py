@@ -436,6 +436,7 @@ def register():
             "password": hashed_password,
             "voiceCommandsEnabled": False,
             "locationPreferences": False,
+            "audioFeedbackEnabled": False,
             "profilePicture": selected_avatar,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
@@ -496,6 +497,7 @@ def google_register():
             "password": "Google Account",
             "voiceCommandsEnabled": False,
             "locationPreferences": False,            
+            "audioFeedbackEnabled": False,
             "profilePicture": selected_avatar,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
@@ -585,6 +587,9 @@ def update_user_preferences(user_id):
 
         if "locationPreferences" in data:
             updates["locationPreferences"] = data["locationPreferences"]
+
+        if "audioFeedbackEnabled" in data:
+            updates["audioFeedbackEnabled"] = data["audioFeedbackEnabled"]
 
         if updates:
             db.collection("users").document(user_id).update(updates)

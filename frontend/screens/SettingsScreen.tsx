@@ -1,3 +1,4 @@
+// SettingsScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -6,19 +7,19 @@ import Accordion from '../components/Accordion';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
 import Toggle from '../components/Toggle';
+import VoiceCommandHelp from './VoiceCommandsHelp';
 import { API_BASE_URL } from "../../database/firebaseConfig";
 import { useUserData } from '../UserContext'; 
+import { usePreferences } from "../context/PreferencesContext";
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
-
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
-  const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState<boolean>(false);
+  const { voiceCommandsEnabled, setVoiceCommandsEnabled, audioFeedbackEnabled, setAudioFeedbackEnabled, locationEnabled, setLocationEnabled } = usePreferences();
   const [userId, setUserId] = useState<string | null>(null);
   const { userData, setUserData } = useUserData();
   const [profilePicture, setProfilePicture] = useState<string>(''); 
@@ -286,7 +287,18 @@ const SettingsScreen: React.FC = () => {
             setVoiceCommandsEnabled(newValue);
             console.log("Voice commands toggle is now:", newValue);
           }}
-          description="Enabling voice commands allows you to navigate the app using verbal commands. Microphone access is required in order to enable voice commands."
+          description="Enabling voice commands allows you to navigate the app using verbal commands. Microphone access is required."
+        />
+
+        <Toggle
+          title="Enable Audio Feedback"
+          startIcon="volume-plus"  // Updated icon name
+          value={audioFeedbackEnabled}
+          onToggle={(newValue) => {
+            setAudioFeedbackEnabled(newValue);
+            console.log("Audio feedback toggle is now:", newValue);
+          }}
+          description="Enable spoken feedback for commands."
         />
 
         <Toggle
@@ -309,9 +321,11 @@ const SettingsScreen: React.FC = () => {
               console.error("Error PATCHing preferences:", err);
             }
           }}
-          description="Enable your location for personalized bird species predictions for your area. Location access is required in order to receive bird forecast prediction local to your area."
+          description="Enable your location for personalized predictions."
         />
 
+        {/* Voice Command Help Section */}
+        <VoiceCommandHelp />
 
         <View style={styles.buttonContainer}>
         <Button
