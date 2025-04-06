@@ -11,7 +11,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~4.0.0",
     "@react-native-async-storage/async-storage": "1.23.1",
-    "@react-native-community/datetimepicker": "^8.3.0",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@react-native-firebase/app": "^21.8.0",
     "@react-native-firebase/auth": "^21.8.0",
     "@react-native-picker/picker": "^2.11.0",
@@ -23,15 +23,16 @@
     "@react-navigation/stack": "^7.0.13",
     "@types/react-navigation": "^3.0.8",
     "axios": "^1.8.3",
-    "expo": "~52.0.36",
+    "expo": "~52.0.42",
     "expo-auth-session": "^6.0.3",
     "expo-av": "~15.0.2",
     "expo-build-properties": "~0.13.2",
     "expo-constants": "~17.0.3",
-    "expo-dev-client": "~5.0.14",
+    "expo-dev-client": "~5.0.18",
     "expo-font": "~13.0.1",
     "expo-linking": "^7.0.3",
-    "expo-location": "~18.0.7",
+    "expo-location": "~18.0.10",
+    "expo-maps": "^0.7.3",
     "expo-speech": "~13.0.1",
     "expo-splash-screen": "~0.29.22",
     "ffmpeg": "^0.0.4",
@@ -43,15 +44,13 @@
     "openai": "^4.87.3",
     "react": "^18.3.1",
     "react-dom": "18.3.1",
-    "react-native": "^0.76.3",
+    "react-native": "0.76.8",
     "react-native-audio-record": "^0.2.2",
     "react-native-calendars": "^1.1310.0",
     "react-native-date-ranges": "^2.5.0",
-    "react-native-element-dropdown": "^2.12.4",
     "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-get-random-values": "^1.11.0",
-    "react-native-maps": "1.18.0",
     "react-native-modal": "^14.0.0-rc.0",
     "react-native-modal-datetime-picker": "^18.0.0",
     "react-native-reanimated": "^3.16.7",
@@ -69,15 +68,7 @@
     "@types/firebase": "^2.4.32",
     "@types/lodash.debounce": "^4.0.9",
     "@types/react": "~18.3.12",
-    "@types/react-native": "^0.72.8",
     "concurrently": "^9.1.2",
     "typescript": "^5.3.3"
-  },
-  "expo": {
-    "doctor": {
-      "reactNativeDirectoryCheck": {
-        "listUnknownPackages": false
-      }
-    }
   }
 }

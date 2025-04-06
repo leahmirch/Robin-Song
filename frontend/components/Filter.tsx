@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import {View, Text, StyleSheet, TouchableOpacity,} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import Modal from "react-native-modal";
 import { Calendar } from "react-native-calendars";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import DropdownComponent from "./Dropdown";
+import Accordion from './Accordion';
+import PickerComponent from "./Picker";
 import Button from "./Button";
 import colors from "../assets/theme/colors";
 
@@ -23,10 +24,15 @@ const Filter: React.FC<FilterProps> = ({ speciesList, onFilterChange }) => {
   const [selectedSpecies, setSelectedSpecies] = useState<string | null>(null);
   const [range, setRange] = useState<{ start?: string; end?: string }>({});
 
-  const handleSpeciesChange = (item: { label: string; value: string | number }) => {
-    const speciesValue = String(item.value);
-    setSelectedSpecies(speciesValue);
-    onFilterChange("species", speciesValue);
+  const handleSpeciesChange = (value: string | number | null) => {
+    if (value === null) {
+      setSelectedSpecies("");
+      onFilterChange("species", "");
+    } else {
+      const speciesValue = String(value);
+      setSelectedSpecies(speciesValue);
+      onFilterChange("species", speciesValue);
+    }
   };
 
   const onDayPress = (day: any) => {
@@ -81,6 +87,9 @@ const Filter: React.FC<FilterProps> = ({ speciesList, onFilterChange }) => {
     <View style={styles.container}>
       {/* Filter button to open modal */}
       <TouchableOpacity
+        accessible={true}
+        accessibilityHint="Double tap to open the filter screen."
+        accessibilityRole="button"
         style={styles.filterButton}
         onPress={() => setIsModalVisible(true)}
       >
@@ -101,6 +110,7 @@ const Filter: React.FC<FilterProps> = ({ speciesList, onFilterChange }) => {
         style={styles.modal}
       >
         <View style={styles.modalContent}>
+          <ScrollView style={styles.modalContent}>
           <View style={styles.modalTopBar}>
             <View
               accessible={true}
@@ -126,68 +136,43 @@ const Filter: React.FC<FilterProps> = ({ speciesList, onFilterChange }) => {
           </View>
 
           {/* Species Filter */}
-          <View
-            accessible={true}
-            accessibilityRole="header"
-            accessibilityHint="Continue forward to select a species from a dropdown to filter your bird history list."
-            style={styles.labelContainer}
-          >
-            <MaterialCommunityIcons
-              name="bird"
-              size={20}
-              color={colors.secondary}
-              style={styles.labelIcon}
+          <Accordion title="Select a species" startIcon="bird">
+            <PickerComponent
+              data={speciesList}
+              value={selectedSpecies}
+              onChange={handleSpeciesChange}
+              showPlaceholder={true}
             />
-            <Text style={styles.label}>Select Species</Text>
-          </View>
-          <DropdownComponent
-            data={speciesList}
-            value={selectedSpecies}
-            onChange={handleSpeciesChange}
-            placeholder="Select a Species"
-            style={styles.dropdown}
-          />
-
+          </Accordion>
+          
           {/* Date Range Filter */}
           <View>
-            <View
-              accessible={true}
-              accessibilityRole="header"
-              accessibilityHint="Continue forward to select dates on a calendar to filter your bird history list."
-              style={styles.labelContainer}
-            >
-              <MaterialCommunityIcons
-                name="calendar-range"
-                size={20}
-                color={colors.secondary}
-                style={styles.labelIcon}
+            <Accordion title="Select a date range" startIcon="calendar-range">
+              <Calendar
+                onDayPress={onDayPress}
+                markingType="period"
+                markedDates={getMarkedDates()}
+                style={styles.calendar}
+                theme={{
+                  calendarBackground: "#F5F5F5",
+                  backgroundColor: "#F5F5F5",
+                  textSectionTitleColor: colors.secondary,
+                  selectedDayBackgroundColor: colors.accent,
+                  selectedDayTextColor: "#ffffff",
+                  todayTextColor: colors.primary,
+                  dayTextColor: colors.text,
+                  textDisabledColor: "#d9e1e8",
+                  dotColor: colors.accent,
+                  selectedDotColor: "#ffffff",
+                  arrowColor: colors.primary,
+                  monthTextColor: colors.secondary,
+                  indicatorColor: colors.primary,
+                  textDayFontFamily: "Radio Canada",
+                  textMonthFontFamily: "Caprasimo",
+                  textDayHeaderFontFamily: "Radio Canada",
+                }}
               />
-              <Text style={styles.label}>Select Date Range</Text>
-            </View>
-            <Calendar
-              onDayPress={onDayPress}
-              markingType="period"
-              markedDates={getMarkedDates()}
-              style={styles.calendar}
-              theme={{
-                calendarBackground: "#F5F5F5",
-                backgroundColor: "#F5F5F5",
-                textSectionTitleColor: colors.secondary,
-                selectedDayBackgroundColor: colors.accent,
-                selectedDayTextColor: "#ffffff",
-                todayTextColor: colors.primary,
-                dayTextColor: colors.text,
-                textDisabledColor: "#d9e1e8",
-                dotColor: colors.accent,
-                selectedDotColor: "#ffffff",
-                arrowColor: colors.primary,
-                monthTextColor: colors.secondary,
-                indicatorColor: colors.primary,
-                textDayFontFamily: "Radio Canada",
-                textMonthFontFamily: "Caprasimo",
-                textDayHeaderFontFamily: "Radio Canada",
-              }}
-            />
+            </Accordion>
           </View>
 
           <View style={styles.buttonRow}>
@@ -222,6 +207,7 @@ const Filter: React.FC<FilterProps> = ({ speciesList, onFilterChange }) => {
               style={{ width: '49%' }}
             />
           </View>
+          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -236,12 +222,11 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     backgroundColor: colors.accent,
-    paddingHorizontal: 10,
+    paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 50,
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-end",
   },
   filterButtonText: {
     color: colors.white,
@@ -250,22 +235,17 @@ const styles = StyleSheet.create({
     fontFamily: "Radio Canada",
   },
   filterIcon: {
-    marginRight: 4,
+    marginRight: 8,
   },
   modal: {
     justifyContent: "center",
     alignItems: "center",
   },
   modalContent: {
-    width: "90%",
-    padding: 20,
+    width: "100%",
+    padding: 10,
     backgroundColor: colors.background,
     borderRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   modalTopBar: {
     flexDirection: "row",

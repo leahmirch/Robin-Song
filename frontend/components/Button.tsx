@@ -22,6 +22,8 @@ interface ButtonProps {
 const Button: React.FC<ButtonProps> = ({ title, onPress, variant = 'primary', style, textStyle, icon }) => {
   return (
     <TouchableOpacity
+      accessibilityRole='button'
+      accessibilityHint={`Double tap to ${title}`}
       style={[
         styles.button,
         variant === 'primary' && styles.primary,

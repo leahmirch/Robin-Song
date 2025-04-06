@@ -1,11 +1,12 @@
 module.exports = {
   expo: {
-    name: "robin-song",
+    name: "Robin",
     owner: "robin-song",
     slug: "robin-song",
     scheme: "robinsong",
     orientation: "portrait",
     icon: "./frontend/assets/img/logos/robinAppIcon.png",
+    newArchEnabled: false,
     android: {
       jsEngine: "hermes",
       package: "com.robinsong.robinsong",
@@ -39,7 +40,8 @@ module.exports = {
         "expo-splash-screen",
         {
           backgroundColor: "#ECA08D",
-          image: "./frontend/assets/img/logos/robinAppIcon.png"
+          image: "./frontend/assets/img/logos/splash-icon.png",
+          "imageWidth": 150
         }
       ],
       [
@@ -82,7 +84,6 @@ module.exports = {
       EXPO_PUBLIC_FIREBASE_APP_ID: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
       EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
       EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID,
-      EXPO_PUBLIC_UNSPLASH_ACCESS_KEY: process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY,
       EXPO_PUBLIC_SERVER_BASE_URL: process.env.EXPO_PUBLIC_SERVER_BASE_URL
     }
   }

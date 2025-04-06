@@ -1,22 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { SafeAreaView, Text, StyleSheet, Image, View } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { SafeAreaView, Text, StyleSheet, Image, View, ScrollView } from 'react-native';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
-import OrDivider from '../components/OrDivider';
 import NavLink from '../components/NavLink';
 import colors from '../assets/theme/colors';
 import { registerUser } from '../auth/authService';
 import { CommonActions } from '@react-navigation/native';
 import ErrorMessage from "../components/ErrorMessage";
-import Constants from "expo-constants";
 import { getAuth, signInWithCredential } from 'firebase/auth';
-import * as WebBrowser from "expo-web-browser";
 import { ResponseType } from "expo-auth-session";
 import { useAuthRequest } from "expo-auth-session";
 import { makeRedirectUri } from "expo-auth-session";
 import { GoogleAuthProvider } from "firebase/auth";
+import { API_BASE_URL } from '../../database/firebaseConfig';
 
 export default function RegisterScreen() {
   const navigation = useNavigation();
@@ -98,9 +95,10 @@ export default function RegisterScreen() {
   
       console.log("User signed in with Google:", user);
   
-      const response = await fetch("http://localhost:5000/google-register", {
+      const response = await fetch(`${API_BASE_URL}/google-register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: user.email,
           firstName: user.displayName?.split(" ")[0] || "Google",
@@ -125,7 +123,7 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.spacing}>
+      <ScrollView contentContainerStyle={styles.spacing}>
         <Image
           source={require('../assets/img/logos/robinNoText72.png')}
           style={styles.logo}
@@ -164,7 +162,7 @@ export default function RegisterScreen() {
           onChangeText={setEmail} 
           keyboardType="email-address"
           autoCapitalize="none"
-          style={{marginBottom: 20}}
+          style={{marginBottom: 20, width: '100%'}}
           textStyle={styles.form}
         />
 
@@ -173,7 +171,7 @@ export default function RegisterScreen() {
           value={password}
           onChangeText={setPassword}
           isPassword
-          style={{marginBottom: 12}}
+          style={{marginBottom: 12, width: '100%'}}
           textStyle={styles.form}
         />
 
@@ -183,15 +181,6 @@ export default function RegisterScreen() {
           variant="primary"
           style={styles.form}
           textStyle={{fontSize: 20}}
-        />
-
-        <OrDivider />
-
-        <Button
-          title="Continue with Google"
-          onPress={handleGoogleSignIn}
-          variant="card"
-          icon={<MaterialCommunityIcons name="google" size={25} color={colors.accent} />}
         />
 
         <View style={styles.accountLayout}>
@@ -204,7 +193,7 @@ export default function RegisterScreen() {
             textStyle={[styles.accountLink, styles.accountText]}
           />
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -217,6 +206,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   spacing: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 24,
   },
   logo: {
@@ -239,6 +231,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   form: {
+    width: '100%',
     fontSize: 20,
     height: 50,
   },

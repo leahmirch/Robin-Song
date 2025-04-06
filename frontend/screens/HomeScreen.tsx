@@ -11,6 +11,8 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.spacing}>
         <Image
+          accessible={true}
+          accessibilityLabel='Robin Home Screen'
           source={require('../assets/img/logos/robin72.png')}
           style={styles.logo}
           resizeMode="contain"

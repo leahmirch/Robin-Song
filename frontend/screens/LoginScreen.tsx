@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react'; 
 import { View, Text, Image, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getAuth, signInWithPopup} from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import colors from '../assets/theme/colors';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
-import OrDivider from '../components/OrDivider';
 import NavLink from '../components/NavLink';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as AuthSession from 'expo-auth-session';
 import { loginUser } from '../auth/authService';
 import ErrorMessage from "../components/ErrorMessage";
 import SuccessMessage from "../components/SuccessMessage";
@@ -18,6 +15,8 @@ import { useAuthRequest } from "expo-auth-session";
 import { makeRedirectUri } from "expo-auth-session";
 import { GoogleAuthProvider } from "firebase/auth";
 import { signInWithCredential } from "firebase/auth";
+import { useUserData } from '../UserContext'; 
+import { API_BASE_URL } from '../../database/firebaseConfig';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -31,6 +30,9 @@ export default function LoginScreen() {
   const [success, setSuccess] = useState<string | null>(
     route.params?.successMessage || null
   );
+
+  const { setUserData } = useUserData();
+
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -56,29 +58,38 @@ export default function LoginScreen() {
   
     if (!email || !password) {
       setError("Email and password are required.");
-      console.log("Error Set:", error);
       return;
     }
   
     setLoading(true);
   
     try {
-      const result = await loginUser(email, password);
+      const result = await loginUser(email, password); 
       if (result) {
         console.log("Login successful:", result);
+        const userResponse = await fetch(`${API_BASE_URL}/users/me`, {
+          method: "GET",
+          credentials: "include", 
+        });
+        const userData = await userResponse.json();
+        if (userResponse.ok) {
+          console.log("User data fetched:", userData);
+          setUserData(userData); 
+        } else {
+          console.error("Error fetching user data:", userData.error);
+        }
         navigation.navigate("Tabs");
       } else {
         setError("Invalid email or password.");
-        console.log("Error Set:", error);
       }
     } catch (error: any) {
       console.log("Login failed:", error.message);
       setError(error.message);
-      console.log("Error Set:", error);
     } finally {
       setLoading(false);
     }
   };
+  
 
   const handleGoogleSignIn = async () => {
     try {
@@ -102,17 +113,17 @@ export default function LoginScreen() {
   
       console.log("User signed in with Google:", user);
   
-      // Register Google user in Firestore
-      const response = await fetch("http://localhost:5000/google-register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.email,
-          firstName: user.displayName?.split(" ")[0] || "Google",
-          lastName: user.displayName?.split(" ")[1] || "User",
-          uid: user.uid,
-        }),
-      });
+      const response = await fetch(`${API_BASE_URL}/google-register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        email: user.email,
+        firstName: user.displayName?.split(" ")[0] || "Google",
+        lastName: user.displayName?.split(" ")[1] || "User",
+        uid: user.uid,
+      }),
+    });
   
       const data = await response.json();
       if (!response.ok) {
@@ -171,15 +182,6 @@ export default function LoginScreen() {
           variant="primary"
           style={styles.form}
           textStyle={{fontSize: 20}}
-        />
-
-        <OrDivider />
-
-        <Button
-          title="Sign in with Google"
-          onPress={handleGoogleSignIn}
-          variant="card"
-          icon={<MaterialCommunityIcons name="google" size={25} color={colors.accent} />}
         />
 
         <View style={styles.noAccountLayout}>
