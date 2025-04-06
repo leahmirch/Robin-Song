@@ -1,5 +1,5 @@
 // SettingsScreen.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import colors from '../assets/theme/colors';
@@ -16,7 +16,18 @@ const SettingsScreen: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const { voiceCommandsEnabled, setVoiceCommandsEnabled, audioFeedbackEnabled, setAudioFeedbackEnabled, locationEnabled, setLocationEnabled } = usePreferences();
+
+  const {
+    voiceCommandsEnabled,
+    setVoiceCommandsEnabled,
+    audioFeedbackEnabled,
+    setAudioFeedbackEnabled,
+    locationEnabled,
+    setLocationEnabled,
+    showCommandPopups,
+    setShowCommandPopups,
+  } = usePreferences();
+
   const userId = "FsDwDpHUD6XQU3egNNCOJLCTiNg1"; // Hardcoded user-id
 
   useFocusEffect(
@@ -122,13 +133,25 @@ const SettingsScreen: React.FC = () => {
 
         <Toggle
           title="Enable Audio Feedback"
-          startIcon="volume-plus"  // Updated icon name
+          startIcon="volume-plus"
           value={audioFeedbackEnabled}
           onToggle={(newValue) => {
             setAudioFeedbackEnabled(newValue);
             console.log("Audio feedback toggle is now:", newValue);
           }}
           description="Enable spoken feedback for commands."
+        />
+
+        {/* Moved this Show Command Popups toggle above the Location toggle */}
+        <Toggle
+          title="Show Command Popups"
+          startIcon="alert-circle-outline"
+          value={showCommandPopups}
+          onToggle={(newValue) => {
+            setShowCommandPopups(newValue);
+            console.log("Show command popups is now:", newValue);
+          }}
+          description="Enable or disable on-screen alerts after a voice command is recognized."
         />
 
         <Toggle
@@ -153,7 +176,6 @@ const SettingsScreen: React.FC = () => {
           description="Enable your location for personalized predictions."
         />
 
-        {/* Voice Command Help Section */}
         <VoiceCommandHelp />
 
         <View style={styles.buttonContainer}>

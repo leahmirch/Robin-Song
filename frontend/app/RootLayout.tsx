@@ -10,7 +10,7 @@ import TabNavigator from './TabNavigator';
 import { CurrentScreenProvider } from '../context/CurrentScreenContext';
 import { PreferencesProvider } from '../context/PreferencesContext';
 import { navigationRef } from './navigationService';
-import VoiceCommandManager from './VoiceCommandManager';
+import VoiceCommandManager from '../services/voice/VoiceCommandManager';
 
 
 import VoiceTester from '../services/voice/VoiceTester'; 

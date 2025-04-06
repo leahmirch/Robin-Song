@@ -8,8 +8,11 @@ type PreferencesContextType = {
   setAudioFeedbackEnabled: (enabled: boolean) => void;
   locationEnabled: boolean;
   setLocationEnabled: (enabled: boolean) => void;
-  detectionActive: boolean;            
-  setDetectionActive: (active: boolean) => void; 
+  detectionActive: boolean;
+  setDetectionActive: (active: boolean) => void;
+  // NEW: Show popups for recognized commands
+  showCommandPopups: boolean;
+  setShowCommandPopups: (enabled: boolean) => void;
 };
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
@@ -21,7 +24,11 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [audioFeedbackEnabled, setAudioFeedbackEnabled] = useState(false);
   // Default location to false.
   const [locationEnabled, setLocationEnabled] = useState(false);
-  const [detectionActive, setDetectionActive] = useState(false); // NEW
+  // Default detection to false.
+  const [detectionActive, setDetectionActive] = useState(false);
+
+  // NEW: By default, show popups for recognized commands
+  const [showCommandPopups, setShowCommandPopups] = useState(true);
 
   return (
     <PreferencesContext.Provider
@@ -32,8 +39,11 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setAudioFeedbackEnabled,
         locationEnabled,
         setLocationEnabled,
-        detectionActive,       // NEW
-        setDetectionActive,    // NEW
+        detectionActive,
+        setDetectionActive,
+        // NEW
+        showCommandPopups,
+        setShowCommandPopups,
       }}
     >
       {children}
