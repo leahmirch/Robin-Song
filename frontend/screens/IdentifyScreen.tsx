@@ -46,19 +46,11 @@ const IdentifyScreen: React.FC = () => {
  const [loading, setLoading] = useState(false);
  const [isDetecting, setIsDetecting] = useState(false);
  const [detectionStatus, setDetectionStatus] = useState("Not Identifying Birds");
+ const [detectionActive, setDetectionActive] = useState(false);
  const [latitude, setLatitude] = useState<number | null>(null);
  const [longitude, setLongitude] = useState<number | null>(null);
  const recordingRef = useRef<Audio.Recording | null>(null);
  const birdNameRef = useRef(null);
-  const [latestBird, setLatestBird] = useState<BirdData | null>(null);
-  const [birdInfo, setBirdInfo] = useState<BirdInfo | null>(null);
-  const [birdImage, setBirdImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  // Use detectionActive from PreferencesContext
-  const { detectionActive, setDetectionActive } = usePreferences();
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
-  const recordingRef = useRef<Audio.Recording | null>(null);
 
   useEffect(() => {
     const fetchLastBird = async () => {
