@@ -18,6 +18,7 @@ import { speakAppText } from './ttsHelper';
 
 const WAKE_WORD = 'robin';
 
+// Normalization for misheard text:
 function normalizeText(text: string): string {
   return text
     .replace(/\breid\b/g, 'read')
@@ -40,7 +41,7 @@ function normalizeText(text: string): string {
     .replace(/\bfeedn behavior\b/g, 'feeding behavior');
 }
 
-// Existing command sets:
+// The commands (same as your code)
 const generalCommands = [
   { command: 'Identify', synonyms: ['identify', 'go to identify', 'open identify', 'show identify', 'start identify'] },
   { command: 'Forecast', synonyms: ['forecast', 'go to forecast', 'open forecast', 'show forecast', 'start forecast'] },
@@ -81,20 +82,22 @@ const settingsCommands = [
   {
     command: 'enable location',
     synonyms: [
-      'enable location', 'turn on location', 'activate location',
-      'enable location for predictions', 'turn on location for predictions'
+      'enable location','turn on location','activate location',
+      'enable location for predictions','turn on location for predictions'
     ]
   },
   {
     command: 'disable location',
     synonyms: [
-      'disable location', 'turn off location', 'deactivate location',
-      'disable location for predictions', 'turn off location for predictions'
+      'disable location','turn off location','deactivate location',
+      'disable location for predictions','turn off location for predictions'
     ]
   }
 ];
 
 const commandMapping = [...generalCommands, ...settingsCommands];
+
+const DEBOUNCE_DELAY = 400;
 
 function parseCommand(recognizedText: string): string | null {
   const lowerText = recognizedText.toLowerCase();
@@ -104,8 +107,8 @@ function parseCommand(recognizedText: string): string | null {
   }
   const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
   const cleanedText = normalizeText(textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
-  
-  // exact match
+
+
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
       const cleanedSyn = normalizeText(syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
@@ -115,7 +118,7 @@ function parseCommand(recognizedText: string): string | null {
       }
     }
   }
-   // substring
+
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
       const cleanedSyn = normalizeText(syn.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
@@ -132,15 +135,14 @@ function parseAskQuestion(recognizedText: string): string | null {
   if (!lower.includes(WAKE_WORD)) return null;
   let text = lower.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
   text = normalizeText(text);
-  text = text.replace(/\basked\b/g, 'ask')
-             .replace(/\basking\b/g, 'ask')
-             .replace(/\basks\b/g, 'ask');
+  text = text
+    .replace(/\basked\b/g, 'ask')
+    .replace(/\basking\b/g, 'ask')
+    .replace(/\basks\b/g, 'ask');
   const match = text.match(/\b(?:ask|question|query|inquire)\s+(.*)/);
   if (!match) return null;
   return match[1].trim();
 }
-
-const DEBOUNCE_DELAY = 600;
 
 function handleSettingsCommand(
   commandName: string,
@@ -269,15 +271,15 @@ const VoiceCommandManager: React.FC = () => {
     setLocationEnabled,
     detectionActive,
     setDetectionActive,
-  
-    showCommandPopups, 
-    setShowCommandPopups,
+    showCommandPopups
   } = usePreferences();
 
   const { currentScreen } = useCurrentScreen();
 
   const audioFeedbackRef = useRef(audioFeedbackEnabled);
   const showCommandPopupsRef = useRef(showCommandPopups);
+
+  const COOLDOWN_MS = 1000;
 
   useEffect(() => {
     audioFeedbackRef.current = audioFeedbackEnabled;
@@ -299,7 +301,6 @@ const VoiceCommandManager: React.FC = () => {
     }
   }
 
-  // recognition states
   const recognitionInProgress = useRef(false);
   const cooldownTimeout = useRef<NodeJS.Timeout | null>(null);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -308,9 +309,7 @@ const VoiceCommandManager: React.FC = () => {
   useEffect(() => {
     if (voiceCommandsEnabled) {
       Voice.onSpeechResults = onSpeechResults;
-      Voice.onSpeechPartialResults = () => {
-        console.log('Partial speech results received.');
-      };
+      Voice.onSpeechPartialResults = () => {};
       Voice.onSpeechError = onSpeechError;
       startListening();
     } else {
@@ -369,7 +368,6 @@ const VoiceCommandManager: React.FC = () => {
       return handleStopReadingCommand(showAlertOnce);
     }
 
-    // Toggling location/voice/audio in Settings
     if (
       commandName === 'enable voice commands' ||
       commandName === 'disable voice commands' ||
@@ -387,12 +385,12 @@ const VoiceCommandManager: React.FC = () => {
       );
     }
 
-    // Auth commands
+    // Auth
     if (commandName === 'logout' || commandName === 'login') {
       return handleAuthCommand(commandName, showAlertOnce);
     }
 
-    // Detection toggles
+    // Start/Stop detection
     if (commandName === 'start detection' || commandName === 'stop detection') {
       return handleDetectionCommand(commandName, setDetectionActive, showAlertOnce);
     }
@@ -419,10 +417,11 @@ const VoiceCommandManager: React.FC = () => {
           console.log('Voice Command:', command);
           stopListening();
           processCommand(command);
+
           cooldownTimeout.current = setTimeout(() => {
             cooldownTimeout.current = null;
             startListening();
-          }, 2000);
+          }, COOLDOWN_MS);
         } else if (!command) {
           const extractedQuestion = parseAskQuestion(lastRecognizedText.current);
           if (extractedQuestion) {
@@ -434,7 +433,7 @@ const VoiceCommandManager: React.FC = () => {
             cooldownTimeout.current = setTimeout(() => {
               cooldownTimeout.current = null;
               startListening();
-            }, 2000);
+            }, COOLDOWN_MS);
           } else {
             console.log(`No valid command recognized. phrase="${lastRecognizedText.current}"`);
           }
@@ -468,7 +467,7 @@ const VoiceCommandManager: React.FC = () => {
     if (voiceCommandsEnabled) {
       Voice.onSpeechResults = onSpeechResults;
       Voice.onSpeechPartialResults = () => {
-        console.log('Partial speech results received.');
+
       };
       Voice.onSpeechError = onSpeechError;
       startListening();
