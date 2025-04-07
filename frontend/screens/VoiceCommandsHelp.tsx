@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { speakAppText } from '../services/voice/ttsHelper';
+import Accordion from '../components/Accordion';
 import colors from '../assets/theme/colors';
 
 interface CommandItem {
@@ -196,15 +197,15 @@ const commandData: CommandCategory[] = [
 ];
 
 const VoiceCommandHelp: React.FC = () => {
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-
-  const toggleCategory = (category: string) => {
-    setExpandedCategory(expandedCategory === category ? null : category);
-  };
-
-  const renderCommandItem = ({ item }: { item: CommandItem }) => (
-    <View style={styles.commandItem}>
-      <View style={styles.commandHeader}>
+  const renderCommandItem = (item: CommandItem, key: string ) => (
+    <View key={key} style={styles.commandItem}>
+      <View
+        accessible={true}
+        accessibilityLabel={`${item.command} command.`}
+        accessibilityHint={`Continue forward to view information for the ${item.command} command`}
+        accessibilityRole='header'
+        style={styles.commandHeader}
+      >
         {item.icon && (
           <MaterialCommunityIcons
             name={item.icon}
@@ -214,81 +215,50 @@ const VoiceCommandHelp: React.FC = () => {
           />
         )}
         <Text style={styles.commandTitle}>{item.command}</Text>
-        <TouchableOpacity
-          style={styles.tryButton}
-          onPress={() => speakAppText(item.example)}
-        >
-          <Text style={styles.tryButtonText}>Try It</Text>
-        </TouchableOpacity>
       </View>
       <View style={styles.detailsContainer}>
-        <Text style={styles.exampleTitle}>Example:</Text>
-        <Text style={styles.exampleText}>{item.example}</Text>
-        <Text style={styles.synonymsTitle}>Synonyms:</Text>
-        <View style={styles.synonymsContainer}>
-          {item.synonyms.map((syn, index) => (
-            <Text key={index} style={styles.synonymText}>
-              • {syn}
-            </Text>
-          ))}
+        <View
+          accessible={true}
+          accessibilityLabel={`Example of ${item.command} command: ${item.example}`}
+        >
+          <Text style={styles.exampleTitle}>Example:</Text>
+          <Text style={styles.exampleText}>{item.example}</Text>
+        </View>
+
+        <View
+          accessible={true}
+          accessibilityLabel={`Synonyms that can also be used for the ${item.command} command: ${item.synonyms}`}
+        >
+          <Text style={styles.synonymsTitle}>Synonyms:</Text>
+          <View style={styles.synonymsContainer}>
+            {item.synonyms.map((syn, index) => (
+              <Text key={index} style={styles.synonymText}>
+                • {syn}
+              </Text>
+            ))}
+          </View>
         </View>
       </View>
     </View>
   );
 
-  const renderCategory = ({ item }: { item: CommandCategory }) => {
-    const isExpanded = expandedCategory === item.category;
-    return (
-      <View style={styles.categoryContainer}>
-        <TouchableOpacity
-          style={styles.categoryHeader}
-          onPress={() => toggleCategory(item.category)}
-        >
-          {item.icon && (
-            <MaterialCommunityIcons
-              name={item.icon}
-              size={24}
-              style={styles.categoryIcon}
-            />
-          )}
-          <Text style={styles.categoryTitle}>{item.category}</Text>
-          <MaterialCommunityIcons
-            name={isExpanded ? 'chevron-up' : 'chevron-down'}
-            size={24}
-            color={colors.secondary}
-          />
-        </TouchableOpacity>
-        {isExpanded && (
-          <FlatList
-            data={item.commands}
-            keyExtractor={(cmd) => cmd.command}
-            renderItem={renderCommandItem}
-            style={styles.commandsList}
-            nestedScrollEnabled={true} 
-          />
-        )}
-      </View>
-    );
-  };
-
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Voice Command Help</Text>
-      <FlatList
-        data={commandData}
-        keyExtractor={(item) => item.category}
-        renderItem={renderCategory}
-        nestedScrollEnabled={true}
-      />
+      <Text accessibilityRole="header" style={styles.header}>Voice Command Help</Text>
+      {commandData.map((item) => (
+        <Accordion key={item.category} title={item.category} startIcon={item.icon}>
+          {item.commands.map((command) =>
+            renderCommandItem(command, `${item.category}-${command.command}`)
+          )}
+        </Accordion>
+      ))}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: 16,
+    marginTop: 24,
   },
   header: {
     fontSize: 28,
@@ -297,38 +267,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 16,
   },
-  categoryContainer: {
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: 8,
-    backgroundColor: colors.card,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-  },
-  categoryIcon: {
-    fontSize: 24,
-    color: colors.primary,
-    marginRight: 8,
-  },
-  categoryTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontFamily: 'Caprasimo',
-    color: colors.primary,
-    marginLeft: 5,
-  },
-  commandsList: {
-    paddingHorizontal: 12,
-    paddingBottom: 12,
-  },
   commandItem: {
     marginBottom: 16,
     padding: 8,
-    backgroundColor: colors.background,
+    backgroundColor: colors.chatGPTBackground,
     borderRadius: 8,
   },
   commandHeader: {
@@ -339,7 +281,6 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   commandTitle: {
-    flex: 1,
     fontSize: 16,
     fontFamily: 'Radio Canada',
     fontWeight: 'bold',
