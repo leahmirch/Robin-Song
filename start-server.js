@@ -42,11 +42,11 @@ function startProcesses() {
 
     // Start Backend Server
     console.log("Starting Backend Server...");
-    const backendProcess = spawn(`"${pythonBinary}"`, ["backend/src/server.py"], { stdio: "inherit", shell: isWindows });
+    const backendProcess = spawn(`"${pythonBinary}"`, ["backend-python/server.py"], { stdio: "inherit", shell: isWindows });
 
     // Start Bird Detection Script
     console.log("Starting Bird Detection Script...");
-    const detectProcess = spawn(`"${pythonBinary}"`, ["backend/src/detect_birds.py"], { stdio: "inherit", shell: isWindows });
+    const detectProcess = spawn(`"${pythonBinary}"`, ["backend-python/detect_birds.py"], { stdio: "inherit", shell: isWindows });
 
     // Start Expo Frontend
     console.log("Starting Expo Frontend...");

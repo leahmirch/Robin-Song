@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: bird-python-backend
+    runtime: python
+    rootDir: backend-python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --bind 0.0.0.0:10000
+    envVars:
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: firebase-admin-key.json
+      - key: NODE_BACKEND_URL
+        value: https://bird-node-backend.onrender.com
+
+  - type: web
+    name: bird-node-backend
+    runtime: node
+    rootDir: backen
+    buildCommand: npm install
+    startCommand: node users.js # or whichever is your main entry point
+    envVars:
+      - key: FLASK_BACKEND_URL
+        value: https://bird-python-backend.onrender.com
+      - key: FIREBASE_PROJECT_ID
+        value: your-firebase-project-id
