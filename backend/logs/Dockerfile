@@ -26,6 +26,9 @@ RUN apt-get update && apt-get install -y alsa-utils
 ADD backend-python/requirements.txt requirements.txt
 RUN python3.11 -m pip install --no-cache-dir --ignore-installed -r requirements.txt
 
+# Manually fix openai package
+RUN python3.11 -m pip uninstall -y openai && python3.11 -m pip install --upgrade openai
+
 # Copy the rest of the application files
 ADD backend-python/detect_birds.py .
 ADD backend-python/bird_data.csv .
