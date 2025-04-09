@@ -13,6 +13,8 @@ import { navigationRef } from './navigationService';
 import VoiceCommandManager from '../services/voice/VoiceCommandManager';
 import VoiceTester from '../services/voice/VoiceTester';
 import { useUserData } from '../UserContext';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -49,6 +51,11 @@ export default function RootLayout() {
                 />
               </>
             )}
+            <Stack.Screen
+              name="PrivacyPolicy"
+              component={PrivacyPolicyScreen}
+              options={{ headerTitle: 'Privacy Policy' }}
+            />
             <Stack.Screen name="VoiceTester" component={VoiceTester} />
           </Stack.Navigator>
           <VoiceCommandManager />
