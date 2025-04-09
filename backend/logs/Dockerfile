@@ -23,8 +23,8 @@ RUN apt-get update && apt-get install -y alsa-utils
 
 
 # Install Python dependencies
-ADD backend-python/requirements.txt .
-RUN python3.11 -m pip install --no-cache-dir -r backend-python/requirements.txt
+ADD backend-python/requirements.txt requirements.txt
+RUN python3.11 -m pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application files
 ADD backend-python/detect_birds.py .
