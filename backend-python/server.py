@@ -355,7 +355,7 @@ def start_detection():
     global is_running, process
     if not is_running:
         try:
-            process = subprocess.Popen(["python", "detect_birds.py"])
+            process = subprocess.Popen(["python", "/backend-python/detect_birds.py"])
             is_running = True
             print("Detection started.")
             return jsonify({"message": "Bird detection started"})
