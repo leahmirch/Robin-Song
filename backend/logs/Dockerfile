@@ -29,7 +29,6 @@ RUN python3.11 -m pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application files
 ADD detect_birds.py .
 ADD bird_data.csv .
-ADD app/service-key.json /app/service-key.json
 
 
 # Expose the application port
