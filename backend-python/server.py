@@ -352,6 +352,7 @@ def get_my_bird_history():
 @app.route('/start-detection', methods=['POST'])
 @login_required
 def start_detection():
+    print("/start-detection POST request received")
     global is_running, process
     if not is_running:
         try:
@@ -363,6 +364,7 @@ def start_detection():
             print(f"Error starting detection: {str(e)}")
             return jsonify({"message": f"Error starting detection: {str(e)}"}), 500
     else:
+        print('Detection already running.')
         return jsonify({"message": "Bird detection is already running"}), 400
 
 @app.route('/stop-detection', methods=['POST'])
