@@ -6,10 +6,13 @@ module.exports = {
     scheme: "robinsong",
     orientation: "portrait",
     icon: "./frontend/assets/img/logos/robinAppIcon.png",
-    newArchEnabled: false,
     android: {
       jsEngine: "hermes",
       package: "com.robinsong.robinsong",
+      icon: "./frontend/assets/img/logos/adaptive-icon.png",
+      adaptiveIcon: {
+        foregroundImage: "./frontend/assets/img/logos/adaptive-icon.png"
+      },
       googleServicesFile:
         process.env.GOOGLE_SERVICES_JSON || "./google-services/google-services.json",
       config: {
