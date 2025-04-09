@@ -352,14 +352,14 @@ const SettingsScreen: React.FC = () => {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Robin Privacy Policy"
+          accessibilityLabel="Robin's Privacy Policy"
           onPress={() => navigation.navigate("PrivacyPolicy")}
           style={({ pressed }) => [
             styles.row,
             pressed && { opacity: 0.6 },
           ]}
         >
-          <Text style={styles.rowText}>Robin Privacy Policy</Text>
+          <Text style={styles.rowText}>Robin's Privacy Policy</Text>
           <Ionicons name="chevron-forward" size={22} color={colors.primary} />
         </Pressable>
 
