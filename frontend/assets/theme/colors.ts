@@ -14,6 +14,7 @@ const colors = {
     chatGPTCardBackground: '#F3E1D6',
     white: '#FFFFFF',
     black: '#000000',
+    cardDark: "#3A3A3A",
   } as const;
   
   export type Colors = typeof colors;
