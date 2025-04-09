@@ -34,6 +34,9 @@ ADD backend-python/detect_birds.py .
 ADD backend-python/bird_data.csv .
 ADD backend-python /backend-python
 
+# Copy the Firebase credentials file into the Docker image
+ADD backend-python/secrets/firebase-admin-key.json /app/secrets/firebase-admin-key.json
+
 # Expose the application port
 EXPOSE 5000
 
