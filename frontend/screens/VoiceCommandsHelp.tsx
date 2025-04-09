@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { speakAppText } from '../services/voice/ttsHelper';
+// Added stopSpeaking import to enable stopping speech via TTS helper
+import { speakAppText, stopSpeaking } from '../services/voice/ttsHelper';
 import Accordion from '../components/Accordion';
 import colors from '../assets/theme/colors';
 
@@ -197,13 +198,38 @@ const commandData: CommandCategory[] = [
 ];
 
 const VoiceCommandHelp: React.FC = () => {
-  const renderCommandItem = (item: CommandItem, key: string ) => (
+  // State to track if text-to-speech is currently active
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  /**
+   * Toggles the speech output.
+   * When already speaking, it stops the speech.
+   * When not speaking, it starts speaking the provided text.
+   *
+   * Note: If your TTS helper supports an onDone callback, pass a callback to reset isSpeaking when the speech finishes naturally.
+   */
+  const toggleSpeech = (text: string) => {
+    if (isSpeaking) {
+      // Stop the currently playing speech
+      stopSpeaking();
+      setIsSpeaking(false);
+    } else {
+      setIsSpeaking(true);
+      // If your TTS helper allows an onDone callback, use it to reset isSpeaking:
+      // speakAppText(text, { onDone: () => setIsSpeaking(false) });
+      // Otherwise, simply start the speech:
+      speakAppText(text);
+      // Optionally, you might consider setting a timeout here based on estimated speech duration.
+    }
+  };
+
+  const renderCommandItem = (item: CommandItem, key: string) => (
     <View key={key} style={styles.commandItem}>
       <View
         accessible={true}
         accessibilityLabel={`${item.command} command.`}
         accessibilityHint={`Continue forward to view information for the ${item.command} command`}
-        accessibilityRole='header'
+        accessibilityRole="header"
         style={styles.commandHeader}
       >
         {item.icon && (
@@ -215,11 +241,10 @@ const VoiceCommandHelp: React.FC = () => {
           />
         )}
         <Text style={styles.commandTitle}>{item.command}</Text>
-  
-        {/* ✅ Re-added Try It button */}
         <TouchableOpacity
           style={styles.tryButton}
-          onPress={() => speakAppText(item.example)}
+          // Replaced direct speakAppText call with toggleSpeech for on/off functionality
+          onPress={() => toggleSpeech(item.example)}
         >
           <Text style={styles.tryButtonText}>Try It</Text>
         </TouchableOpacity>
@@ -232,7 +257,6 @@ const VoiceCommandHelp: React.FC = () => {
           <Text style={styles.exampleTitle}>Example:</Text>
           <Text style={styles.exampleText}>{item.example}</Text>
         </View>
-  
         <View
           accessible={true}
           accessibilityLabel={`Synonyms that can also be used for the ${item.command} command: ${item.synonyms}`}
@@ -249,11 +273,12 @@ const VoiceCommandHelp: React.FC = () => {
       </View>
     </View>
   );
-  
 
   return (
     <View style={styles.container}>
-      <Text accessibilityRole="header" style={styles.header}>Voice Command Help</Text>
+      <Text accessibilityRole="header" style={styles.header}>
+        Voice Command Help
+      </Text>
       {commandData.map((item) => (
         <Accordion key={item.category} title={item.category} startIcon={item.icon}>
           {item.commands.map((command) =>
@@ -300,6 +325,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 4,
+    marginLeft: 'auto',
   },
   tryButtonText: {
     fontSize: 14,
