@@ -415,7 +415,6 @@ const SettingsScreen: React.FC = () => {
   );
 };
 
-// Styling remains identical
 const styles = StyleSheet.create({
   container: {
     flex: 1,

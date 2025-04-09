@@ -24,3 +24,6 @@ export function speakAppText(
 
   Speech.speak(text, ttsOptions);
 }
+export function stopSpeaking() {
+  Speech.stop();
+}

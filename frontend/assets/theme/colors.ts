@@ -15,7 +15,6 @@ const colors = {
     white: '#FFFFFF',
     black: '#000000',
     cardDark: "#333333",
-
   } as const;
   
   export type Colors = typeof colors;

@@ -84,8 +84,7 @@ export default function PrivacyPolicyScreen() {
             <WebView
               originWhitelist={["*"]}
               source={htmlAsset}
-              startInLoadingState
-              onLoadProgress={({ nativeEvent }) =>
+              startInLoadingState              onLoadProgress={({ nativeEvent }) =>
                 setProgress(nativeEvent.progress)
               }
               onError={() => setHasError(true)}
