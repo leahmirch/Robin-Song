@@ -18,7 +18,6 @@ import { speakAppText } from './ttsHelper';
 
 const WAKE_WORD = 'robin';
 
-// Normalization for misheard text:
 function normalizeText(text: string): string {
   return text
     .replace(/\breid\b/g, 'read')
@@ -41,7 +40,7 @@ function normalizeText(text: string): string {
     .replace(/\bfeedn behavior\b/g, 'feeding behavior');
 }
 
-// The commands (same as your code)
+// The commands as in your original code
 const generalCommands = [
   { command: 'Identify', synonyms: ['identify', 'go to identify', 'open identify', 'show identify', 'start identify'] },
   { command: 'Forecast', synonyms: ['forecast', 'go to forecast', 'open forecast', 'show forecast', 'start forecast'] },
@@ -97,7 +96,9 @@ const settingsCommands = [
 
 const commandMapping = [...generalCommands, ...settingsCommands];
 
-const DEBOUNCE_DELAY = 400;
+const DEBOUNCE_DELAY = 1000;
+const COOLDOWN_MS = 1500; 
+const LISTEN_RESTART_TIMEOUT = 1000;
 
 function parseCommand(recognizedText: string): string | null {
   const lowerText = recognizedText.toLowerCase();
@@ -107,7 +108,6 @@ function parseCommand(recognizedText: string): string | null {
   }
   const textWithoutWake = lowerText.replace(new RegExp(`\\b${WAKE_WORD}\\b`, 'gi'), '').trim();
   const cleanedText = normalizeText(textWithoutWake.replace(/[^a-zA-Z\s]/g, '').toLowerCase());
-
 
   for (const mapping of commandMapping) {
     for (const syn of mapping.synonyms) {
@@ -279,8 +279,6 @@ const VoiceCommandManager: React.FC = () => {
   const audioFeedbackRef = useRef(audioFeedbackEnabled);
   const showCommandPopupsRef = useRef(showCommandPopups);
 
-  const COOLDOWN_MS = 1000;
-
   useEffect(() => {
     audioFeedbackRef.current = audioFeedbackEnabled;
   }, [audioFeedbackEnabled]);
@@ -306,22 +304,6 @@ const VoiceCommandManager: React.FC = () => {
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const lastRecognizedText = useRef<string>('');
 
-  useEffect(() => {
-    if (voiceCommandsEnabled) {
-      Voice.onSpeechResults = onSpeechResults;
-      Voice.onSpeechPartialResults = () => {};
-      Voice.onSpeechError = onSpeechError;
-      startListening();
-    } else {
-      stopListening();
-    }
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-      if (cooldownTimeout.current) clearTimeout(cooldownTimeout.current);
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    };
-  }, [voiceCommandsEnabled]);
-
   async function startListening() {
     if (recognitionInProgress.current) {
       console.log("Already listening; skipping start.");
@@ -338,6 +320,10 @@ const VoiceCommandManager: React.FC = () => {
   }
 
   async function stopListening() {
+    if (!recognitionInProgress.current) {
+      console.log("Not currently listening; skipping stop.");
+      return;
+    }
     try {
       await Voice.stop();
     } catch (e) {
@@ -385,17 +371,17 @@ const VoiceCommandManager: React.FC = () => {
       );
     }
 
-    // Auth
+    // Auth commands
     if (commandName === 'logout' || commandName === 'login') {
       return handleAuthCommand(commandName, showAlertOnce);
     }
 
-    // Start/Stop detection
+    // Detection commands
     if (commandName === 'start detection' || commandName === 'stop detection') {
       return handleDetectionCommand(commandName, setDetectionActive, showAlertOnce);
     }
 
-    // Chat
+    // Chat commands
     if (commandName === 'chat' || commandName === 'close chat') {
       return handleChatCommand(commandName, showAlertOnce);
     }
@@ -407,17 +393,15 @@ const VoiceCommandManager: React.FC = () => {
     if (event.value && event.value.length > 0) {
       const recognizedPhrase = event.value[event.value.length - 1].toLowerCase().trim();
       console.log("Final recognized phrase:", recognizedPhrase);
-
       lastRecognizedText.current = recognizedPhrase;
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
 
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       debounceTimeout.current = setTimeout(() => {
         const command = parseCommand(lastRecognizedText.current);
         if (command && !cooldownTimeout.current) {
           console.log('Voice Command:', command);
           stopListening();
           processCommand(command);
-
           cooldownTimeout.current = setTimeout(() => {
             cooldownTimeout.current = null;
             startListening();
@@ -436,6 +420,8 @@ const VoiceCommandManager: React.FC = () => {
             }, COOLDOWN_MS);
           } else {
             console.log(`No valid command recognized. phrase="${lastRecognizedText.current}"`);
+            stopListening();
+            setTimeout(() => startListening(), LISTEN_RESTART_TIMEOUT);
           }
         } else {
           console.log('In cooldown, ignoring command:', command);
@@ -444,7 +430,7 @@ const VoiceCommandManager: React.FC = () => {
       }, DEBOUNCE_DELAY);
     } else {
       stopListening();
-      setTimeout(() => startListening(), 1000);
+      setTimeout(() => startListening(), LISTEN_RESTART_TIMEOUT);
     }
   }
 
@@ -458,17 +444,13 @@ const VoiceCommandManager: React.FC = () => {
       showAlertOnce('Voice Error', JSON.stringify(event.error));
     }
     stopListening();
-    if (!cooldownTimeout.current) {
-      setTimeout(() => startListening(), 1000);
-    }
+    setTimeout(() => startListening(), LISTEN_RESTART_TIMEOUT);
   }
 
   useEffect(() => {
     if (voiceCommandsEnabled) {
       Voice.onSpeechResults = onSpeechResults;
-      Voice.onSpeechPartialResults = () => {
-
-      };
+      Voice.onSpeechPartialResults = () => {};
       Voice.onSpeechError = onSpeechError;
       startListening();
     } else {
