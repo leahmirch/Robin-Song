@@ -54,7 +54,7 @@ msgpack==1.1.0
 namex==0.0.8
 numba==0.60.0
 numpy==1.26.4
-openai==0.28.1
+openai==1.0.0
 opt_einsum==3.4.0
 optree==0.13.1
 packaging==24.2
