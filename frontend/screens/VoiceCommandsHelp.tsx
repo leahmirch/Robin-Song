@@ -215,6 +215,14 @@ const VoiceCommandHelp: React.FC = () => {
           />
         )}
         <Text style={styles.commandTitle}>{item.command}</Text>
+  
+        {/* ✅ Re-added Try It button */}
+        <TouchableOpacity
+          style={styles.tryButton}
+          onPress={() => speakAppText(item.example)}
+        >
+          <Text style={styles.tryButtonText}>Try It</Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.detailsContainer}>
         <View
@@ -224,7 +232,7 @@ const VoiceCommandHelp: React.FC = () => {
           <Text style={styles.exampleTitle}>Example:</Text>
           <Text style={styles.exampleText}>{item.example}</Text>
         </View>
-
+  
         <View
           accessible={true}
           accessibilityLabel={`Synonyms that can also be used for the ${item.command} command: ${item.synonyms}`}
@@ -241,6 +249,7 @@ const VoiceCommandHelp: React.FC = () => {
       </View>
     </View>
   );
+  
 
   return (
     <View style={styles.container}>
