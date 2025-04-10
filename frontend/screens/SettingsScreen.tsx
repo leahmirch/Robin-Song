@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert } from 'react-native';
+import { Image, SafeAreaView, ScrollView, Text, StyleSheet, View, Alert, Pressable} from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import colors from '../assets/theme/colors';
 import Accordion from '../components/Accordion';
@@ -8,6 +8,8 @@ import Button from '../components/Button';
 import Toggle from '../components/Toggle';
 import { API_BASE_URL } from "../../database/firebaseConfig";
 import { useUserData } from '../UserContext'; 
+import { usePreferences } from "../context/PreferencesContext";
+import { Ionicons } from "@expo/vector-icons";
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -132,8 +134,6 @@ const SettingsScreen: React.FC = () => {
       Alert.alert("Logout error", "An error occurred. Please try again.");
     }
   };
-  
-  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -313,6 +313,19 @@ const SettingsScreen: React.FC = () => {
         />
 
 
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Robin's Privacy Policy"
+          onPress={() => navigation.navigate("PrivacyPolicy")}
+          style={({ pressed }) => [
+            styles.row,
+            pressed && { opacity: 0.6 },
+          ]}
+        >
+          <Text style={styles.rowText}>Robin's Privacy Policy</Text>
+          <Ionicons name="chevron-forward" size={22} color={colors.primary} />
+        </Pressable>
+
         <View style={styles.buttonContainer}>
         <Button
           title="Logout"
@@ -420,6 +433,26 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 24,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    backgroundColor: colors.card,
+    borderRadius: 10,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  rowText: {
+    fontFamily: "Radio Canada",
+    fontSize: 18,
+    color: colors.text,
   },
 });
 
