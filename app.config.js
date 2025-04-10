@@ -29,6 +29,8 @@ module.exports = {
             ITSAppUsesNonExemptEncryption: false,
             NSLocationWhenInUseUsageDescription: "We use your location to show bird hotspots near you.",
             NSMicrophoneUsageDescription: "We use your microphone audio to detect birds near you.",
+            NSSpeechRecognitionUsageDescription: "This app uses speech recognition to convert your voice into text.",
+            NSPhotoLibraryUsageDescription: "This app may request access to your photo library to allow you to select and upload photos."
           },
         
       config: {
