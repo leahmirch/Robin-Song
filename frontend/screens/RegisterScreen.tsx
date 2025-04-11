@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, Text, StyleSheet, Image, View, ScrollView } from 'react-native';
+import { KeyboardAvoidingView, Platform } from 'react-native';
 import TextFormField from '../components/TextForm';
 import Button from '../components/Button';
 import NavLink from '../components/NavLink';
@@ -122,79 +123,79 @@ export default function RegisterScreen() {
   };  
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.spacing}>
-        <Image
+  <KeyboardAvoidingView
+    style={styles.container}
+    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+  >
+    <ScrollView contentContainerStyle={styles.spacing} keyboardShouldPersistTaps="handled">
+    <Image
           source={require('../assets/img/logos/robinNoText72.png')}
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.title}>Welcome to Robin!</Text>
+      <Text style={styles.title}>Welcome to Robin!</Text>
 
-        <Text style={styles.subtitle}>Enter your information to create an account.</Text>
+      <Text style={styles.subtitle}>Enter your information to create an account.</Text>
 
-        <ErrorMessage message={error} />
+      <ErrorMessage message={error} />
 
-        <View style={styles.names}>
-          <TextFormField
-            placeholder="First Name"
-            value={firstName} 
-            onChangeText={setFirstName}
-            autoCapitalize="none"
-            style={{marginBottom: 20, width: '49%'}}
-            textStyle={styles.form}
-          />
-
-          <TextFormField
-            placeholder="Last Name" 
-            value={lastName} 
-            onChangeText={setLastName}
-            autoCapitalize="none"
-            style={{marginBottom: 20, width: '49%'}}
-            textStyle={styles.form}
-          />
-        </View>
-        
-
+      <View style={styles.names}>
         <TextFormField
-          placeholder="Email"
-          value={email} 
-          onChangeText={setEmail} 
-          keyboardType="email-address"
+          placeholder="First Name"
+          value={firstName}
+          onChangeText={setFirstName}
           autoCapitalize="none"
-          style={{marginBottom: 20, width: '100%'}}
+          style={{ marginBottom: 20, width: '49%' }}
           textStyle={styles.form}
         />
-
         <TextFormField
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          isPassword
-          style={{marginBottom: 12, width: '100%'}}
+          placeholder="Last Name"
+          value={lastName}
+          onChangeText={setLastName}
+          autoCapitalize="none"
+          style={{ marginBottom: 20, width: '49%' }}
           textStyle={styles.form}
         />
+      </View>
 
-        <Button
-          title={loading ? "Creating Account..." : "Create Account"}
-          onPress={handleRegister}
-          variant="primary"
-          style={styles.form}
-          textStyle={{fontSize: 20}}
+      <TextFormField
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        style={{ marginBottom: 20, width: '100%' }}
+        textStyle={styles.form}
+      />
+
+      <TextFormField
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        isPassword
+        style={{ marginBottom: 12, width: '100%' }}
+        textStyle={styles.form}
+      />
+
+      <Button
+        title={loading ? "Creating Account..." : "Create Account"}
+        onPress={handleRegister}
+        variant="primary"
+        style={styles.form}
+        textStyle={{ fontSize: 20 }}
+      />
+
+      <View style={styles.accountLayout}>
+        <Text style={styles.accountText}>Have an account?</Text>
+        <NavLink
+          text="Sign in"
+          targetTab="Login"
+          textStyle={[styles.accountLink, styles.accountText]}
         />
-
-        <View style={styles.accountLayout}>
-          <Text style={styles.accountText}>
-            Have an account?
-          </Text>
-          <NavLink
-            text="Sign in"
-            targetTab="Login"
-            textStyle={[styles.accountLink, styles.accountText]}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScrollView>
+  </KeyboardAvoidingView>
   );
 };
 

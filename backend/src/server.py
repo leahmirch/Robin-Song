@@ -437,6 +437,7 @@ def register():
             "voiceCommandsEnabled": False,
             "locationPreferences": False,
             "profilePicture": selected_avatar,
+            "audioFeedbackEnabled": False,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
         db.collection("users").document(user.uid).set(user_data)
@@ -497,6 +498,8 @@ def google_register():
             "voiceCommandsEnabled": False,
             "locationPreferences": False,            
             "profilePicture": selected_avatar,
+            "locationPreferences": False,
+            "audioFeedbackEnabled": False,
             "createdAt": firestore.SERVER_TIMESTAMP
         }
         new_user_ref = db.collection("users").add(user_data)
@@ -585,6 +588,9 @@ def update_user_preferences(user_id):
 
         if "locationPreferences" in data:
             updates["locationPreferences"] = data["locationPreferences"]
+
+        if "audioFeedbackEnabled" in data:
+            updates["audioFeedbackEnabled"] = data["audioFeedbackEnabled"]
 
         if updates:
             db.collection("users").document(user_id).update(updates)
