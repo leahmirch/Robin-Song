@@ -1,18 +1,14 @@
-// RootLayout.tsx
-
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { CurrentScreenProvider } from '../context/CurrentScreenContext';
 import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-import TabNavigator from './TabNavigator';
-import { CurrentScreenProvider } from '../context/CurrentScreenContext';
-import { PreferencesProvider } from '../context/PreferencesContext';
-import { navigationRef } from './navigationService';
-import VoiceCommandManager from '../services/voice/VoiceCommandManager';
-import VoiceTester from '../services/voice/VoiceTester';
+import TabNavigator from './TabNavigator'
 import { useUserData } from '../UserContext';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -20,8 +16,7 @@ export default function RootLayout() {
   const { userData } = useUserData();
 
   return (
-    <PreferencesProvider>
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer>
         <CurrentScreenProvider>
           <Stack.Navigator initialRouteName={userData ? "Tabs" : "Home"}>
             {userData ? (
@@ -49,11 +44,13 @@ export default function RootLayout() {
                 />
               </>
             )}
-            <Stack.Screen name="VoiceTester" component={VoiceTester} />
+            <Stack.Screen
+              name="PrivacyPolicy"
+              component={PrivacyPolicyScreen}
+              options={{ headerTitle: 'Privacy Policy' }}
+            />
           </Stack.Navigator>
-          <VoiceCommandManager />
         </CurrentScreenProvider>
       </NavigationContainer>
-    </PreferencesProvider>
   );
 }
