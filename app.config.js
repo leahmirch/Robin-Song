@@ -60,13 +60,13 @@ module.exports = {
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Robin to access your microphone."
+          "microphonePermission": "Turning on your microphone allows Robin to listen for birds in your environment by processing your audio."
         }
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Robin to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Turning on location services allows Robin to predict optimal bird sighting locations closest to your area."
         }
       ],
     ],
