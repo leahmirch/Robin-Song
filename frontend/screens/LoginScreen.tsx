@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react'; 
-import { View, Text, Image, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
 import colors from '../assets/theme/colors';
@@ -140,64 +148,58 @@ export default function LoginScreen() {
   };  
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-      
-      <View style={styles.area}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.area}>
         <Image
           source={require('../assets/img/logos/robinNoText72.png')}
           style={styles.logo}
           resizeMode="contain"
         />
-
         <Text style={styles.title}>Sign in to Robin!</Text>
+          <Text style={styles.subtitle}>Enter your account information to sign in.</Text>
 
-        <Text style={styles.subtitle}>Enter your account information to sign in.</Text>
+          <SuccessMessage message={success} />
+          <ErrorMessage message={error} />
 
-        <SuccessMessage message={success} />
-        <ErrorMessage message={error} />
-
-        <TextFormField
-          placeholder="Email"
-          value={email} 
-          onChangeText={setEmail} 
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={{marginBottom: 20}}
-          textStyle={styles.form}
-        />
-
-        <TextFormField
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          isPassword
-          style={{marginBottom: 12}}
-          textStyle={styles.form}
-        />
-
-        <Button
-          title={loading ? "Signing In..." : "Sign In"}
-          onPress={handleLogin} 
-          variant="primary"
-          style={styles.form}
-          textStyle={{fontSize: 20}}
-        />
-
-        <View style={styles.noAccountLayout}>
-          <Text style={styles.noAccountText}>
-            Don't have an account?
-          </Text>
-          <NavLink
-            text="Sign up"
-            targetTab="Register"
-            textStyle={[styles.noAccountLink, styles.noAccountText]}
+          <TextFormField
+            placeholder="Email"
+            value={email} 
+            onChangeText={setEmail} 
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={{marginBottom: 20}}
+            textStyle={styles.form}
           />
+
+          <TextFormField
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            isPassword
+            style={{marginBottom: 12}}
+            textStyle={styles.form}
+          />
+
+          <Button
+            title={loading ? "Signing In..." : "Sign In"}
+            onPress={handleLogin}
+            variant="primary"
+            style={styles.form}
+            textStyle={{fontSize: 20}}
+          />
+
+          <View style={styles.noAccountLayout}>
+            <Text style={styles.noAccountText}>Don't have an account?</Text>
+            <NavLink text="Sign up" targetTab="Register" textStyle={[styles.noAccountLink, styles.noAccountText]} />
+          </View>
         </View>
-        
-      </View>
       </ScrollView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
