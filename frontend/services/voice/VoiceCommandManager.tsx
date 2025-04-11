@@ -309,29 +309,27 @@ const VoiceCommandManager: React.FC = () => {
       console.log("Already listening; skipping start.");
       return;
     }
+  
     try {
       recognitionInProgress.current = true;
-      await Voice.start('en-US');
-      console.log('Voice recognition started.');
-    } catch (e) {
-      console.error('Error starting voice:', e);
+      await Voice.destroy(); 
+      await Voice.start("en-US");
+      console.log("Voice recognition started.");
+    } catch (e: any) {
+      console.error("Error starting voice:", e);
       recognitionInProgress.current = false;
     }
-  }
+  }  
 
   async function stopListening() {
-    if (!recognitionInProgress.current) {
-      console.log("Not currently listening; skipping stop.");
-      return;
-    }
     try {
       await Voice.stop();
     } catch (e) {
-      console.error('Error stopping voice:', e);
+      console.error("Error stopping voice:", e);
     } finally {
       recognitionInProgress.current = false;
     }
-  }
+  }  
 
   function processCommand(commandName: string) {
     let currentRoute = navigationRef.getCurrentRoute()?.name || '';

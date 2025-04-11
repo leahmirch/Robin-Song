@@ -5,10 +5,12 @@ import { CurrentScreenProvider } from '../context/CurrentScreenContext';
 import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-import TabNavigator from './TabNavigator'
+import TabNavigator from './TabNavigator';
 import { useUserData } from '../UserContext';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
-
+import { PreferencesProvider } from '../context/PreferencesContext';
+import VoiceCommandManager from '../services/voice/VoiceCommandManager';
+import { navigationRef } from './navigationService';
 
 const Stack = createNativeStackNavigator();
 
@@ -16,8 +18,10 @@ export default function RootLayout() {
   const { userData } = useUserData();
 
   return (
-      <NavigationContainer>
-        <CurrentScreenProvider>
+    <PreferencesProvider>
+      <CurrentScreenProvider>
+        <VoiceCommandManager />
+        <NavigationContainer ref={navigationRef}>
           <Stack.Navigator initialRouteName={userData ? "Tabs" : "Home"}>
             {userData ? (
               <Stack.Screen
@@ -50,7 +54,8 @@ export default function RootLayout() {
               options={{ headerTitle: 'Privacy Policy' }}
             />
           </Stack.Navigator>
-        </CurrentScreenProvider>
-      </NavigationContainer>
+        </NavigationContainer>
+      </CurrentScreenProvider>
+    </PreferencesProvider>
   );
 }

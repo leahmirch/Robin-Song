@@ -29,7 +29,7 @@ module.exports = {
         ITSAppUsesNonExemptEncryption: false,
         NSLocationWhenInUseUsageDescription: "We use your location to show bird hotspots near you.",
         NSMicrophoneUsageDescription: "We use your microphone audio to detect birds near you.",
-        NSSpeechRecognitionUsageDescription: "Allow Robin to securely recognize user speech."
+        NSSpeechRecognitionUsageDescription: "Enabling speech recognition allows Robin to understand your voice commands and respond with bird information or actions tailored to your request."
       },
       config: {
         googleMapsApiKey: "temporary"
@@ -58,20 +58,20 @@ module.exports = {
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Robin to access your microphone."
+          "microphonePermission": "Robin needs access to your microphone to detect bird songs around you."
         }
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Robin to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Robin uses your location to predict where birds are most likely to appear near you."
         }
       ],
       [
         "@react-native-voice/voice",
         {
-          microphonePermission: "Allow $(PRODUCT_NAME) to access your microphone",
-          speechRecognitionPermission: "Allow $(PRODUCT_NAME) to securely recognize user speech"
+          microphonePermission: "Robin uses your microphone to listen for voice commands.",
+          speechRecognitionPermission: "Robin uses speech recognition to understand what you say and respond with bird-related information."
         }
       ]
     ],
