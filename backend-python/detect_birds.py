@@ -24,7 +24,7 @@ logging.getLogger("pyaudio").setLevel(logging.ERROR)
 from dotenv import load_dotenv
 load_dotenv()
 
-SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_ADMIN_CREDENTIALS", "backend/secrets/firebase-admin-key.json")
+SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_ADMIN_CREDENTIALS", "backend-python/secrets/firebase-admin-key.json")
 
 cred = credentials.Certificate(SERVICE_ACCOUNT_FILE)
 firebase_admin.initialize_app(cred)

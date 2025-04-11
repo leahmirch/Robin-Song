@@ -8,7 +8,6 @@ import Button from '../components/Button';
 import Toggle from '../components/Toggle';
 import { API_BASE_URL } from "../../database/firebaseConfig";
 import { useUserData } from '../UserContext'; 
-import { usePreferences } from "../context/PreferencesContext";
 import { Ionicons } from "@expo/vector-icons";
 
 const SettingsScreen: React.FC = () => {
@@ -278,7 +277,7 @@ const SettingsScreen: React.FC = () => {
           />
         </Accordion>
 
-        <Toggle
+        {/* <Toggle
           title="Enable Voice Commands"
           startIcon="microphone-outline"
           value={voiceCommandsEnabled}
@@ -287,7 +286,7 @@ const SettingsScreen: React.FC = () => {
             console.log("Voice commands toggle is now:", newValue);
           }}
           description="Enabling voice commands allows you to navigate the app using verbal commands. Microphone access is required in order to enable voice commands."
-        />
+        /> */}
 
         <Toggle
           title="Enable Location for Forecast"
