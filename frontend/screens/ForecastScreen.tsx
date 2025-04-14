@@ -247,10 +247,9 @@ const styles = StyleSheet.create({
   },
   preferenceLabel: {
     width: '100%',
-    height: 50,
     backgroundColor: colors.accent,
     borderRadius: 15,
-    paddingVertical: 12,
+    paddingVertical: 16,
     marginBottom: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -286,7 +285,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   mapContainer: {
-    height: 250,
+    flex: 1,
     borderRadius: 20,
     margin: 10,
   },

@@ -180,7 +180,6 @@ export default function LoginScreen() {
           title={loading ? "Signing In..." : "Sign In"}
           onPress={handleLogin} 
           variant="primary"
-          style={styles.form}
           textStyle={{fontSize: 20}}
         />
 
@@ -238,8 +237,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   form: {
-    fontSize: 20,
-    height: 50,
+    fontSize: 20
   },
   sizeContainer: {
     marginBottom: 24,

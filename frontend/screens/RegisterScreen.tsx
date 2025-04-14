@@ -124,6 +124,8 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.spacing}>
+        
+        <View style={{ width: '100%' }}>
         <Image
           source={require('../assets/img/logos/robinNoText72.png')}
           style={styles.logo}
@@ -179,7 +181,7 @@ export default function RegisterScreen() {
           title={loading ? "Creating Account..." : "Create Account"}
           onPress={handleRegister}
           variant="primary"
-          style={styles.form}
+          style={{width: '100%'}}
           textStyle={{fontSize: 20}}
         />
 
@@ -192,6 +194,7 @@ export default function RegisterScreen() {
             targetTab="Login"
             textStyle={[styles.accountLink, styles.accountText]}
           />
+        </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -233,7 +236,6 @@ const styles = StyleSheet.create({
   form: {
     width: '100%',
     fontSize: 20,
-    height: 50,
   },
   names: {
     flexDirection: 'row',
