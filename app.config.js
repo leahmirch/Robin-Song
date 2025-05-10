@@ -29,6 +29,8 @@ module.exports = {
             ITSAppUsesNonExemptEncryption: false,
             NSLocationWhenInUseUsageDescription: "We use your location to show bird hotspots near you.",
             NSMicrophoneUsageDescription: "We use your microphone audio to detect birds near you.",
+            NSSpeechRecognitionUsageDescription: "This app uses speech recognition to convert your voice into text.",
+            NSPhotoLibraryUsageDescription: "This app may request access to your photo library to allow you to select and upload photos."
           },
         
       config: {
@@ -58,13 +60,13 @@ module.exports = {
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Robin to access your microphone."
+          "microphonePermission": "Turning on your microphone allows Robin to listen for birds in your environment by processing your audio."
         }
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Robin to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Turning on location services allows Robin to predict optimal bird sighting locations closest to your area."
         }
       ],
     ],

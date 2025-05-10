@@ -47,7 +47,7 @@ export default function RootLayout() {
             <Stack.Screen
               name="PrivacyPolicy"
               component={PrivacyPolicyScreen}
-              options={{ headerTitle: 'Privacy Policy' }}
+              options={{ headerTitle: 'Privacy Policy', headerShown: false }}
             />
           </Stack.Navigator>
         </CurrentScreenProvider>

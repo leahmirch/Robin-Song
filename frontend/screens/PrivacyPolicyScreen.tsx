@@ -7,7 +7,10 @@ import {
   ActivityIndicator,
   Pressable,
   useColorScheme,
+  Alert,
 } from "react-native";
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import colors from "../assets/theme/colors";
 
@@ -15,8 +18,9 @@ const htmlAsset = require("../assets/Privacy-Policy/PrivacyPolicy.html");
 
 export default function PrivacyPolicyScreen() {
   const isDark = useColorScheme() === "dark";
+  const navigation = useNavigation();
 
-  const [progress, setProgress] = useState(0);  // 0 → 1
+  const [progress, setProgress] = useState(0);
   const [hasError, setHasError] = useState(false);
 
   const ProgressBar = () =>
@@ -33,6 +37,7 @@ export default function PrivacyPolicyScreen() {
 
   const ErrorView = () => (
     <View style={styles.loader}>
+      <Ionicons name="chevron-forward" size={22} color={colors.primary} />
       <Text style={[styles.errorText, { color: colors.text }]}>
         Couldn’t load the policy.
       </Text>
@@ -57,6 +62,12 @@ export default function PrivacyPolicyScreen() {
         { backgroundColor: isDark ? colors.black : colors.background },
       ]}
     >
+
+      <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="chevron-back" size={22} color={colors.primary} />
+        <Text style={{ fontFamily: 'Radio Canada', color: colors.text, fontSize: 18 }}>Back</Text>
+      </Pressable>
+
       <View style={styles.header}>
         <Text
           accessibilityRole="header"
@@ -114,19 +125,29 @@ export default function PrivacyPolicyScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-
+  screen: { 
+    flex: 1 
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingLeft: 10,
+  },
   header: {
     alignItems: "center",
-    paddingVertical: 6,
+    marginLeft: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#0002",
+    borderBottomColor: colors.accent,
   },
   headerTitle: {
+    justifyContent: 'center',
+    alignSelf: 'center',
     fontFamily: "Caprasimo",
     fontSize: 28,
+    pointerEvents: 'none',
+    paddingVertical: 12,
   },
-
   progressContainer: {
     height: 2,
     backgroundColor: "transparent",
@@ -135,7 +156,6 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: colors.primary,
   },
-
   card: {
     flex: 1,
     margin: 16,
@@ -147,12 +167,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
   },
-
   innerPad: {
     flex: 1,
     padding: 16,          
   },
-
   loader: {
     flex: 1,
     alignItems: "center",

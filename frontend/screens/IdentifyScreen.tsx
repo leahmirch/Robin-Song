@@ -430,7 +430,8 @@ const styles = StyleSheet.create({
  },
  badge: {
    width: "35%",
-   height: 110,
+   height: "100%",
+   maxHeight: 300,
    justifyContent: "center",
    shadowColor: '#000',
    shadowOffset: { width: 0, height: 2 },

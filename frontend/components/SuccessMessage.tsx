@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, Animated } from "react-native";
+import { Text, StyleSheet, Animated } from "react-native";
 import colors from "../assets/theme/colors";
 
 type Props = {
@@ -8,13 +8,11 @@ type Props = {
 
 export default function SuccessMessage({ message }: Props) {
   const fadeAnim = useRef(new Animated.Value(1)).current; 
-  const heightAnim = useRef(new Animated.Value(50)).current;
   const [isVisible, setIsVisible] = useState(!!message); 
 
   useEffect(() => {
     if (message) {
       fadeAnim.setValue(1);
-      heightAnim.setValue(50);
       setIsVisible(true);
 
       const timeout = setTimeout(() => {
@@ -23,11 +21,6 @@ export default function SuccessMessage({ message }: Props) {
             toValue: 0,
             duration: 2000,
             useNativeDriver: false,
-          }),
-          Animated.timing(heightAnim, {
-            toValue: 0,
-            duration: 2000,
-            useNativeDriver: false, 
           }),
         ]).start(() => setIsVisible(false)); 
       }, 4000);
@@ -39,22 +32,21 @@ export default function SuccessMessage({ message }: Props) {
   if (!isVisible) return null;
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim, height: heightAnim }]}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <Text style={styles.text}>{message}</Text>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-    container: {
-    backgroundColor: colors.secondary, 
+  container: {
+    backgroundColor: '#8485Bf80', 
     borderColor: colors.secondary,
     borderWidth: 3, 
     borderRadius: 8,
     marginBottom: 12,
     alignItems: "center",
-    justifyContent: "center", 
-    minHeight: 50, 
+    justifyContent: "center",
     paddingHorizontal: 12, 
     paddingVertical: 8,
     overflow: "hidden",

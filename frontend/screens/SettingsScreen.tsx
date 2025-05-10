@@ -8,7 +8,6 @@ import Button from '../components/Button';
 import Toggle from '../components/Toggle';
 import { API_BASE_URL } from "../../database/firebaseConfig";
 import { useUserData } from '../UserContext'; 
-import { usePreferences } from "../context/PreferencesContext";
 import { Ionicons } from "@expo/vector-icons";
 
 const SettingsScreen: React.FC = () => {
@@ -145,23 +144,19 @@ const SettingsScreen: React.FC = () => {
           accessibilityLabel={`Your account information. Name: ${userData?.firstName} ${userData?.lastName}. Email address: ${userData?.email}`}
           style={styles.accountCard}
         >
-          <View style={styles.leftSide}>
-            <View style={styles.topRow}>
-              <Image
-                accessible={true}
-                accessibilityLabel='Account Profile Picture'
-                source={getImageSource(profilePicture)}
-                style={styles.image}
-              />
-            </View>
+          <View style={{ justifyContent: 'center', marginRight: 12 }}>
+            <Image
+              accessible={true}
+              accessibilityLabel='Account Profile Picture'
+              source={getImageSource(profilePicture)}
+              style={styles.image}
+            />
           </View>
-          <View>
-            <View style={styles.topRow}>
-              <Text style={styles.name}>
-                {userData?.firstName ?? ''} {userData?.lastName ?? ''}
-              </Text>
-              <Text style={styles.infoText}>{userData?.email ?? ''}</Text>
-            </View>
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Text style={styles.name}>
+              {userData?.firstName ?? ''} {userData?.lastName ?? ''}
+            </Text>
+            <Text style={styles.infoText}>{userData?.email ?? ''}</Text>
           </View>
         </View>
 
@@ -278,7 +273,7 @@ const SettingsScreen: React.FC = () => {
           />
         </Accordion>
 
-        <Toggle
+        {/* <Toggle
           title="Enable Voice Commands"
           startIcon="microphone-outline"
           value={voiceCommandsEnabled}
@@ -287,7 +282,7 @@ const SettingsScreen: React.FC = () => {
             console.log("Voice commands toggle is now:", newValue);
           }}
           description="Enabling voice commands allows you to navigate the app using verbal commands. Microphone access is required in order to enable voice commands."
-        />
+        /> */}
 
         <Toggle
           title="Enable Location for Forecast"
@@ -332,42 +327,42 @@ const SettingsScreen: React.FC = () => {
           onPress={handleLogout}
           variant="secondary"
         />
-<Button
-  title="Delete Account"
-  variant="primary"
-  onPress={() => {
-    Alert.alert(
-      "Are you sure?",
-      "This action will permanently delete your account and cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const resp = await fetch(`${API_BASE_URL}/users/${userId}`, {
-                method: 'DELETE',
-                credentials: 'include',
-              });
-              if (!resp.ok) throw new Error('Failed to delete account');
-          
-              Alert.alert("Account Deleted", "Your account has been successfully deleted.");
-              setUserData(null);
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "Home" }],
-              });
-            } catch (error) {
-              Alert.alert("Error", (error as Error).message);
-              console.error("Account deletion failed:", error);
-            }
-          }
-        },
-      ]
-    );
-  }}
-/>
+        <Button
+          title="Delete Account"
+          variant="primary"
+          onPress={() => {
+            Alert.alert(
+              "Are you sure?",
+              "This action will permanently delete your account and cannot be undone.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Delete",
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      const resp = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                      });
+                      if (!resp.ok) throw new Error('Failed to delete account');
+                  
+                      Alert.alert("Account Deleted", "Your account has been successfully deleted.");
+                      setUserData(null);
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: "Home" }],
+                      });
+                    } catch (error) {
+                      Alert.alert("Error", (error as Error).message);
+                      console.error("Account deletion failed:", error);
+                    }
+                  }
+                },
+              ]
+            );
+          }}
+        />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -390,6 +385,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   accountCard: {
+    flex: 1,
     flexDirection: 'row',
     marginBottom: 24,
     backgroundColor: colors.card,
@@ -402,16 +398,10 @@ const styles = StyleSheet.create({
     elevation: 5,
     shadowRadius: 4,
   },
-  leftSide: {
-    width: 90,
-  },
-  topRow: {
-    height: 75,
-    justifyContent: 'center',
-  },
   name: {
+    flexWrap: 'wrap',
     fontFamily: 'Caprasimo',
-    fontSize: 32,
+    fontSize: 24,
     color: colors.primary,
   },
   label: {
@@ -419,7 +409,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Radio Canada',
     color: colors.primary,
-    marginBottom: 5,
   },
   infoText: {
     fontSize: 18,
@@ -443,11 +432,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 10,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    elevation: 5,
+    shadowRadius: 4,
   },
   rowText: {
     fontFamily: "Radio Canada",

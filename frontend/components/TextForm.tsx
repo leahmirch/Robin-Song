@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.form,
   },
   input: {
-    height: 40,
+    paddingVertical: 12,
     flex: 1,
     paddingHorizontal: 10,
     color: colors.primary,

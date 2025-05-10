@@ -352,10 +352,11 @@ def get_my_bird_history():
 @app.route('/start-detection', methods=['POST'])
 @login_required
 def start_detection():
+    print("/start-detection POST request received")
     global is_running, process
     if not is_running:
         try:
-            process = subprocess.Popen(["python", "detect_birds.py"])
+            process = subprocess.Popen(["python", "detect_birds.py"], cwd="backend-python")
             is_running = True
             print("Detection started.")
             return jsonify({"message": "Bird detection started"})
@@ -363,6 +364,7 @@ def start_detection():
             print(f"Error starting detection: {str(e)}")
             return jsonify({"message": f"Error starting detection: {str(e)}"}), 500
     else:
+        print('Detection already running.')
         return jsonify({"message": "Bird detection is already running"}), 400
 
 @app.route('/stop-detection', methods=['POST'])
@@ -668,6 +670,7 @@ def create_chat():
         return jsonify({"message": "Chat created", "chatId": chat_ref[1].id})
 
     except Exception as e:
+        print({"error": f"Error creating chat: {str(e)}"})
         return jsonify({"error": f"Error creating chat: {str(e)}"}), 500
 
 
@@ -730,6 +733,7 @@ def send_message_to_chat(chat_id):
         return jsonify({"botMessage": bot_message}), 200
 
     except Exception as e:
+        print({"error": f"Error sending message: {str(e)}"})
         return jsonify({"error": f"Error sending message: {str(e)}"}), 500
 
 
@@ -752,6 +756,7 @@ def get_chat_messages(chat_id):
 
         return jsonify(messages), 200
     except Exception as e:
+        print({"error": f"Error fetching messages: {str(e)}"})
         return jsonify({"error": f"Error fetching messages: {str(e)}"}), 500
 
 
@@ -767,6 +772,7 @@ def get_all_chats():
 
         return jsonify(chat_list)
     except Exception as e:
+        print({"error": f"Error fetching chats: {str(e)}"})
         return jsonify({"error": f"Error fetching chats: {str(e)}"}), 500
 
 
@@ -791,6 +797,7 @@ def delete_chat(chat_id):
         return jsonify({"message": "Chat deleted successfully"}), 200
 
     except Exception as e:
+        print({"error": f"Error deleting chat: {str(e)}"})
         return jsonify({"error": f"Error deleting chat: {str(e)}"}), 500
 
 
@@ -809,6 +816,7 @@ def delete_message(chat_id, message_id):
         db.collection("chats").document(chat_id).collection("messages").document(message_id).delete()
         return jsonify({"message": "Message deleted successfully"}), 200
     except Exception as e:
+        print({"error": f"Error deleting message: {str(e)}"})
         return jsonify({"error": f"Error deleting message: {str(e)}"}), 500
 
 

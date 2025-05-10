@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import {SafeAreaView, View,Text, StyleSheet, Image, ActivityIndicator, SectionList,TouchableOpacity,Alert, Linking, RefreshControl} from "react-native";
+import {SafeAreaView, View,Text, StyleSheet, Image, ActivityIndicator, SectionList, TouchableOpacity, Alert, Linking, RefreshControl, ScrollView} from "react-native";
 import {collection, query, orderBy,limit, startAfter, getDocs, where} from "firebase/firestore";
 import { db } from "../../database/firebaseConfig";
 import SearchBar from "../components/SearchBar";

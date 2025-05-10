@@ -9,13 +9,11 @@ type Props = {
 
 export default function ErrorMessage({ message }: Props) {
   const fadeAnim = useRef(new Animated.Value(1)).current; 
-  const heightAnim = useRef(new Animated.Value(50)).current; 
   const [isVisible, setIsVisible] = useState(!!message); 
 
   useEffect(() => {
     if (message) {
       fadeAnim.setValue(1);
-      heightAnim.setValue(50);
       setIsVisible(true);
 
       const timeout = setTimeout(() => {
@@ -24,11 +22,6 @@ export default function ErrorMessage({ message }: Props) {
             toValue: 0,
             duration: 8000,
             useNativeDriver: false,
-          }),
-          Animated.timing(heightAnim, {
-            toValue: 0,
-            duration: 8000,
-            useNativeDriver: false, 
           }),
         ]).start(() => setIsVisible(false)); 
       }, 4000);
@@ -40,7 +33,7 @@ export default function ErrorMessage({ message }: Props) {
   if (!isVisible) return null;
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim, height: heightAnim }]}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <MaterialCommunityIcons
         name="alert-circle-outline"
         size={24}
@@ -62,7 +55,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     alignItems: "center",
     justifyContent: "center", 
-    minHeight: 50, 
     paddingHorizontal: 12, 
     paddingVertical: 8, 
     overflow: "hidden",

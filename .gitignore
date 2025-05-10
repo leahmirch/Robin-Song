@@ -6,7 +6,7 @@ birdnet-env/
 .DS_Store
 *.pyd
 *.dll
-backend/secrets/
+backend-python/secrets/
 .expo/devices.json
 .expo/settings.json
 .expo/packager-info.json

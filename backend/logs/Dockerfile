@@ -23,17 +23,19 @@ RUN apt-get update && apt-get install -y alsa-utils
 
 
 # Install Python dependencies
-ADD requirements.txt .
-RUN python3.11 -m pip install --no-cache-dir -r requirements.txt
+ADD backend-python/requirements.txt requirements.txt
+RUN python3.11 -m pip install --no-cache-dir --ignore-installed -r requirements.txt
+
+# Manually fix openai package
+RUN python3.11 -m pip uninstall -y openai && python3.11 -m pip install --upgrade openai
 
 # Copy the rest of the application files
-ADD detect_birds.py .
-ADD bird_data.csv .
-ADD app/service-key.json /app/service-key.json
-
+ADD backend-python/detect_birds.py .
+ADD backend-python/bird_data.csv .
+ADD backend-python /backend-python
 
 # Expose the application port
 EXPOSE 5000
 
 # Set the default command
-CMD ["python3.11", "./detect_birds.py"]
+CMD ["python3.11", "/backend-python/server.py"]
